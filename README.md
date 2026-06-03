@@ -36,17 +36,7 @@
 pip install -r requirements.txt
 ```
 
-### 2. 启动
-
-```bash
-python main.py
-```
-
-首次启动会自动从 `config.example.json` 创建 `config.json`，然后打开 Web 面板填配置：
-
-**http://127.0.0.1:8766** → 点「基础设置」→ 填写配置 → 保存配置 → 重启生效
-
-### 3. 配置 AstrBot
+### 2. 配置 AstrBot
 
 -  1.在 AstrBot的机器人 中添加 创建新机器人
 -  2.消息平台类别选择onebotv11，aiocqhttp 适配器
@@ -57,15 +47,14 @@ python main.py
 
 重启 AstrBot。
 
-### 4. 启动桥接
+### 3. 启动桥接
 
 ```bash
 python main.py
 ```
 
 Web 控制面板：**http://127.0.0.1:8766**
-打开web控制面板
-
+- 打开web控制面板 → 点「基础设置」→ 填写配置 → 保存配置 → 重启生效
 ## 配置项说明
 
 所有配置可在 Web 面板「基础设置」中在线编辑。
