@@ -26,7 +26,7 @@
 | 依赖 | 说明 |
 |------|------|
 | Windows 系统 | 需要桌面微信 |
-| [WeFlow](https://weflow.top) | 已安装并登录微信，开启 API 服务（端口 5031） |
+| [WeFlow](https://weflow.top) | 已安装并登录微信，开启 API 服务（端口 5031） |(由于作者删库了，可以进q群下载！）
 | Python 3.10+ | 运行桥接脚本 |
 | [AstrBot](https://github.com/AstrBotDevs/AstrBot) | 已部署运行的 AstrBot 实例，启用 aiocqhttp 适配器 |
 
@@ -122,6 +122,10 @@ wechat-weflow-bridge/
 ## 特别好评
 https://github.com/KilincocomilK/WeeMessenger  
 超级优秀灵活的微信消息发送器
+## 特别祝愿
+- weflow作者老师一定要高考加油啊！！！快快好起来天天开心！！！
+- 祝自己和KilincocomilK老师和所有高三学子也高考加油！
+- 我说白了！世界是属于高三生的！
 
 ## 许可证
 
