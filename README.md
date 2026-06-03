@@ -47,7 +47,12 @@ pip install -r requirements.txt
 
 重启 AstrBot。
 
-### 3. 启动桥接
+
+### 3. 下载项目
+- 下载release即可
+
+
+### 4. 启动桥接
 
 ```bash
 python main.py
