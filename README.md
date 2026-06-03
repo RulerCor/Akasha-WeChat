@@ -1,6 +1,7 @@
 # Akasha-WeChat
 
 让微信小号接入LLM大模型，通过 **OneBot v11 协议** 与模型通信。
+若在使用过程中有任何问题，欢迎加qq群110345753进行反馈！但鉴于作者为高三学生，若有不及时之处，还请见谅
 
 ```
 微信 ←→ WeFlow ──SSE──→ bridge ←→ AstrBot (aiocqhttp)
@@ -113,6 +114,13 @@ wechat-weflow-bridge/
 
 - **控制面板** — 查看桥接/AstrBot/WeFlow 连接状态、启停控制、群聊模式切换、实时日志
 - **基础设置** — 在线编辑所有配置项，保存即写入 `config.json`
+
+## 特别鸣谢
+- Astrbot 超好的LLM Agent项目
+- weflow 超好的读取本地的微信聊天记录导出和年度报告应用
+## 特别好评
+https://github.com/KilincocomilK/WeeMessenger  
+超级优秀灵活的微信消息发送器
 
 ## 许可证
 
