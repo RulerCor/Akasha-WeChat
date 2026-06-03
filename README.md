@@ -1,6 +1,6 @@
-# WeFlow 微信桥接 — OneBot v11 版
+# Akasha-WeChat
 
-让微信小号接入 AstrBot，通过 **OneBot v11 协议** 与 AstrBot 通信。
+让微信小号接入LLM大模型，通过 **OneBot v11 协议** 与模型通信。
 
 ```
 微信 ←→ WeFlow ──SSE──→ bridge ←→ AstrBot (aiocqhttp)
@@ -10,14 +10,14 @@
 
 ## 特性
 
-- ✅ **消息接收** — WeFlow SSE 实时推送，无轮询无风控
-- ✅ **AI 回复** — 通过 AstrBot 调用任何 LLM（DeepSeek、Kimi、Claude 等）
-- ✅ **图片识别** — 支持 ollama llava / Kimi 等模型描述图片内容
-- ✅ **三种群聊模式** — 仅@回复 / 全部回复 / 批处理，Web 页面一键切换
-- ✅ **Web 控制面板** — 粉白主题，启停控制、状态监控、日志查看
-- ✅ **在线配置编辑** — 直接在网页上修改 config.json，无需碰文件
-- ✅ **消息缓冲** — 多条消息合并后推送，减少 AI 调用次数
-- ✅ **自回复防护** — 多层去重，防止 AI 和自己的消息循环
+-  **消息接收** — WeFlow SSE 实时推送，无轮询无风控
+-  **AI 回复** — 通过 AstrBot 调用任何 LLM（DeepSeek、Kimi、Claude 等）
+-  **图片识别** — 支持 ollama llava / Kimi 等模型描述图片内容
+-  **三种群聊模式** — 仅@回复 / 全部回复 / 批处理，Web 页面一键切换
+-  **Web 控制面板** — 粉白主题，启停控制、状态监控、日志查看
+-  **在线配置编辑** — 直接在网页上修改 config.json，无需碰文件
+-  **消息缓冲** — 多条消息合并后推送，减少 AI 调用次数
+-  **自回复防护** — 多层去重，防止 AI 和自己的消息循环
 
 ## 前置条件
 
