@@ -20,3 +20,6 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+
+# ===== 架构图校验中间产物（保留 architecture.json / architecture.html）=====
+docs/architecture.visual-check.*

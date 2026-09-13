@@ -225,6 +225,12 @@ class WeFlowBridge:
         if mentioned:
             state.note_group_mention(session_id_data, sender_in_group)
 
+        # 指令直通：群里以 "/" 开头的消息（/sid、/help、/reset…）**无需 @** 也放行，
+        # 与 AstrBot 自身的 wake_prefix 语义一致。不放行的话，mention 模式下
+        # 这些内置指令会被桥接提前丢掉，用户永远等不到回复。
+        # 注意：这里只放宽「是否放行」，不参与图片合并 —— 图片仍只认真正的 @。
+        is_command = is_group and content.lstrip().startswith("/")
+
         # ---------- 图片 ----------
         # 两条路径都保留，由 config.IMAGE_CAPTION_ENABLED 决定：
         #   ① 开了「桥接侧图片描述」→ 走原版 process_image_message（取图 → 描述模型 → 注入文字）
@@ -258,7 +264,7 @@ class WeFlowBridge:
             log.info(f"⏭️ 自回复去重跳过: {content[:30]}")
             return
 
-        if is_group and state.group_reply_mode == "mention" and not mentioned:
+        if is_group and state.group_reply_mode == "mention" and not (mentioned or is_command):
             self._log_skip(data, "群消息未 @机器人（mention 模式）")
             return
 
@@ -377,15 +383,23 @@ class WeFlowBridge:
                     if at_pattern in clean_text:
                         clean_text = clean_text.replace(at_pattern, "").strip()
 
-                formatted = clean_text
-                if sender_name:
-                    formatted = f'{sender_name}在群{entry.get("group_name", contact)}中说：{clean_text}'
+                # 指令直通：/sid、/help 这类指令必须让 AstrBot 在**文本最开头**就看到 "/"。
+                # 一旦套上「某某在群某某中说：」外壳，AstrBot 收到的文本就不以 "/" 开头，
+                # 内置指令会被当成普通聊天丢给大模型（私聊没有这层壳，所以私聊 /sid 一直正常）。
+                if clean_text.startswith("/"):
+                    formatted = clean_text
+                else:
+                    formatted = clean_text
+                    if sender_name:
+                        formatted = f'{sender_name}在群{entry.get("group_name", contact)}中说：{clean_text}'
 
             # 消息段顺序：@机器人 → 图片 → 文本
             msg_segments = [{"type": "at", "data": {"qq": str(state._self_id_int)}}]
             msg_segments.extend(image_segments)
             if formatted:
-                msg_segments.append({"type": "text", "data": {"text": f" {formatted}"}})
+                # 普通聊天保留一个前导空格做视觉分隔；指令则严格贴开头，避免任何歧义
+                sep = "" if formatted.startswith("/") else " "
+                msg_segments.append({"type": "text", "data": {"text": f"{sep}{formatted}"}})
             event = make_message_event("group", user_id, msg_segments,
                                        group_id=group_id,
                                        group_name=entry.get("group_name", contact),

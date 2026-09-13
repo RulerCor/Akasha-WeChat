@@ -1,0 +1,378 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Akasha-WeChat_RC 系统总览",
+    "repository": {
+      "url": "https://github.com/RulerCordelius/Akasha-WeChat_RC",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "9c27945a821dc1417fe3a517686a820729f8db12"
+    },
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1300,
+      660
+    ],
+    "views": [
+      {
+        "id": "inbound",
+        "label": "消息进来",
+        "focus": [
+          "wechat",
+          "weflow",
+          "bridge"
+        ],
+        "note": "WeFlow 从本地消息库读到新消息，通过 SSE 推给桥接。"
+      },
+      {
+        "id": "reasoning",
+        "label": "AI 处理",
+        "focus": [
+          "obws",
+          "astrbot",
+          "llm",
+          "kb"
+        ],
+        "note": "桥接把消息转成 OneBot 事件，AstrBot 负责模型、人格与知识库。"
+      },
+      {
+        "id": "outbound",
+        "label": "回复写回微信",
+        "focus": [
+          "astrbot",
+          "bridge",
+          "uia",
+          "wechat"
+        ],
+        "note": "AstrBot 回调 send_msg，桥接用 UIA 操作微信窗口把内容发出去。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "wechat",
+      "type": "external",
+      "label": "微信 PC 客户端",
+      "sublabel": "mmui::MainWindow",
+      "pos": [
+        70,
+        300
+      ],
+      "size": [
+        132,
+        66
+      ]
+    },
+    {
+      "id": "weflow",
+      "type": "external",
+      "label": "WeFlow 本地服务",
+      "sublabel": "读取 :5031（只读）",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        146,
+        66
+      ],
+      "tag": "第三方"
+    },
+    {
+      "id": "bridge",
+      "type": "backend",
+      "label": "桥接核心",
+      "sublabel": "缓冲 · 去重 · 过滤",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        152,
+        72
+      ],
+      "tag": "本项目",
+      "sources": [
+        {
+          "path": "wechat-weflow-bridge-ob11/bridge_core.py",
+          "label": "WeFlowBridge"
+        }
+      ]
+    },
+    {
+      "id": "panel",
+      "type": "frontend",
+      "label": "Web 控制面板",
+      "sublabel": "启停 · 配置 · 日志 :8766",
+      "pos": [
+        460,
+        140
+      ],
+      "size": [
+        152,
+        60
+      ],
+      "sources": [
+        {
+          "path": "wechat-weflow-bridge-ob11/web_panel.py",
+          "label": "WebHandler"
+        }
+      ]
+    },
+    {
+      "id": "obws",
+      "type": "messagebus",
+      "label": "OneBot v11 反向 WS",
+      "sublabel": "事件上行 / API 下行",
+      "pos": [
+        672,
+        300
+      ],
+      "size": [
+        152,
+        66
+      ],
+      "sources": [
+        {
+          "path": "wechat-weflow-bridge-ob11/ob_client.py",
+          "label": "WS 客户端线程"
+        }
+      ]
+    },
+    {
+      "id": "astrbot",
+      "type": "backend",
+      "label": "AstrBot",
+      "sublabel": "aiocqhttp 服务端 :11229",
+      "pos": [
+        884,
+        300
+      ],
+      "size": [
+        152,
+        72
+      ],
+      "tag": "外部依赖"
+    },
+    {
+      "id": "llm",
+      "type": "cloud",
+      "label": "LLM / 多模态模型",
+      "sublabel": "对话 · 识图 · 向量",
+      "pos": [
+        1096,
+        300
+      ],
+      "size": [
+        156,
+        66
+      ],
+      "tag": "云端"
+    },
+    {
+      "id": "kb",
+      "type": "database",
+      "label": "知识库",
+      "sublabel": "向量索引 / 文档",
+      "pos": [
+        1096,
+        470
+      ],
+      "size": [
+        156,
+        66
+      ]
+    },
+    {
+      "id": "uia",
+      "type": "backend",
+      "label": "UIA 发送器",
+      "sublabel": "输入框 · 发送按钮 · 会话列表",
+      "pos": [
+        460,
+        500
+      ],
+      "size": [
+        152,
+        66
+      ],
+      "tag": "本项目",
+      "sources": [
+        {
+          "path": "wechat-weflow-bridge-ob11/uia_sender.py",
+          "label": "UiaSender"
+        }
+      ]
+    },
+    {
+      "id": "namecache",
+      "type": "database",
+      "label": "会话名缓存",
+      "sublabel": "data/chat_names.json",
+      "pos": [
+        672,
+        500
+      ],
+      "size": [
+        152,
+        60
+      ],
+      "sources": [
+        {
+          "path": "wechat-weflow-bridge-ob11/state.py",
+          "label": "set_chat_name"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "本机 Windows 桌面",
+      "wraps": [
+        "wechat",
+        "weflow",
+        "bridge",
+        "panel",
+        "obws",
+        "uia",
+        "namecache",
+        "astrbot",
+        "kb"
+      ],
+      "pad": 22
+    },
+    {
+      "kind": "security-group",
+      "label": "桥接进程 Akasha-WeChat_RC",
+      "wraps": [
+        "bridge",
+        "panel",
+        "obws",
+        "uia",
+        "namecache"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "security-group",
+      "label": "AstrBot 进程",
+      "wraps": [
+        "astrbot",
+        "kb"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "from": "wechat",
+      "to": "weflow",
+      "label": "本地消息库（解密读取）",
+      "variant": "dashed",
+      "labelDy": -27
+    },
+    {
+      "from": "weflow",
+      "to": "bridge",
+      "label": "SSE 推送 message.new",
+      "variant": "emphasis",
+      "labelDy": -27
+    },
+    {
+      "from": "bridge",
+      "to": "obws",
+      "label": "OneBot v11 事件（文本 / base64 图片）",
+      "variant": "emphasis",
+      "labelDy": -27
+    },
+    {
+      "from": "obws",
+      "to": "astrbot",
+      "label": "反向 WebSocket :11229/ws",
+      "variant": "emphasis",
+      "labelDy": 57
+    },
+    {
+      "from": "astrbot",
+      "to": "llm",
+      "label": "chat / embeddings",
+      "labelDy": -27
+    },
+    {
+      "from": "astrbot",
+      "to": "kb",
+      "label": "检索 / 写入",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "from": "astrbot",
+      "to": "obws",
+      "label": "send_msg 回调 + 只读查询",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "from": "bridge",
+      "to": "uia",
+      "label": "文字 / 图片",
+      "labelDy": 24
+    },
+    {
+      "from": "uia",
+      "to": "wechat",
+      "label": "UIA 键鼠模拟写入",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "from": "bridge",
+      "to": "namecache",
+      "label": "会话名持久化",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "from": "bridge",
+      "to": "panel",
+      "label": "状态 / 日志 / 在线配置",
+      "variant": "dashed",
+      "labelDy": -18
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "主链路",
+      "items": [
+        "WeFlow 解密本地消息库后 SSE 推送，不轮询、不依赖窗口渲染",
+        "桥接做缓冲合并、多层去重、策略过滤，再构造 OneBot v11 事件",
+        "AstrBot 产出回复后回调 send_msg，桥接用 UIA 写回微信窗口"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "RC 分支的关键修复",
+      "items": [
+        "输入框按类名 ChatInputField 定位：消息不再被写进搜索框",
+        "发送按钮改为 XOutlineButton：不再出现「填进输入框却不发送」",
+        "会话 ID 改用 MD5：重启不再产生重复会话（原 hash 每进程随机）",
+        "群名走持久化缓存：不再把 chatroom 原始 ID 当群名显示"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "能力边界",
+      "items": [
+        "WeFlow 只有读取能力，发送必须依赖 UIA 自动化",
+        "群成员名单与人数取不到，只读接口只返回发过言的成员",
+        "图片理解交给 AstrBot：转述模型留空则主模型直接看图"
+      ]
+    }
+  ]
+}
