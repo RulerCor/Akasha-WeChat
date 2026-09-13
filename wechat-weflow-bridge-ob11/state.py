@@ -485,4 +485,4 @@ def muted_session_list() -> list:
 _load_muted_sessions()
 
 # 群聊回复模式（运行时可变，启动时从 config 初始化）
-group_reply_mode = "mention"
+group_reply_mode = "all"

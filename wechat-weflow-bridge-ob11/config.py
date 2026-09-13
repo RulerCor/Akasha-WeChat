@@ -19,15 +19,6 @@ for _var in ("NO_PROXY", "no_proxy"):
     if _missing:
         os.environ[_var] = ",".join(filter(None, [_cur] + _missing))
 
-# ============ 项目标识（长期可识别） ============
-PROJECT_NAME = "Akasha-WeChat_RC"
-_VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
-try:
-    with open(_VERSION_FILE, encoding="utf-8") as _f:
-        PROJECT_VERSION = _f.read().strip() or "0.0.0"
-except Exception:
-    PROJECT_VERSION = "0.0.0"
-
 # ============ 配置 ============
 
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
@@ -58,7 +49,26 @@ WE_FLOW_SEND_API = config["weflow_send_api"]
 BUFFER_SECONDS = config.get("buffer_seconds", 5)
 WEB_PORT = config.get("web_port", 8766)
 WEB_HOST = config.get("web_host", "0.0.0.0")
-GROUP_REPLY_MODE = config.get("group_reply_mode", "mention")  # "mention" / "all"
+# 群聊模式："all"（标准：所有消息转发，@ 必回、非 @ 由 AstrBot 随机插话决定）/"batch"（整群合并）。
+# 旧值 "mention"（仅@回复）已并入 all：是否对非 @ 消息插话完全由 AstrBot 的
+# active_reply（随机插话）开关与概率决定，桥接不再有第二种普通模式。
+# 兼容：老配置里的 "mention" 在读取时归一化为 "all"。
+GROUP_REPLY_MODE = config.get("group_reply_mode", "all")
+if GROUP_REPLY_MODE == "mention":
+    GROUP_REPLY_MODE = "all"
+
+# ============ 项目标识（长期可识别） ============
+#
+# 这是上游 alingalingling/Akasha-WeChat 的 RC 分支。名字与版本号固定写在这里 +
+# 同目录 VERSION 文件，方便日志、面板、issue 里一眼分辨"跑的是哪一版"，
+# 不依赖目录名（目录可能被改名）。
+PROJECT_NAME = "Akasha-WeChat_RC"
+_VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
+try:
+    with open(_VERSION_FILE, encoding="utf-8") as _f:
+        PROJECT_VERSION = _f.read().strip() or "0.0.0"
+except Exception:
+    PROJECT_VERSION = "0.0.0"
 
 # 切换联系人的方式：
 #   "auto"   —— 先在左侧会话列表按名字点击，找不到再退回 Ctrl+F 搜索（默认）

@@ -11,7 +11,7 @@
     "weflow_send_api": "http://127.0.0.1:5031/api/v1/message",
     "buffer_seconds": 5,
     "web_port": 8766,
-    "group_reply_mode": "mention",
+    "group_reply_mode": "all",
     "astrbot_ob_url": "ws://127.0.0.1:11229/ws",
     "astrbot_config_file": "",
     "ollama_base_url": "http://127.0.0.1:61000",

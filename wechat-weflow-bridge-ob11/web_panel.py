@@ -279,7 +279,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
         </div>
         <div class="hint-text">
           这就是 AstrBot 配置页里「随机小概率主动回复」那个功能：群消息<b>不是 @ 机器人</b>时，按概率掷骰决定要不要插一嘴。
-          生效前提：① 桥接「群聊模式」为 <b>全部回复(all)</b>（否则非@消息到不了 AstrBot）；② 该群先用 /new 建立过会话；③ @ 机器人一定正常回复，与此开关无关。保存后需重启 AstrBot 生效。
+          生效前提：① 桥接「群聊模式」为 <b>标准模式</b>（批处理下不会转发非@消息）；② 该群先用 /new 建立过会话；③ @ 机器人一定正常回复，与此开关无关。保存后需重启 AstrBot 生效。
         </div>
         <div class="save-bar">
           <span class="save-msg" id="abMsg">✅ 已写入 AstrBot 配置</span>
@@ -320,7 +320,7 @@ function switchTab(name) {
 }
 
 // ===== 面板刷新 =====
-var modeMap = {'mention':'仅@回复','all':'全部回复','batch':'批处理'};
+var modeMap = {'mention':'标准模式','all':'标准模式','batch':'批处理'};
 
 function refreshDashboard() {
   fetch('/status').then(function(r){return r.json()}).then(function(s){
@@ -393,7 +393,7 @@ function renderConfigForm(cfg) {
     ]},
     {title:'消息', fields:[
       {key:'buffer_seconds', label:'消息缓冲(秒)：同人多条消息合并等待', type:'number', ph:'5'},
-      {key:'group_reply_mode', label:'群聊回复模式（控制台也可一键切换）', type:'select', opts:[{v:'mention',l:'仅@回复（推荐，多机器人安全）'},{v:'all',l:'全部回复（主动回复需此项）'},{v:'batch',l:'批处理（整群合并一条）'}]},
+      {key:'group_reply_mode', label:'群聊模式（控制台也可一键切换）', type:'select', opts:[{v:'all',l:'标准模式（@必回；非@消息由 AstrBot 随机插话决定）'},{v:'batch',l:'批处理（整群合并一条）'}]},
       {key:'quote_reply_prefix', label:'引用回复转文字前缀（微信无法原生引用）', type:'select', opts:[{v:'false',l:'关闭（忽略引用）'},{v:'true',l:'开启（回复带〔回复 某某：原文〕）'}]},
     ]},
     {title:'图片（桥接侧管道）', fields:[
@@ -426,6 +426,7 @@ function renderConfigForm(cfg) {
         return;
       }
       var val = cfg[f.key] !== undefined ? cfg[f.key] : '';
+      if (f.key === 'group_reply_mode' && val === 'mention') val = 'all'; // 旧值兼容
       if (typeof val === 'boolean') val = val ? 'true' : 'false';
       if (Array.isArray(val)) val = val.join(', ');
       html += '<div class="settings-field"><label>' + f.label + '</label>';
@@ -702,7 +703,7 @@ class WebHandler(BaseHTTPRequestHandler):
             log.info("[Web] 已恢复")
             self.send_json({"ok": True})
         elif self.path == "/mode":
-            mode_order = ["mention", "all", "batch"]
+            mode_order = ["all", "batch"]
             idx = mode_order.index(state.group_reply_mode) if state.group_reply_mode in mode_order else -1
             new_mode = mode_order[(idx + 1) % len(mode_order)]
             state.group_reply_mode = new_mode
@@ -736,9 +737,10 @@ class WebHandler(BaseHTTPRequestHandler):
                     f.write("\n")
 
                 log.info(f"[Web] 配置已保存")
-                # 运行时同步 group_reply_mode
+                # 运行时同步 group_reply_mode（旧值 mention 归一化为 all）
                 if "group_reply_mode" in new_cfg:
-                    state.group_reply_mode = new_cfg["group_reply_mode"]
+                    state.group_reply_mode = ("all" if new_cfg["group_reply_mode"] == "mention"
+                                              else new_cfg["group_reply_mode"])
 
                 self.send_json({"ok": True})
             except Exception as e:
