@@ -1,0 +1,22 @@
+# ===== 本机配置（含 WeFlow access_token，绝不入库）=====
+config.json
+
+# ===== 运行时产物 =====
+data/
+*.log
+bridge.pid
+bridge_run.log
+wechat_images/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# ===== 编辑器 / 系统 =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

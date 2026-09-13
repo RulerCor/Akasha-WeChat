@@ -12,6 +12,7 @@ import asyncio
 import base64
 import json
 import os
+import re
 import tempfile
 import time
 import logging
@@ -24,6 +25,153 @@ import config
 log = logging.getLogger("ob11-bridge")
 
 
+# ============ 只读查询接口 ============
+#
+# AstrBot 收到消息后，会回调这些接口来补全上下文：
+#   get_group_info         → 群名、群人数
+#   get_group_member_info  → 成员昵称（解析 @ 时用）
+#   get_group_member_list  → 成员列表（判断群主/管理员）
+#   get_stranger_info      → 陌生人昵称
+#   get_login_info         → 机器人自己的账号昵称
+#
+# 桥接这边能提供的是「群显示名」和「见过发言的成员名」；微信侧拿不到的
+# （完整成员名单、群人数、角色）就不编造，按协议留空，AstrBot 会自行降级。
+
+
+def _bot_nickname() -> str:
+    """机器人自己显示用的昵称。"""
+    try:
+        return (config.BOT_NICKNAMES or ["Bot"])[0]
+    except Exception:
+        return "Bot"
+
+
+def _member_entry(group_id: int, user_id: int, name: str, role: str = "member") -> dict:
+    """按 OneBot 标准字段拼一个群成员对象。
+
+    微信没有「群名片」概念，这里把已知的展示名同时放进 card / nickname，
+    这样 AstrBot 一次调用就能拿到名字（否则它还会再调 get_stranger_info）。
+    """
+    return {
+        "group_id": group_id,
+        "user_id": user_id,
+        "nickname": name or str(user_id),
+        "card": name or "",
+        "sex": "unknown",
+        "age": 0,
+        "area": "",
+        "join_time": 0,
+        "last_sent_time": 0,
+        "level": "1",
+        "role": role,
+        "unfriendly": False,
+        "title": "",
+    }
+
+
+def _api_get_login_info(_params: dict) -> dict:
+    return {"user_id": state._self_id_int, "nickname": _bot_nickname()}
+
+
+def _api_get_group_info(params: dict) -> dict:
+    gid = int(params.get("group_id") or 0)
+    username = state.get_session_id(gid) or ""
+    name = state.get_contact(gid) or state.get_chat_name(username) or str(gid)
+    # 微信群名可能带 "(13)" 成员数后缀，往回给的时候去掉
+    name = re.sub(r"\s*\(\d+\)\s*$", "", name).strip() or str(gid)
+    info = {
+        "group_id": gid,
+        "group_name": name,
+        "group_memo": "",
+        "group_create_time": 0,
+        "group_level": 0,
+    }
+    # 群人数：只在缓存名里带 "(13)" 这种后缀时才知道，拿不到就不填（不编造）
+    count = state.member_count_of_group(username)
+    if count:
+        info["member_count"] = count
+    return info
+
+
+def _api_get_group_member_info(params: dict) -> dict:
+    gid = int(params.get("group_id") or 0)
+    uid = int(params.get("user_id") or 0)
+    name = state.get_member_name(uid) or ""
+    if not name and uid and uid == state._self_id_int:
+        name = _bot_nickname()
+    return _member_entry(gid, uid, name)
+
+
+def _api_get_group_member_list(params: dict) -> list:
+    gid = int(params.get("group_id") or 0)
+    members = state.get_group_members(gid)
+    out = [_member_entry(gid, uid, name) for uid, name in members.items()]
+    if state._self_id_int and state._self_id_int not in members:
+        out.append(_member_entry(gid, state._self_id_int, _bot_nickname()))
+    return out
+
+
+def _api_get_group_list(_params: dict) -> list:
+    out = []
+    for username, name in state.known_groups().items():
+        item = {"group_id": state._wxid_to_int(username), "group_name": name}
+        count = state.member_count_of_group(username)
+        if count:
+            item["member_count"] = count
+        out.append(item)
+    return out
+
+
+def _api_get_friend_list(_params: dict) -> list:
+    # 微信侧好友列表未接入桥接，返回空（AstrBot 会自行降级）
+    return []
+
+
+def _api_get_stranger_info(params: dict) -> dict:
+    uid = int(params.get("user_id") or 0)
+    name = state.get_member_name(uid) or ""
+    if not name and uid and uid == state._self_id_int:
+        name = _bot_nickname()
+    return {"user_id": uid, "nick": "", "nickname": name or str(uid),
+            "sex": "unknown", "age": 0}
+
+
+def _api_get_msg(params: dict) -> dict:
+    """回查一条已推送的消息（AstrBot 解析「引用」段时会用）。"""
+    rec = state.get_message(params.get("message_id"))
+    if not rec:
+        return {}
+    is_group = bool(rec.get("is_group"))
+    uid = int(rec.get("user_id") or 0)
+    payload = {
+        "post_type": "message",
+        "message_type": "group" if is_group else "private",
+        "message_id": int(params.get("message_id") or 0),
+        "user_id": uid,
+        "self_id": state._self_id_int,
+        "time": int(rec.get("ts") or time.time()),
+        "raw_message": rec.get("content") or "",
+        "message": [{"type": "text", "data": {"text": rec.get("content") or ""}}],
+        "font": 0,
+        "sender": {"user_id": uid, "nickname": rec.get("sender") or ""},
+    }
+    if is_group:
+        payload["group_id"] = int(rec.get("group_id") or 0)
+    return payload
+
+
+_READ_API = {
+    "get_login_info": _api_get_login_info,
+    "get_group_info": _api_get_group_info,
+    "get_group_member_info": _api_get_group_member_info,
+    "get_group_member_list": _api_get_group_member_list,
+    "get_group_list": _api_get_group_list,
+    "get_friend_list": _api_get_friend_list,
+    "get_stranger_info": _api_get_stranger_info,
+    "get_msg": _api_get_msg,
+}
+
+
 async def _handle_ob_api(data: dict):
     """处理 AstrBot 发来的 API 请求。"""
     action = data.get("action", "")
@@ -31,9 +179,18 @@ async def _handle_ob_api(data: dict):
     echo = data.get("echo", "")
     log.info(f"[OB11] API: {action} echo={echo}")
 
+    # 只读查询类：数据必须随响应一起回去，所以在回响应之前先算好
+    resp_data = {"status": "ok", "retcode": 0, "data": {}}
+    handler = _READ_API.get(action)
+    if handler is not None:
+        try:
+            resp_data["data"] = handler(params)
+            log.debug(f"[OB11] {action} -> {json.dumps(resp_data['data'], ensure_ascii=False)[:200]}")
+        except Exception as e:
+            log.warning(f"[OB11] {action} 查询失败: {e}")
+
     # 先回响应（必须在处理消息前回，否则 AstrBot 超时）
     resp_sent = False
-    resp_data = {"status": "ok", "retcode": 0, "data": {}}
     if echo:
         resp_data["echo"] = echo
     # 如果 WS 暂时断连，等一会重试
@@ -57,19 +214,38 @@ async def _handle_ob_api(data: dict):
         is_group = action == "send_group_msg"
         target_id = params.get("group_id" if is_group else "user_id", 0)
         message = params.get("message", [])
-        contact = state._ob_id_to_contact.get(target_id, str(target_id))
+        contact = state.get_contact(target_id, str(target_id))
 
         # 逐段处理：文字和图片分别发送
+        # 引用回复前缀（可选）：AstrBot 开启 reply_with_quote 后，回复链开头是
+        # {"type":"reply","data":{"id":N}} 段。微信 UIA 做不了原生引用，
+        # 开启 quote_reply_prefix 时把它翻译成「〔回复 某某：原文…〕」拼在下一段文字前；
+        # 默认关闭，直接忽略 reply 段。
+        quote_prefix = None
         for seg in message:
             if not isinstance(seg, dict):
                 continue
             seg_type = seg.get("type", "")
             seg_data = seg.get("data", {})
 
+            if seg_type == "reply":
+                if config.QUOTE_REPLY_PREFIX:
+                    orig = state.get_message(seg_data.get("id"))
+                    if orig:
+                        snippet = (orig.get("content") or "").replace("\n", " ")[:40]
+                        quote_prefix = f"〔回复 {orig.get('sender','?')}：{snippet}〕\n"
+                continue
+
             if seg_type == "text":
                 text = seg_data.get("text", "")
                 if text:
+                    if quote_prefix:
+                        text = quote_prefix + text
+                        quote_prefix = None
                     await asyncio.to_thread(state.sender_instance.send_text, contact, text)
+                    # 记录自己发出的内容：这条消息会被 WeFlow 读回来，
+                    # 若不拦截会被当成用户输入再回一遍（自问自答）
+                    state.note_sent_text(text)
                     log.info(f"[OB11] 文字已发送至 {contact}: {text[:50]}")
 
             elif seg_type == "image":
@@ -121,6 +297,11 @@ async def _handle_ob_api(data: dict):
                 log.info(f"[OB11] 表情已发送至 {contact}")
 
             # 其他类型（record, video 等）忽略
+
+        # 兜底：引用前缀没被任何文字段消费（如纯图片回复），单独发一条
+        if quote_prefix:
+            await asyncio.to_thread(state.sender_instance.send_text, contact, quote_prefix.rstrip())
+            log.info(f"[OB11] 引用前缀已单独发送至 {contact}")
 
     else:
         log.debug(f"[OB11] 未处理 API: {action}")

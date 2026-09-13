@@ -1,0 +1,58 @@
+# 开发日志
+
+本文件记录 `Akasha-WeChat_RC` 相对上游 [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 的改动。
+格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
+约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
+
+## [1.0.1-rc.1]
+
+对应上游 tag `v1.0.1`。这一版的主题是：**让桥接能长期稳定地跑起来**。
+
+### 修复
+
+**发送链路（UIA）**
+- 消息被写进微信左侧搜索框：聊天输入框 `mmui::ChatInputField` 在控件树第 18 层左右，上游遍历深度上限 14 找不到，回退逻辑把唯一的另一个 EditControl（搜索框）当成了输入框。深度改为 26，并按类名精确定位
+- 找不到合适输入框时不再退化为使用搜索框，直接中止
+- `uiautomation` 2.x 移除了 `IsValuePatternAvailable` 与 `Control.SetValue`，原代码抛异常后退化成 `SendKeys`（发给当前焦点控件 → 落进搜索框）。改为 `GetPropertyValue(PropertyId…)` + `GetValuePattern().SetValue()`
+- 发送按钮定位错误：原按"名称为空或含发送/空"匹配，抓到的是左侧栏无名图标（点了没反应，表现为"字填进输入框但发不出去"）。改为按类名 `mmui::XOutlineButton` + 名称「发送」定位
+- 发送结果判定：改为依次尝试 发送按钮 → Enter → Ctrl+Enter，以「输入框是否清空」为唯一成功判据；失败会在日志明确报出，不再假装成功
+- 发送前先 `SetFocus()`，避免 `SendKeys` 打到别的控件
+- 窗口句柄：上游用 `Qt51514QWindowIcon` / `WeChatMainWndForPC`，微信 4.x 实际是 `mmui::MainWindow`（标题 `Weixin`）
+
+**会话与身份**
+- 会话 ID 用 `hash(wxid)`：**Python 对字符串的 hash 每进程随机化**，桥接一重启同一联系人就变成新会话，AstrBot 面板里表现为"每个私聊/群聊都出现两遍"。改为 MD5 前 8 字节，跨重启稳定
+- 群 ID 改用 `xxx@chatroom` 而非群名，群改名不再产生新会话
+- SSE 的 `groupName` 偶发缺失时，上游会用 `sourceName`（也是原始 ID）当群名，面板显示成 `xxx@chatroom`。改为持久化「微信 ID → 显示名」缓存（启动时从 WeFlow 全量预取 + 消息流回写）
+
+**消息流**
+- 推送期间到达的新消息会一直压在缓冲里（上游 `processing=True` 时不再排期）→ 推送完成后重新排期
+- 自回复去重完全失效：上游 `_sent_recently` 只判断、从不写入，机器人会把自己的回复当成新消息再回一遍 → 发送时记录，接收时比对
+- 本地请求走系统代理导致 502：在 `config.py` 代码层面补 `NO_PROXY`，不再依赖启动脚本
+- `processed_ids` 无上限增长 → 加 FIFO（上限 5000）
+
+### 新增
+
+- **会话列表点击切换**：先在左侧会话列表按名字点击（精确 > 前缀 > 包含），失败再退回 Ctrl+F 搜索；切换后用标题栏校验是否真的切过去了。`switch_method`：`auto`（默认）/ `list` / `search`
+- **群图片门槛**：图片必须与**同一个人的 @ 属于同一次请求**才读取——@ 之前发的先暂存等 @，@ 之后紧跟的直接读；换人 @ 不消费别人的暂存，超时作废。避免群里任何人发图都触发回复
+- **图片理解两条路**（`image_caption_model`）：留空 → 图片原样以 `base64://` 段交给 AstrBot（由它用主模型直看或走转述模型）；填了 → 走上游的桥接侧描述（取图落盘 → 描述模型 → 发文字）。上游的描述体系完整保留
+- **只读 OneBot 接口**：`get_login_info` / `get_group_info` / `get_group_member_info` / `get_group_member_list` / `get_group_list` / `get_friend_list` / `get_stranger_info` / `get_msg`。此前一律回空 `{}`，AstrBot 拿不到群名与成员昵称（实测它每次解析 @ 都会调 `get_group_member_info`）
+- **被丢弃的消息会打日志**：`⏭️ 跳过 群[…] 某人: 原因（30s 内累计 N 条）`，按"会话+成员+原因"节流，可用 `log_skipped_messages` 关闭
+- 新增配置：`switch_method`、`log_skipped_messages`、`quote_reply_prefix`、`web_host`、`image_mention_window`、`image_max_bytes`
+- 联系人名持久化缓存（`data/chat_names.json`，已被 gitignore）
+- 项目标识：`PROJECT_NAME = "Akasha-WeChat_RC"` + `VERSION` 文件，启动日志首行打印
+
+### 变更
+
+- `web_host` 默认 `0.0.0.0`（局域网可访问），只想要本机访问改 `127.0.0.1`
+- `senders.create_sender()` 在 `send_method=weflow_api` 时额外打一条警告：WeFlow 实测**没有发送接口**（`/api/v1/message`、`/api/v1/send` 等均 404），该路径必然失败，正常请用 `uia`
+
+### 其他
+
+- 补齐维护文档：`README.md`（fork 说明）、`AGENT.md`（约定与踩坑）、`CHANGELOG.md`（本文件）、`VERSION`、`.gitignore`
+- 确立维护约定：不删上游代码、同文件编辑串行、隐私红线、长驻程序用可见窗口启动
+
+### 已知限制
+
+- 微信原生「引用回复」气泡做不了（需要客户端右键菜单操作，UIA 不可靠）；`quote_reply_prefix` 只是文本模拟，默认关闭
+- 群成员完整名单与群人数取不到（WeFlow 无对应接口），`get_group_member_list` 只含发过言的成员
+- AstrBot 在拿不到群人数时会用 `len(成员列表)` 兜底，因此该数字偏小——已知，不编造

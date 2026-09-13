@@ -38,6 +38,7 @@ def _start_bridge():
     if not state.ob_client_started:
         t = threading.Thread(target=_run_ob_client, daemon=True, name="ob11-client")
         t.start()
+        state.ob_thread = t
         state.ob_client_started = True
 
     state.bridge_thread = threading.Thread(target=_bridge_loop, daemon=True, name="bridge")
@@ -74,6 +75,14 @@ def _stop_bridge():
 
     state._ob_ws_ready.clear()
 
+    # 等旧的客户端线程真正退出再允许重启 —— 否则 stop→start 会留下两个客户端线程
+    _t = getattr(state, "ob_thread", None)
+    if _t is not None and _t.is_alive():
+        _t.join(timeout=5)
+        if _t.is_alive():
+            log.warning("[Web] OB 客户端线程未能及时退出，将在后台自行结束")
+    state.ob_thread = None
+
     # 重置启动标记，让下次 start 能重新拉起 WebSocket 客户端线程
     state.ob_client_started = False
     state._ob_ws_loop = None
@@ -90,7 +99,8 @@ def _bridge_loop():
         state.running = False
         return
 
-    log.info(f"Bridge | WeFlow: {config.WE_FLOW_BASE_URL} | OB11: {config.ASTRBOT_OB_URL} | 发送: uia")
+    log.info(f"{config.PROJECT_NAME} v{config.PROJECT_VERSION} (upstream: alingalingling/Akasha-WeChat)")
+    log.info(f"Bridge | WeFlow: {config.WE_FLOW_BASE_URL} | OB11: {config.ASTRBOT_OB_URL} | 发送: {config.SEND_METHOD}")
 
     bridge = WeFlowBridge(state.sender_instance)
     with state.bridge_lock:
@@ -127,8 +137,18 @@ def _bridge_loop():
 
 
 def start_web():
-    server = HTTPServer(("127.0.0.1", config.WEB_PORT), WebHandler)
-    log.info(f"Web: http://127.0.0.1:{config.WEB_PORT}")
+    # web_host 默认 0.0.0.0（局域网可访问）；只想本机访问时在 config.json 里改成 127.0.0.1
+    host = getattr(config, "WEB_HOST", "") or "0.0.0.0"
+    server = HTTPServer((host, config.WEB_PORT), WebHandler)
+    if host in ("0.0.0.0", "::"):
+        import socket
+        try:
+            lan = socket.gethostbyname(socket.gethostname())
+            log.info(f"Web: http://127.0.0.1:{config.WEB_PORT}  (局域网: http://{lan}:{config.WEB_PORT})")
+        except Exception:
+            log.info(f"Web: http://0.0.0.0:{config.WEB_PORT}")
+    else:
+        log.info(f"Web: http://{host}:{config.WEB_PORT}")
     server.serve_forever()
 
 
@@ -138,15 +158,6 @@ if __name__ == "__main__":
     # 从 config 初始化 state 中需要计算的值
     state._self_id_int = state._wxid_to_int(config.BOT_WXID or "wechat_bot")
     state.group_reply_mode = config.GROUP_REPLY_MODE
-
-    # 初始化运行时可变的图片描述配置
-    state.image_caption_provider = config.IMAGE_CAPTION_PROVIDER
-    state.image_caption_model = config.IMAGE_CAPTION_MODEL
-    state.image_caption_api_key = config.IMAGE_CAPTION_API_KEY
-    state.image_caption_api_base = config.IMAGE_CAPTION_API_BASE
-    state.image_caption_prompt = config.IMAGE_CAPTION_PROMPT
-    state.ollama_base_url = config.OLLAMA_BASE_URL
-    state.ollama_timeout = config.OLLAMA_TIMEOUT
 
     PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bridge.pid")
 

@@ -149,7 +149,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
       <div class="status-card"><div class="label">桥接状态</div><div class="value" id="bridgeStatus">-</div></div>
       <div class="status-card"><div class="label">AstrBot</div><div class="value" id="obStatus">-</div></div>
       <div class="status-card"><div class="label">WeFlow</div><div class="value" id="weflowStatus">-</div></div>
-      <div class="status-card"><div class="label">发送模式</div><div class="value" id="sendMethod" style="font-size:13px">UIA 纯键盘</div></div>
+      <div class="status-card"><div class="label">发送模式</div><div class="value" id="sendMethod" style="font-size:13px">-</div></div>
     </div>
 
     <div class="btn-row">
@@ -274,10 +274,12 @@ function renderConfigForm(cfg) {
     {title:'WeFlow 连接', fields:[
       {key:'weflow_base_url', label:'WeFlow 地址', type:'text', ph:'http://127.0.0.1:5031'},
       {key:'access_token', label:'Access Token', type:'password', ph:'输入Token'},
+      {key:'weflow_send_api', label:'发送 API 地址', type:'text', ph:'http://127.0.0.1:5031/api/v1/message'},
     ]},
     {title:'机器人', fields:[
-      {key:'bot_nicknames', label:'机器人昵称（多个用逗号隔开）', type:'text', ph:'如: 小助手'},
+      {key:'bot_nicknames', label:'机器人昵称（多个用逗号隔开）', type:'text', ph:'山山酱(^'},
       {key:'bot_wxid', label:'机器人 wxid', type:'text', ph:'wxid_xxx'},
+      {key:'send_method', label:'发送方式', type:'select', opts:[{v:'uia',l:'UIA 自动化'},{v:'weflow_api',l:'WeFlow API'}]},
     ]},
     {title:'AstrBot 连接', fields:[
       {key:'astrbot_ob_url', label:'AstrBot OB 地址', type:'text', ph:'ws://127.0.0.1:11229/ws'},
@@ -292,18 +294,26 @@ function renderConfigForm(cfg) {
       {key:'image_caption_provider', label:'描述服务', type:'select', opts:[{v:'ollama',l:'Ollama 本地'},{v:'openai',l:'OpenAI 兼容'}]},
       {key:'image_caption_model', label:'模型名', type:'text', ph:'kimi-k2.6 / llava:7b'},
       {key:'image_caption_api_key', label:'API Key', type:'password', ph:'sk-xxx (OpenAI模式时)'},
-      {key:'image_caption_api_base', label:'API 地址', type:'text', ph:'如: https://api.moonshot.cn/v1'},
+      {key:'image_caption_api_base', label:'API 地址', type:'text', ph:'https://api.moonshot.cn/v1'},
       {key:'image_caption_prompt', label:'描述提示词', type:'textarea', ph:'请用中文描述...'},
     ]},
     {title:'Ollama（使用本地模式时）', fields:[
       {key:'ollama_base_url', label:'Ollama 地址', type:'text', ph:'http://127.0.0.1:61000'},
       {key:'ollama_timeout', label:'超时(秒)', type:'number', ph:'60'},
     ]},
+    {title:'图片理解方式', fields:[
+      {type:'info', text:'<b>模型名留空</b>（默认）→ 桥接把图片<b>原样转交</b>给 AstrBot，理解方式由 AstrBot 决定：未配置「图片转述模型」就用<b>主模型直接看图</b>（需多模态模型，如 MiniMax-M3），配了则先转述成文字。<br><b>模型名填了</b> → 启用上面的「桥接侧图片描述」：桥接先调它把图转成文字，再把文字发给 AstrBot。<br>单张超过 8MB 的图片会被跳过。改完需重启桥接。'},
+    ]},
   ];
 
   groups.forEach(function(g){
     html += '<div class="settings-group"><h3>' + g.title + '</h3><div class="settings-row">';
     g.fields.forEach(function(f){
+      if (f.type === 'info') {
+        html += '<div class="settings-field" style="flex-basis:100%;max-width:100%">'
+              + '<div style="opacity:.85;line-height:1.7;font-size:13px">' + f.text + '</div></div>';
+        return;
+      }
       var val = cfg[f.key] !== undefined ? cfg[f.key] : '';
       if (Array.isArray(val)) val = val.join(', ');
       html += '<div class="settings-field"><label>' + f.label + '</label>';
@@ -377,7 +387,7 @@ class WebHandler(BaseHTTPRequestHandler):
             self.send_json({
                 "running": state.running,
                 "paused": state.paused.is_set(),
-                "send_method": "uia",
+                "send_method": config.SEND_METHOD,
                 "ob_url": config.ASTRBOT_OB_URL,
                 "ob_connected": ob_connected,
                 "weflow_connected": weflow_connected,
@@ -453,14 +463,6 @@ class WebHandler(BaseHTTPRequestHandler):
                 # 运行时同步 group_reply_mode
                 if "group_reply_mode" in new_cfg:
                     state.group_reply_mode = new_cfg["group_reply_mode"]
-
-                # 运行时同步图片描述配置（存文件后即时生效，无需重启）
-                for key in ("image_caption_provider", "image_caption_model",
-                            "image_caption_api_key", "image_caption_api_base",
-                            "image_caption_prompt", "ollama_base_url",
-                            "ollama_timeout"):
-                    if key in new_cfg:
-                        setattr(state, key, new_cfg[key])
 
                 self.send_json({"ok": True})
             except Exception as e:
