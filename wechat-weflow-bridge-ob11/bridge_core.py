@@ -314,6 +314,12 @@ class WeFlowBridge:
             self._log_skip(data, "群消息未 @机器人（mention 模式）")
             return
 
+        # 群聊斜杠指令在任何模式下都必须 @ 机器人才放行：
+        # 避免同一群里多个机器人对裸 /help 抢答。@ 了仍无外壳透传。
+        if is_group and content.lstrip().startswith("/") and not mentioned:
+            self._log_skip(data, "群指令未 @机器人（指令需 @ 触发）")
+            return
+
         if is_group:
             base_name = self._resolve_group_name(session_id_data, group_name_raw, source_name)
             contact = base_name
@@ -338,6 +344,11 @@ class WeFlowBridge:
                 entry["messages"].append(f'成员"{sender_in_group}"在群"{base_name}"中对你说：{content}')
             else:
                 entry["messages"].append(content)
+            # 记录这一批消息里是否有人真的 @ 过机器人：
+            # @ 段只在真 @ 时才加（process_sender 用）——否则 all 模式下每条消息
+            # 都会被 AstrBot 当成 @ 唤醒，逐条必回，随机插话机制完全失效。
+            if mentioned:
+                entry["mentioned_any"] = True
             if extra_images:
                 entry["pending_images"].extend(extra_images)
                 log.info(f"🖼️ {len(extra_images)} 张暂存图片已并入本次消息 [{contact}]")
@@ -391,6 +402,8 @@ class WeFlowBridge:
         contact = entry.get("contact", sender_id)
         is_group = entry.get("is_group", False)
         combined = "\n".join(msgs)
+        # 本批是否有人真 @ 过（取出后立刻复位，避免"继承"到下一批）
+        mentioned_any = bool(entry.pop("mentioned_any", False))
 
         # 图片下载放在锁外（网络耗时），转成标准 OneBot image 段所需的 base64。
         # 图片格式用 base64:// —— 与 AstrBot 自身发送图片时一致，不依赖文件路径可达性。
@@ -452,8 +465,11 @@ class WeFlowBridge:
                     if sender_name:
                         formatted = f'{sender_name}在群{entry.get("group_name", contact)}中说：{clean_text}'
 
-            # 消息段顺序：@机器人 → 图片 → 文本
-            msg_segments = [{"type": "at", "data": {"qq": str(state._self_id_int)}}]
+            # 消息段顺序：@机器人（仅真 @ 过时）→ 图片 → 文本。
+            # 不能无条件加 @：all 模式下非 @ 消息若被硬塞 [At:]，
+            # AstrBot 会视为唤醒逐条回复，active_reply 随机插话就形同虚设。
+            msg_segments = ([{"type": "at", "data": {"qq": str(state._self_id_int)}}]
+                            if mentioned_any else [])
             msg_segments.extend(image_segments)
             if formatted:
                 # 普通聊天保留一个前导空格做视觉分隔；指令则严格贴开头，避免任何歧义
