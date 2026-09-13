@@ -112,6 +112,11 @@ Akasha-WeChat_RC/
     ├── config.example.json requirements.txt start.bat LICENSE
     ├── VERSION                版本号（长期标识的一部分）
     └── README.md              上游原始说明（保留未改）
+
+sim/                        附属工具：微信对话模拟器（见 sim/README.md）
+├── sim_wechat.py           独立 OneBot 客户端直连 AstrBot，网页聊天界面 + autotest
+├── start_sim.bat           Windows 一键启动
+└── README.md               用途、依赖与注意事项
 ```
 
 ## 版本与维护约定

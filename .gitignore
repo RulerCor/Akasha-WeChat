@@ -23,3 +23,9 @@ Thumbs.db
 
 # ===== 架构图校验中间产物（保留 architecture.json / architecture.html）=====
 docs/architecture.visual-check.*
+
+# ===== sim 模拟器运行产物 =====
+sim/data/
+sim/*.log
+sim/模拟对话测试报告.md
+__pycache__/
