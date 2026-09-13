@@ -259,17 +259,17 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
         </div>
         <div class="settings-row">
           <div class="settings-field" style="max-width:150px">
-            <label>主动回复开关</label>
+            <label>随机插话开关（AstrBot「主动回复」）</label>
             <select id="ab_ar_enable"><option value="0">关闭</option><option value="1">开启</option></select>
           </div>
-          <div class="settings-field" style="max-width:160px">
-            <label>主动回复概率 (0~1)</label>
+          <div class="settings-field" style="max-width:180px">
+            <label>插话概率 (0~1，每条群消息掷骰)</label>
             <input type="number" id="ab_ar_poss" step="0.01" min="0" max="1" placeholder="0.1">
           </div>
         </div>
         <div class="settings-row">
           <div class="settings-field" style="flex-basis:100%">
-            <label>主动回复范围（勾选的群才主动接话；全部不勾 = 所有群都生效）</label>
+            <label>随机插话范围（勾选的群才可能插话；<b>不影响 @ 唤醒的正常回复</b>；全不勾 = 所有群生效）</label>
             <div id="ab_ar_groups" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:6px 2px"></div>
           </div>
           <div class="settings-field" style="flex-basis:100%">
@@ -278,7 +278,8 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
           </div>
         </div>
         <div class="hint-text">
-          ⚠️ 主动回复还要求：桥接「群聊模式」为 <b>全部回复(all)</b>、该群先用 /new 建立过会话、消息不是 @ 机器人（@ 了一定会回）。
+          这就是 AstrBot 配置页里「随机小概率主动回复」那个功能：群消息<b>不是 @ 机器人</b>时，按概率掷骰决定要不要插一嘴。
+          生效前提：① 桥接「群聊模式」为 <b>全部回复(all)</b>（否则非@消息到不了 AstrBot）；② 该群先用 /new 建立过会话；③ @ 机器人一定正常回复，与此开关无关。保存后需重启 AstrBot 生效。
         </div>
         <div class="save-bar">
           <span class="save-msg" id="abMsg">✅ 已写入 AstrBot 配置</span>
@@ -395,22 +396,24 @@ function renderConfigForm(cfg) {
       {key:'group_reply_mode', label:'群聊回复模式（控制台也可一键切换）', type:'select', opts:[{v:'mention',l:'仅@回复（推荐，多机器人安全）'},{v:'all',l:'全部回复（主动回复需此项）'},{v:'batch',l:'批处理（整群合并一条）'}]},
       {key:'quote_reply_prefix', label:'引用回复转文字前缀（微信无法原生引用）', type:'select', opts:[{v:'false',l:'关闭（忽略引用）'},{v:'true',l:'开启（回复带〔回复 某某：原文〕）'}]},
     ]},
-    {title:'图片', fields:[
-      {key:'image_max_bytes', label:'单张图片大小上限(字节)', type:'number', ph:'8388608'},
-      {key:'image_mention_window', label:'群图片等待@的时间窗(秒)', type:'number', ph:'120'},
-      {key:'image_caption_provider', label:'描述服务（桥接侧转述，模型名留空时不启用）', type:'select', opts:[{v:'ollama',l:'Ollama 本地'},{v:'openai',l:'OpenAI 兼容'}]},
-      {key:'image_caption_model', label:'转述模型名（留空=图片原样交给 AstrBot 主模型直看）', type:'text', ph:'llava:7b'},
-      {key:'image_caption_api_key', label:'API Key（OpenAI 模式）', type:'password', ph:'sk-xxx'},
-      {key:'image_caption_api_base', label:'API 地址（OpenAI 模式）', type:'text', ph:'https://api.moonshot.cn/v1'},
-      {key:'image_caption_prompt', label:'描述提示词', type:'textarea', ph:'请用中文描述...'},
-      {key:'ollama_base_url', label:'Ollama 地址', type:'text', ph:'http://127.0.0.1:61000'},
-      {key:'ollama_timeout', label:'Ollama 超时(秒)', type:'number', ph:'60'},
-      {type:'info', text:'图片理解说明：<b>转述模型名留空</b>（默认）→ 桥接把图片原样转交 AstrBot：未配置「图片转述模型」就用主模型直看（需多模态）。<b>填了</b> → 桥接先调它把图转成文字再发。群图片仍遵循「同一个人 @ 才读取」门槛。'},
+    {title:'图片（桥接侧管道）', fields:[
+      {key:'image_mention_window', label:'群图片等待@的时间窗(秒)：图先发、同一个人@才读取', type:'number', ph:'120'},
+      {key:'image_max_bytes', label:'单张图片大小上限(字节)，超过则跳过', type:'number', ph:'8388608'},
+      {type:'info', text:'<b>「怎么理解图片」不在桥接配</b>：默认图片原样转交 AstrBot，由 <b>AstrBot 面板(6185) → 配置</b> 里的主模型（多模态）或图片转述模型决定。下面的「桥接侧图片转述」是上游遗留的备用方案（桥接先把图转成文字），默认关闭，一般不用动。'},
     ]},
     {title:'高级', fields:[
       {key:'web_port', label:'Web 面板端口', type:'number', ph:'8766'},
       {key:'web_host', label:'Web 面板监听地址', type:'text', ph:'0.0.0.0'},
       {key:'log_skipped_messages', label:'记录被跳过的消息（排障用）', type:'select', opts:[{v:'true',l:'开启'},{v:'false',l:'关闭'}]},
+    ]},
+    {title:'桥接侧图片转述（上游遗留 · 默认关闭 · 一般不用改）', fields:[
+      {key:'image_caption_model', label:'转述模型名（留空=不启用，走 AstrBot 面板配置）', type:'text', ph:'留空即可'},
+      {key:'image_caption_provider', label:'描述服务', type:'select', opts:[{v:'ollama',l:'Ollama 本地'},{v:'openai',l:'OpenAI 兼容'}]},
+      {key:'image_caption_api_key', label:'API Key（OpenAI 模式）', type:'password', ph:'sk-xxx'},
+      {key:'image_caption_api_base', label:'API 地址（OpenAI 模式）', type:'text', ph:'https://api.moonshot.cn/v1'},
+      {key:'image_caption_prompt', label:'描述提示词', type:'textarea', ph:'请用中文描述...'},
+      {key:'ollama_base_url', label:'Ollama 地址', type:'text', ph:'http://127.0.0.1:61000'},
+      {key:'ollama_timeout', label:'Ollama 超时(秒)', type:'number', ph:'60'},
     ]},
   ];
 
