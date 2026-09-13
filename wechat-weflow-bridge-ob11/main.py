@@ -35,6 +35,15 @@ def _start_bridge():
     state.paused.clear()
     state.sender_instance = create_sender()
 
+    # 启动即把管理员名单（wxid → UID）重放一遍到 AstrBot 配置：
+    # 桥接重启/换机后无需人工再同步。失败不影响启动。
+    try:
+        import people
+        if people.load_admins():
+            people.sync_admins_to_astrbot()
+    except Exception as e:
+        log.warning(f"管理员同步跳过: {e}")
+
     if not state.ob_client_started:
         t = threading.Thread(target=_run_ob_client, daemon=True, name="ob11-client")
         t.start()

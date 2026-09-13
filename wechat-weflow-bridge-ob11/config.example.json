@@ -13,6 +13,7 @@
     "web_port": 8766,
     "group_reply_mode": "mention",
     "astrbot_ob_url": "ws://127.0.0.1:11229/ws",
+    "astrbot_config_file": "",
     "ollama_base_url": "http://127.0.0.1:61000",
     "ollama_model": "llava:7b",
     "ollama_timeout": 60,

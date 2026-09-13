@@ -328,5 +328,112 @@ def get_chat_name(username: str) -> Optional[str]:
 
 _load_chat_names()
 
+# ============ 人员注册表（wxid → 展示名）与群成员名册 ============
+#
+# 目标：让「同一个人」在私聊和所有群里拥有**同一个** OneBot user_id，
+# 这样 AstrBot 的 admins_id 只需要加一次，管理员身份就处处生效。
+#   - 稳定身份 = 微信 wxid（WeFlow /api/v1/group-members 提供）
+#   - user_id  = md5(wxid)（与私聊侧规则一致）
+# SSE 推送在群里只给昵称（sourceName），不给 wxid，所以靠群名册做
+# 「昵称 → wxid」解析；解析失败时退回旧行为（群ID_昵称）。
+
+_persons: dict[str, dict] = {}          # wxid → {"names": [常用名在前], "uid": int}
+_persons_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "data", "persons.json")
+
+
+def _load_persons() -> None:
+    global _persons
+    try:
+        with open(_persons_path, encoding="utf-8") as f:
+            raw = _json.load(f)
+        _persons = {}
+        for wxid, p in raw.items():
+            if not wxid or not isinstance(p, dict):
+                continue
+            _persons[wxid] = {
+                "names": [str(n) for n in p.get("names", []) if n][:6],
+                "uid": int(p.get("uid", _wxid_to_int(wxid))),
+            }
+    except Exception:
+        _persons = {}
+
+
+def _save_persons() -> None:
+    try:
+        _os.makedirs(_os.path.dirname(_persons_path), exist_ok=True)
+        with open(_persons_path, "w", encoding="utf-8") as f:
+            _json.dump(_persons, f, ensure_ascii=False, indent=1)
+    except Exception:
+        pass
+
+
+def remember_person(wxid: str, name: str) -> None:
+    """记录一个人的稳定身份与展示名（供面板「成员与权限」展示）。
+
+    只收真实 wxid：合成键（群ID_昵称）含 @chatroom，不入册。
+    """
+    if not wxid or "@" in wxid:
+        return
+    with _api_lock:
+        p = _persons.setdefault(wxid, {"names": [], "uid": _wxid_to_int(wxid)})
+        p["uid"] = _wxid_to_int(wxid)
+        name = (name or "").strip()
+        if name and name not in p["names"]:
+            p["names"].insert(0, name)
+            del p["names"][6:]
+        _save_persons()
+
+
+def all_persons() -> dict:
+    """全部已知人员 {wxid: {"names": [...], "uid": int}}（副本）。"""
+    with _api_lock:
+        return {k: dict(v) for k, v in _persons.items()}
+
+
+_group_rosters: dict[str, dict] = {}    # chatroom → {"names": {候选名: wxid}, "ts": 更新时刻}
+
+
+def set_group_roster(chatroom: str, members: list) -> None:
+    """写入某个群的成员名册（WeFlow /api/v1/group-members 的 members）。
+
+    为每个成员登记多个候选名（群昵称/展示名/昵称/备注/微信号），
+    群消息的 sourceName 命中任意一个都能解析出 wxid。
+    """
+    if not chatroom or not isinstance(members, list):
+        return
+    names: dict[str, str] = {}
+    for m in members:
+        if not isinstance(m, dict):
+            continue
+        wxid = (m.get("wxid") or "").strip()
+        if not wxid:
+            continue
+        for key in ("groupNickname", "displayName", "nickname", "remark", "alias"):
+            nm = (m.get(key) or "").strip()
+            if nm:
+                names.setdefault(nm, wxid)
+    with _api_lock:
+        _group_rosters[chatroom] = {"names": names, "ts": time.time()}
+
+
+def resolve_wxid_in_group(chatroom: str, display_name: str) -> Optional[str]:
+    """按展示名在群名册里找 wxid；找不到返回 None。"""
+    if not chatroom or not display_name:
+        return None
+    with _api_lock:
+        roster = _group_rosters.get(chatroom)
+    if not roster:
+        return None
+    return roster["names"].get(display_name.strip())
+
+
+def roster_stats() -> dict:
+    """{chatroom: 成员解析名条数}，供面板/日志观察。"""
+    with _api_lock:
+        return {k: len(v["names"]) for k, v in _group_rosters.items()}
+
+
+_load_persons()
+
 # 群聊回复模式（运行时可变，启动时从 config 初始化）
 group_reply_mode = "mention"

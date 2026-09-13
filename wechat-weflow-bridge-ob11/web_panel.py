@@ -116,6 +116,23 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
 .toast.success{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9}
 .toast.error{background:#ffebee;color:#c62828;border:1px solid #ffcdd2}
 .toast.info{background:#fce4ec;color:#ad1457;border:1px solid #f8bbd0}
+
+/* ===== 成员与权限页 ===== */
+.member-table{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.03);border:1px solid #f5e4e8}
+.member-table th{background:#fce4ec;color:#ad6478;text-align:left;padding:8px 10px;font-weight:600;font-size:11.5px}
+.member-table td{padding:7px 10px;border-top:1px solid #f8eef1;color:#5a4a50;word-break:break-all}
+.member-table tr:hover td{background:#fdf7f9}
+.member-table .wxid{color:#b09098;font-size:11px}
+.member-table .uid{color:#8a7a80;font-size:11px;font-family:monospace}
+.admin-badge{display:inline-block;background:linear-gradient(135deg,#f48fb1,#f06292);color:#fff;font-size:10px;padding:1px 8px;border-radius:10px;margin-left:6px;vertical-align:1px}
+.copy-chip{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #f0ced9;border-radius:8px;padding:2px 8px;font-size:11px;color:#d4567a;cursor:pointer;font-family:monospace}
+.copy-chip:hover{background:#fce4ec}
+.search-input{width:220px;padding:6px 10px;border:1.5px solid #f0e2e6;border-radius:10px;font-size:12px;outline:none;background:#fff}
+.search-input:focus{border-color:#f06292}
+.hint-text{font-size:12px;color:#9a7a82;line-height:1.7;background:#fdf7f9;border-radius:10px;padding:8px 12px}
+.hint-text b{color:#d4567a}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.toolbar .spacer{flex:1}
 </style>
 </head>
 <body>
@@ -132,6 +149,9 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
   </button>
   <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
     <span>基础设置</span>
+  </button>
+  <button class="nav-item" data-tab="members" onclick="switchTab('members')">
+    <span>成员与权限</span>
   </button>
 </div>
 
@@ -185,6 +205,82 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
     </div>
   </div>
 
+  <!-- ===== 成员与权限页 ===== -->
+  <div class="tab-page" id="page-members">
+    <div class="header">
+      <h1>成员与权限</h1>
+      <div class="badge" id="membersBadge">加载中...</div>
+    </div>
+
+    <div class="settings-scroll">
+
+      <div class="hint-text">
+        ✅ <b>管理员加一次就全局生效</b>：机器人已把「同一个人」在私聊和所有群里识别为同一个 ID（按微信 wxid）。
+        在下面勾选管理员 → 点「保存管理员」即可，无需再逐群添加。改完需重启 AstrBot 生效（面板保存会自动写入 AstrBot 配置）。
+      </div>
+
+      <div class="settings-group">
+        <h3>成员列表</h3>
+        <div class="toolbar" style="margin-bottom:8px">
+          <input class="search-input" id="memberSearch" placeholder="🔍 搜索名字 / wxid" oninput="renderPeople()">
+          <div class="spacer"></div>
+          <button class="btn btn-pink" onclick="saveAdmins()">💾 保存管理员</button>
+        </div>
+        <table class="member-table">
+          <thead><tr><th style="width:36px">管理</th><th>昵称</th><th>wxid</th><th>UID（/sid 显示的 ID）</th></tr></thead>
+          <tbody id="peopleBody"><tr><td colspan="4" style="color:#c0aab0">加载中...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="settings-group">
+        <h3>群会话 ID（白名单 / 主动回复白名单用）</h3>
+        <table class="member-table">
+          <thead><tr><th>群名</th><th>群 ID</th><th>UMO（完整会话标识）</th></tr></thead>
+          <tbody id="groupsBody"><tr><td colspan="3" style="color:#c0aab0">加载中...</td></tr></tbody>
+        </table>
+        <div class="hint-text" style="margin-top:6px">
+          点击 ID 即复制。<b>白名单</b>填「群 ID」或完整 UMO 都行；<b>主动回复白名单</b>留空 = 所有群都生效。
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>AstrBot 白名单与主动回复（写入 AstrBot 配置）</h3>
+        <div class="settings-row">
+          <div class="settings-field" style="max-width:150px">
+            <label>平台 ID 白名单开关</label>
+            <select id="ab_wl_enable"><option value="0">关闭（不过滤）</option><option value="1">开启</option></select>
+          </div>
+          <div class="settings-field" style="flex-basis:100%">
+            <label>平台 ID 白名单（逗号或换行分隔；填群 ID 或 UMO；留空 = 不限制）</label>
+            <textarea id="ab_wl_list" rows="2" placeholder="如：49538909918&#10;或 wechat_bridge:GroupMessage:xxxxx"></textarea>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-field" style="max-width:150px">
+            <label>主动回复开关</label>
+            <select id="ab_ar_enable"><option value="0">关闭</option><option value="1">开启</option></select>
+          </div>
+          <div class="settings-field" style="max-width:160px">
+            <label>主动回复概率 (0~1)</label>
+            <input type="number" id="ab_ar_poss" step="0.01" min="0" max="1" placeholder="0.1">
+          </div>
+          <div class="settings-field" style="flex-basis:100%">
+            <label>主动回复白名单（留空 = 所有群；填群 ID 或 UMO）</label>
+            <textarea id="ab_ar_list" rows="2" placeholder="留空 = 所有群"></textarea>
+          </div>
+        </div>
+        <div class="hint-text">
+          ⚠️ 主动回复还要求：桥接「群聊模式」为 <b>全部回复(all)</b>、该群先用 /new 建立过会话、消息不是 @ 机器人（@ 了一定会回）。
+        </div>
+        <div class="save-bar">
+          <span class="save-msg" id="abMsg">✅ 已写入 AstrBot 配置</span>
+          <button class="btn btn-pink" onclick="saveAstrbotCfg()">💾 保存到 AstrBot</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -211,6 +307,7 @@ function switchTab(name) {
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
   document.querySelector('[data-tab="' + name + '"]').classList.add('active');
   if (name === 'settings') loadConfig();
+  if (name === 'members') switchTabMembers();
 }
 
 // ===== 面板刷新 =====
@@ -365,6 +462,118 @@ function saveConfig() {
   });
 }
 
+// ===== 成员与权限 =====
+var peopleData = null;
+
+function switchTabMembers() {
+  fetch('/api/people').then(function(r){return r.json()}).then(function(d){
+    peopleData = d;
+    document.getElementById('membersBadge').textContent = d.astrbot_available
+      ? ('AstrBot 配置已连接 · ' + d.persons.length + ' 名成员')
+      : '⚠️ 未找到 AstrBot 配置: ' + (d.astrbot_error || d.astrbot_path);
+    renderPeople();
+    renderGroups();
+    fillAstrbotForm(d);
+  }).catch(function(e){
+    document.getElementById('membersBadge').textContent = '加载失败: ' + e.message;
+  });
+}
+
+function copyText(text) {
+  if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+  else {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  }
+  toast('已复制: ' + text, 'info');
+}
+
+function renderPeople() {
+  if (!peopleData) return;
+  var kw = (document.getElementById('memberSearch').value || '').toLowerCase();
+  var admins = peopleData.admins;
+  var rows = '';
+  peopleData.persons.forEach(function(p){
+    if (kw && p.name.toLowerCase().indexOf(kw) < 0 && p.wxid.toLowerCase().indexOf(kw) < 0) return;
+    rows += '<tr>'
+      + '<td><input type="checkbox" data-wxid="' + p.wxid + '"' + (peopleData.admins.indexOf(p.wxid) >= 0 ? ' checked' : '') + '></td>'
+      + '<td>' + p.name + (peopleData.admins.indexOf(p.wxid) >= 0 ? '<span class="admin-badge">管理员</span>' : '') + '</td>'
+      + '<td class="wxid">' + p.wxid + '</td>'
+      + '<td class="uid">' + p.uid + '</td>'
+      + '</tr>';
+  });
+  document.getElementById('peopleBody').innerHTML = rows || '<tr><td colspan="4" style="color:#c0aab0">没有匹配的成员（名册随消息与启动刷新）</td></tr>';
+}
+
+function renderGroups() {
+  if (!peopleData) return;
+  var rows = '';
+  peopleData.groups.forEach(function(g){
+    rows += '<tr><td>' + g.name + '</td>'
+      + '<td><span class="copy-chip" onclick="copyText(\\'' + g.gid + '\\')">' + g.gid + ' 📋</span></td>'
+      + '<td><span class="copy-chip" onclick="copyText(\\'' + g.umo + '\\')">' + g.umo + ' 📋</span></td></tr>';
+  });
+  document.getElementById('groupsBody').innerHTML = rows || '<tr><td colspan="3" style="color:#c0aab0">暂无已知群（收到消息后出现）</td></tr>';
+}
+
+function scanAdminChecks() {
+  // 把当前表格里的勾选状态并回 peopleData.admins（被搜索过滤掉的成员不受影响）
+  var checked = {};
+  document.querySelectorAll('#peopleBody input[type=checkbox]').forEach(function(cb){
+    checked[cb.getAttribute('data-wxid')] = cb.checked;
+  });
+  peopleData.persons.forEach(function(p){
+    if (!(p.wxid in checked)) return;
+    var i = peopleData.admins.indexOf(p.wxid);
+    if (checked[p.wxid] && i < 0) peopleData.admins.push(p.wxid);
+    if (!checked[p.wxid] && i >= 0) peopleData.admins.splice(i, 1);
+  });
+}
+
+function saveAdmins() {
+  scanAdminChecks();
+  var wxids = peopleData.admins.slice();
+  fetch('/api/admins', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({wxids: wxids}),
+  }).then(function(r){return r.json()}).then(function(res){
+    if (res.ok) {
+      toast('✅ 管理员已保存' + (res.synced ? '，已写入 AstrBot（重启 AstrBot 后生效）' : '，但写入 AstrBot 失败：' + res.error), res.synced ? 'success' : 'error');
+      peopleData.admins = res.admins;
+      renderPeople();
+    } else { toast('❌ 保存失败', 'error'); }
+  });
+}
+
+function fillAstrbotForm(d) {
+  document.getElementById('ab_wl_enable').value = d.id_whitelist_enable ? '1' : '0';
+  document.getElementById('ab_wl_list').value = (d.id_whitelist || []).join('\\n');
+  document.getElementById('ab_ar_enable').value = d.ar_enable ? '1' : '0';
+  document.getElementById('ab_ar_poss').value = d.ar_possibility;
+  document.getElementById('ab_ar_list').value = (d.ar_whitelist || []).join('\\n');
+}
+
+function saveAstrbotCfg() {
+  var body = {
+    id_whitelist_enable: document.getElementById('ab_wl_enable').value === '1',
+    id_whitelist: document.getElementById('ab_wl_list').value.split(/[,，\\n]+/).filter(Boolean),
+    ar_enable: document.getElementById('ab_ar_enable').value === '1',
+    ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
+    ar_whitelist: document.getElementById('ab_ar_list').value.split(/[,，\\n]+/).filter(Boolean),
+  };
+  fetch('/api/astrbot', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body),
+  }).then(function(r){return r.json()}).then(function(res){
+    var el = document.getElementById('abMsg');
+    el.textContent = res.ok ? '✅ 已写入（重启 AstrBot 后生效）' : '❌ ' + res.error;
+    el.className = 'save-msg show';
+    setTimeout(function(){el.className='save-msg'}, 3000);
+    toast(res.ok ? '✅ 已写入 AstrBot 配置' : '❌ 写入失败: ' + res.error, res.ok ? 'success' : 'error');
+  });
+}
+
 // ===== 初始化 =====
 refreshDashboard();
 setInterval(refreshDashboard, 3000);
@@ -401,6 +610,12 @@ class WebHandler(BaseHTTPRequestHandler):
                 self.send_json(cfg)
             except Exception as e:
                 self.send_json({"error": str(e)}, 500)
+        elif self.path == "/api/people":
+            import people
+            try:
+                self.send_json(people.read_overview())
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
         else:
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -467,6 +682,26 @@ class WebHandler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True})
             except Exception as e:
                 log.error(f"[Web] 保存配置异常: {e}")
+                self.send_json({"ok": False, "error": str(e)}, 500)
+        elif self.path == "/api/admins":
+            import people
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                wxids = [str(w).strip() for w in (body.get("wxids") or []) if str(w).strip()]
+                synced, msg = people.sync_admins_to_astrbot(wxids)
+                self.send_json({"ok": True, "synced": synced, "message": msg,
+                                "admins": people.load_admins()})
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+        elif self.path == "/api/astrbot":
+            import people
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                ok, msg = people.update_astrbot_settings(body)
+                self.send_json({"ok": ok, "error": "" if ok else msg})
+            except Exception as e:
                 self.send_json({"ok": False, "error": str(e)}, 500)
         else:
             self.send_json({"ok": False}, 404)

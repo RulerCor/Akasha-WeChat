@@ -186,6 +186,50 @@ class WeFlowBridge:
         except Exception as e:
             log.warning(f"联系人名称预取失败（不影响运行，靠消息流增量补充）: {e}")
 
+    def _prefetch_group_rosters(self):
+        """拉取所有已知群的成员名册（wxid ↔ 昵称），支撑「同人同 ID」。
+
+        WeFlow 的 SSE 在群里只给昵称，而 /api/v1/group-members 能给全名单
+        （含 wxid）。有了名册，群消息的发言人就能解析成稳定的 wxid，
+        user_id 从而与私聊一致 —— AstrBot 的管理员列表加一次就处处生效。
+        每 10 分钟自动刷新一次，捕捉进群/退群/改昵称。
+        """
+        rooms = list(state.known_groups().keys())
+        ok = 0
+        for room in rooms:
+            try:
+                resp = requests.get(
+                    f"{config.WE_FLOW_BASE_URL}/api/v1/group-members",
+                    params={"access_token": config.ACCESS_TOKEN, "talker": room},
+                    timeout=12,
+                )
+                data = resp.json() if resp.status_code == 200 else {}
+                members = data.get("members") or []
+                if members:
+                    state.set_group_roster(room, members)
+                    for m in members:
+                        if isinstance(m, dict) and m.get("wxid"):
+                            nm = (m.get("groupNickname") or m.get("displayName")
+                                  or m.get("nickname") or m.get("remark") or "")
+                            state.remember_person(m["wxid"], nm)
+                    ok += 1
+            except Exception:
+                continue
+        if rooms:
+            total_names = sum(state.roster_stats().values())
+            log.info(f"👥 群成员名册已刷新（{ok}/{len(rooms)} 个群，{total_names} 条昵称映射）")
+
+    def _roster_refresh_loop(self):
+        """后台定时刷新群名册（守护线程，10 分钟一轮）。"""
+        while state.running:
+            time.sleep(600)
+            if not state.running:
+                break
+            try:
+                self._prefetch_group_rosters()
+            except Exception as e:
+                log.debug(f"群名册刷新失败（下轮重试）: {e}")
+
     def ignore_reason(self, data):
         """返回该消息被忽略的原因；不该忽略则返回 None。"""
         content = data.get("content", "")
@@ -360,17 +404,30 @@ class WeFlowBridge:
                  + (f" + {len(image_segments)} 张图片" if image_segments else "")
                  + f" [{'群' if is_group else '私'}|{contact}]")
 
-        # 构建 OneBot 事件（user_id 要用发言人身份，不能用群 sessionId）
+        # 构建 OneBot 事件。user_id 用「稳定的个人身份」：
+        #   群聊 → 先查群名册把 昵称 解析成 wxid，user_id = md5(wxid)
+        #   私聊 → sessionId 本来就是 wxid
+        # 这样同一个人在私聊和所有群里是同一个 ID，AstrBot 的 admins_id
+        # 加一次即全局生效。名册里查不到时退回旧行为（群ID_昵称）。
         if is_group:
-            sender_wxid = entry.get("session_id_data", "") + "_" + (entry.get("sender_in_group", "") or entry.get("source_name", ""))
+            sender_name = entry.get("sender_in_group", "") or entry.get("source_name", "未知")
+            wxid = state.resolve_wxid_in_group(entry.get("session_id_data", ""), sender_name)
+            if wxid:
+                sender_wxid = wxid
+                state.remember_person(wxid, sender_name)
+            else:
+                sender_wxid = entry.get("session_id_data", "") + "_" + sender_name
+                log.info(f"ℹ️ 群名册中未找到「{sender_name}」，本条退回旧式 ID"
+                         f"（该成员的管理员识别要等名册刷新后生效）")
         else:
+            sender_name = entry.get("source_name", contact)
             sender_wxid = entry.get("session_id_data", sender_id)
+            state.remember_person(sender_wxid, sender_name)
         user_id = state._wxid_to_int(sender_wxid)
 
         if is_group:
             group_id = state._wxid_to_int(
                 entry.get("session_id_data") or entry.get("group_name", contact))
-            sender_name = entry.get("sender_in_group", "") or entry.get("source_name", "未知")
 
             if state.group_reply_mode == "batch":
                 # 批处理模式：消息已预格式化好，直接使用
@@ -468,6 +525,9 @@ class WeFlowBridge:
                 return
             log.info("✅ 已连接到 WeFlow 推送")
             self._prefetch_contact_names()
+            # 群名册在后台线程拉取（可能要跑几十秒），不阻塞消息循环
+            threading.Thread(target=self._prefetch_group_rosters, daemon=True).start()
+            threading.Thread(target=self._roster_refresh_loop, daemon=True).start()
 
             for line in self._sse_session.iter_lines(decode_unicode=True):
                 if not state.running:

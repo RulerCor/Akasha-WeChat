@@ -19,11 +19,6 @@ for _var in ("NO_PROXY", "no_proxy"):
     if _missing:
         os.environ[_var] = ",".join(filter(None, [_cur] + _missing))
 
-# ============ 配置 ============
-
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
-EXAMPLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.example.json")
-
 # ============ 项目标识（长期可识别） ============
 #
 # 这是上游 alingalingling/Akasha-WeChat 的 RC 分支。名字与版本号固定写在这里 +
@@ -36,6 +31,11 @@ try:
         PROJECT_VERSION = _f.read().strip() or "0.0.0"
 except Exception:
     PROJECT_VERSION = "0.0.0"
+
+# ============ 配置 ============
+
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+EXAMPLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.example.json")
 
 
 def load_config():
@@ -97,6 +97,15 @@ IMAGE_MAX_BYTES = int(config.get("image_max_bytes", 8 * 1024 * 1024))
 
 # AstrBot OneBot 连接配置（bridge 作为 WebSocket 客户端连 AstrBot 的 aiocqhttp 服务端）
 ASTRBOT_OB_URL = config.get("astrbot_ob_url", "ws://127.0.0.1:19777")
+
+# AstrBot 主配置（cmd_config.json）路径：面板「成员与权限」要往这里同步
+# 管理员列表和白名单/主动回复设置。留空则按 ../AstrBot/data/cmd_config.json 猜测。
+ASTRBOT_CONFIG_FILE = config.get("astrbot_config_file", "")
+if not ASTRBOT_CONFIG_FILE:
+    _guess = os.path.abspath(os.path.join(os.path.dirname(CONFIG_FILE),
+                                          "..", "AstrBot", "data", "cmd_config.json"))
+    if os.path.exists(_guess):
+        ASTRBOT_CONFIG_FILE = _guess
 
 # 图片描述配置（支持 ollama 或 openai 兼容 API）
 IMAGE_CAPTION_PROVIDER = config.get("image_caption_provider", "ollama")  # "ollama" / "openai"

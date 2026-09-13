@@ -4,6 +4,38 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## [1.0.1-rc.3]
+
+这一版的主题：**管理员与白名单的可视化管理 —— 加一次，处处生效**。
+
+### 新增
+
+- **人员注册表（`state.py` + 新模块 `people.py`）**：以微信 wxid 为稳定身份，
+  user_id = `md5(wxid)`。同一个人在**私聊和所有群里是同一个 ID**，
+  AstrBot 的 `admins_id` 只需登记一次，管理员身份即全局生效
+  （此前群消息的 ID 是 `md5(群ID_昵称)`，每个群都不同，管理员要逐群添加）。
+- **群成员名册**：启动时从 WeFlow `/api/v1/group-members` 拉取所有已知群的
+  成员名单（wxid ↔ 昵称，多候选名匹配），每 10 分钟自动刷新；据此把群消息
+  的发言人解析回 wxid。名册未命中的消息自动回退旧行为（群ID_昵称）并记日志。
+- **Web 面板新页「成员与权限」**（`web_panel.py`）：
+  - 成员列表：勾选即授管理员，一键「保存管理员」——写入桥接 `data/admins.json`
+    并自动同步为 UID 写进 AstrBot `cmd_config.json` 的 `admins_id`；
+  - 群会话表：每个已知群的「群 ID + 完整 UMO」一键复制（供 AstrBot 白名单使用）；
+  - AstrBot 白名单/主动回复设置：平台 ID 白名单开关与名单、主动回复开关、
+    概率、白名单，直接在桥接面板编辑并写入 AstrBot 配置。
+- **管理员自动重放**：桥接每次启动把 `data/admins.json` 重放同步到 AstrBot
+  （`main.py`），重启/换机无需人工再配。
+- **AstrBot 主配置路径**：新增 `astrbot_config_file` 配置项（默认自动探测
+  `../AstrBot/data/cmd_config.json`），写回时保留原文件 BOM。
+
+### 变更
+
+- 群消息的 OneBot `user_id` 由 `md5(群ID_昵称)` 改为 `md5(wxid)`。
+  群会话本身仍按 `group_id`（= `md5(群ID)`）隔离，**群聊记忆不受影响**；
+  仅"发言人身份"变化，AstrBot 侧 `admins_id` 里的旧格式 UID 会失效（由面板同步接管）。
+
+> 注：AstrBot 只在启动时读取 `admins_id`，面板保存后需重启 AstrBot 生效。
+
 ## [1.0.1-rc.2]
 
 对应上游 tag `v1.0.1`。这一版的主题是：**让群聊里的内置指令能用、不再被"外壳"吃掉**。
