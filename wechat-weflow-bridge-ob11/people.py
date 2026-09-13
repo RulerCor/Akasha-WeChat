@@ -149,6 +149,7 @@ def read_overview() -> dict:
             "name": name,
             "gid": gid,
             "umo": f"{pid}:GroupMessage:{gid}",
+            "muted": state.is_session_muted(session),
         })
 
     return {
@@ -158,6 +159,7 @@ def read_overview() -> dict:
         "astrbot_error": "" if astrbot_ok else cfg_err,
         "persons": persons,
         "groups": groups,
+        "muted_sessions": state.muted_session_list(),
         "admins": sorted(admins),
         "id_whitelist_enable": bool(ps.get("enable_id_white_list", False)),
         "id_whitelist": ps.get("id_whitelist") or [],

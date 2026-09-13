@@ -20,10 +20,6 @@ for _var in ("NO_PROXY", "no_proxy"):
         os.environ[_var] = ",".join(filter(None, [_cur] + _missing))
 
 # ============ 项目标识（长期可识别） ============
-#
-# 这是上游 alingalingling/Akasha-WeChat 的 RC 分支。名字与版本号固定写在这里 +
-# 同目录 VERSION 文件，方便日志、面板、issue 里一眼分辨"跑的是哪一版"，
-# 不依赖目录名（目录可能被改名）。
 PROJECT_NAME = "Akasha-WeChat_RC"
 _VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
 try:

@@ -435,5 +435,54 @@ def roster_stats() -> dict:
 
 _load_persons()
 
+# ============ 会话回复开关（面板可控静音） ============
+#
+# AstrBot 原生没有「按群关闭回复」的开关（白名单是全局的），所以在桥接层实现：
+# 被静音的会话（群/私聊）的所有消息——包括 @ 机器人——都在桥接就被丢弃，
+# 机器人完全不掺和该会话。适合"一个群里有多个机器人"的场景。
+
+_muted_sessions: set = set()
+_muted_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "data", "muted_sessions.json")
+
+
+def _load_muted_sessions() -> None:
+    global _muted_sessions
+    try:
+        with open(_muted_path, encoding="utf-8") as f:
+            _muted_sessions = {str(x) for x in _json.load(f)}
+    except Exception:
+        _muted_sessions = set()
+
+
+def _save_muted_sessions() -> None:
+    try:
+        _os.makedirs(_os.path.dirname(_muted_path), exist_ok=True)
+        with open(_muted_path, "w", encoding="utf-8") as f:
+            _json.dump(sorted(_muted_sessions), f, ensure_ascii=False, indent=1)
+    except Exception:
+        pass
+
+
+def is_session_muted(session_id: str) -> bool:
+    """该会话（微信群 sessionId / wxid）是否被面板关闭了回复。"""
+    return bool(session_id) and session_id in _muted_sessions
+
+
+def set_session_muted(session_id: str, muted: bool) -> None:
+    if not session_id:
+        return
+    if muted:
+        _muted_sessions.add(session_id)
+    else:
+        _muted_sessions.discard(session_id)
+    _save_muted_sessions()
+
+
+def muted_session_list() -> list:
+    return sorted(_muted_sessions)
+
+
+_load_muted_sessions()
+
 # 群聊回复模式（运行时可变，启动时从 config 初始化）
 group_reply_mode = "mention"

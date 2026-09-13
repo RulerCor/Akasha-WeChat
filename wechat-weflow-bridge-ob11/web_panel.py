@@ -233,13 +233,15 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
       </div>
 
       <div class="settings-group">
-        <h3>群会话 ID（白名单 / 主动回复白名单用）</h3>
+        <h3>群会话（回复开关 / 白名单 ID）</h3>
         <table class="member-table">
-          <thead><tr><th>群名</th><th>群 ID</th><th>UMO（完整会话标识）</th></tr></thead>
-          <tbody id="groupsBody"><tr><td colspan="3" style="color:#c0aab0">加载中...</td></tr></tbody>
+          <thead><tr><th style="width:52px">回复</th><th>群名</th><th>群 ID</th><th>UMO（完整会话标识）</th></tr></thead>
+          <tbody id="groupsBody"><tr><td colspan="4" style="color:#c0aab0">加载中...</td></tr></tbody>
         </table>
         <div class="hint-text" style="margin-top:6px">
-          点击 ID 即复制。<b>白名单</b>填「群 ID」或完整 UMO 都行；<b>主动回复白名单</b>留空 = 所有群都生效。
+          <b>回复开关</b>：关闭后该群的所有消息（包括 @ 机器人）都会被忽略，机器人完全不掺和——
+          适合一个群里跑着多个机器人的情况。<b>白名单</b>填「群 ID」或完整 UMO 都行（点 ID 即复制）；
+          <b>主动回复白名单</b>留空 = 所有群都生效。
         </div>
       </div>
 
@@ -264,9 +266,15 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
             <label>主动回复概率 (0~1)</label>
             <input type="number" id="ab_ar_poss" step="0.01" min="0" max="1" placeholder="0.1">
           </div>
+        </div>
+        <div class="settings-row">
           <div class="settings-field" style="flex-basis:100%">
-            <label>主动回复白名单（留空 = 所有群；填群 ID 或 UMO）</label>
-            <textarea id="ab_ar_list" rows="2" placeholder="留空 = 所有群"></textarea>
+            <label>主动回复范围（勾选的群才主动接话；全部不勾 = 所有群都生效）</label>
+            <div id="ab_ar_groups" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:6px 2px"></div>
+          </div>
+          <div class="settings-field" style="flex-basis:100%">
+            <label>其他自定义条目（不在上面列表里的群 ID / UMO，逗号或换行分隔）</label>
+            <textarea id="ab_ar_extra" rows="2" placeholder="留空即可"></textarea>
           </div>
         </div>
         <div class="hint-text">
@@ -368,38 +376,41 @@ function loadConfig() {
 function renderConfigForm(cfg) {
   var html = '';
   var groups = [
-    {title:'WeFlow 连接', fields:[
+    {title:'连接', fields:[
       {key:'weflow_base_url', label:'WeFlow 地址', type:'text', ph:'http://127.0.0.1:5031'},
-      {key:'access_token', label:'Access Token', type:'password', ph:'输入Token'},
-      {key:'weflow_send_api', label:'发送 API 地址', type:'text', ph:'http://127.0.0.1:5031/api/v1/message'},
-    ]},
-    {title:'机器人', fields:[
-      {key:'bot_nicknames', label:'机器人昵称（多个用逗号隔开）', type:'text', ph:'山山酱(^'},
-      {key:'bot_wxid', label:'机器人 wxid', type:'text', ph:'wxid_xxx'},
-      {key:'send_method', label:'发送方式', type:'select', opts:[{v:'uia',l:'UIA 自动化'},{v:'weflow_api',l:'WeFlow API'}]},
-    ]},
-    {title:'AstrBot 连接', fields:[
+      {key:'access_token', label:'WeFlow Access Token', type:'password', ph:'输入Token'},
+      {key:'weflow_send_api', label:'WeFlow 发送 API', type:'text', ph:'http://127.0.0.1:5031/api/v1/message'},
       {key:'astrbot_ob_url', label:'AstrBot OB 地址', type:'text', ph:'ws://127.0.0.1:11229/ws'},
       {key:'astrbot_attachments', label:'附件目录（AstrBot 存放图片的路径）', type:'text', ph:'C:\\astrbot\\attachments'},
     ]},
-    {title:'桥接设置', fields:[
-      {key:'buffer_seconds', label:'消息缓冲(秒)', type:'number', ph:'5'},
-      {key:'group_reply_mode', label:'群聊回复模式', type:'select', opts:[{v:'mention',l:'仅@回复'},{v:'all',l:'全部回复'},{v:'batch',l:'批处理'}]},
-      {key:'web_port', label:'Web 面板端口', type:'number', ph:'8766'},
+    {title:'机器人身份', fields:[
+      {key:'bot_nicknames', label:'机器人昵称（多个用逗号隔开，@ 昵称即唤醒）', type:'text', ph:'山山酱(^'},
+      {key:'bot_wxid', label:'机器人 wxid', type:'text', ph:'wxid_xxx'},
+      {key:'send_method', label:'发送方式', type:'select', opts:[{v:'uia',l:'UIA 自动化（微信PC客户端）'},{v:'weflow_api',l:'WeFlow API'}]},
+      {key:'switch_method', label:'联系人切换方式（UIA 模式）', type:'select', opts:[{v:'auto',l:'自动（列表→搜索）'},{v:'list',l:'仅会话列表点击'},{v:'search',l:'仅 Ctrl+F 搜索'}]},
+      {key:'astrbot_config_file', label:'AstrBot 主配置路径（成员与权限页同步用，改后需重启）', type:'text', ph:'留空自动探测 ../AstrBot/data/cmd_config.json'},
     ]},
-    {title:'图片描述', fields:[
-      {key:'image_caption_provider', label:'描述服务', type:'select', opts:[{v:'ollama',l:'Ollama 本地'},{v:'openai',l:'OpenAI 兼容'}]},
-      {key:'image_caption_model', label:'模型名', type:'text', ph:'kimi-k2.6 / llava:7b'},
-      {key:'image_caption_api_key', label:'API Key', type:'password', ph:'sk-xxx (OpenAI模式时)'},
-      {key:'image_caption_api_base', label:'API 地址', type:'text', ph:'https://api.moonshot.cn/v1'},
+    {title:'消息', fields:[
+      {key:'buffer_seconds', label:'消息缓冲(秒)：同人多条消息合并等待', type:'number', ph:'5'},
+      {key:'group_reply_mode', label:'群聊回复模式（控制台也可一键切换）', type:'select', opts:[{v:'mention',l:'仅@回复（推荐，多机器人安全）'},{v:'all',l:'全部回复（主动回复需此项）'},{v:'batch',l:'批处理（整群合并一条）'}]},
+      {key:'quote_reply_prefix', label:'引用回复转文字前缀（微信无法原生引用）', type:'select', opts:[{v:'false',l:'关闭（忽略引用）'},{v:'true',l:'开启（回复带〔回复 某某：原文〕）'}]},
+    ]},
+    {title:'图片', fields:[
+      {key:'image_max_bytes', label:'单张图片大小上限(字节)', type:'number', ph:'8388608'},
+      {key:'image_mention_window', label:'群图片等待@的时间窗(秒)', type:'number', ph:'120'},
+      {key:'image_caption_provider', label:'描述服务（桥接侧转述，模型名留空时不启用）', type:'select', opts:[{v:'ollama',l:'Ollama 本地'},{v:'openai',l:'OpenAI 兼容'}]},
+      {key:'image_caption_model', label:'转述模型名（留空=图片原样交给 AstrBot 主模型直看）', type:'text', ph:'llava:7b'},
+      {key:'image_caption_api_key', label:'API Key（OpenAI 模式）', type:'password', ph:'sk-xxx'},
+      {key:'image_caption_api_base', label:'API 地址（OpenAI 模式）', type:'text', ph:'https://api.moonshot.cn/v1'},
       {key:'image_caption_prompt', label:'描述提示词', type:'textarea', ph:'请用中文描述...'},
-    ]},
-    {title:'Ollama（使用本地模式时）', fields:[
       {key:'ollama_base_url', label:'Ollama 地址', type:'text', ph:'http://127.0.0.1:61000'},
-      {key:'ollama_timeout', label:'超时(秒)', type:'number', ph:'60'},
+      {key:'ollama_timeout', label:'Ollama 超时(秒)', type:'number', ph:'60'},
+      {type:'info', text:'图片理解说明：<b>转述模型名留空</b>（默认）→ 桥接把图片原样转交 AstrBot：未配置「图片转述模型」就用主模型直看（需多模态）。<b>填了</b> → 桥接先调它把图转成文字再发。群图片仍遵循「同一个人 @ 才读取」门槛。'},
     ]},
-    {title:'图片理解方式', fields:[
-      {type:'info', text:'<b>模型名留空</b>（默认）→ 桥接把图片<b>原样转交</b>给 AstrBot，理解方式由 AstrBot 决定：未配置「图片转述模型」就用<b>主模型直接看图</b>（需多模态模型，如 MiniMax-M3），配了则先转述成文字。<br><b>模型名填了</b> → 启用上面的「桥接侧图片描述」：桥接先调它把图转成文字，再把文字发给 AstrBot。<br>单张超过 8MB 的图片会被跳过。改完需重启桥接。'},
+    {title:'高级', fields:[
+      {key:'web_port', label:'Web 面板端口', type:'number', ph:'8766'},
+      {key:'web_host', label:'Web 面板监听地址', type:'text', ph:'0.0.0.0'},
+      {key:'log_skipped_messages', label:'记录被跳过的消息（排障用）', type:'select', opts:[{v:'true',l:'开启'},{v:'false',l:'关闭'}]},
     ]},
   ];
 
@@ -412,6 +423,7 @@ function renderConfigForm(cfg) {
         return;
       }
       var val = cfg[f.key] !== undefined ? cfg[f.key] : '';
+      if (typeof val === 'boolean') val = val ? 'true' : 'false';
       if (Array.isArray(val)) val = val.join(', ');
       html += '<div class="settings-field"><label>' + f.label + '</label>';
       if (f.type === 'select') {
@@ -434,6 +446,8 @@ function renderConfigForm(cfg) {
 }
 
 // ===== 保存配置 =====
+var BOOL_KEYS = ['quote_reply_prefix', 'log_skipped_messages'];
+
 function saveConfig() {
   // 从表单收集数据
   var fields = document.querySelectorAll('#settingsForm [id^="cfg_"]');
@@ -442,6 +456,7 @@ function saveConfig() {
     var key = el.id.replace('cfg_','');
     var val = el.value.trim();
     if (el.type === 'number') val = Number(val) || 0;
+    if (BOOL_KEYS.indexOf(key) >= 0) val = (val === 'true' || val === '1');
     // bot_nicknames: 逗号分隔转数组
     if (key === 'bot_nicknames') val = val ? val.split(/[,，]\\s*/).filter(Boolean) : [];
     data[key] = val;
@@ -510,11 +525,33 @@ function renderGroups() {
   if (!peopleData) return;
   var rows = '';
   peopleData.groups.forEach(function(g){
-    rows += '<tr><td>' + g.name + '</td>'
+    rows += '<tr><td><input type="checkbox" data-session="' + g.session + '"'
+      + (g.muted ? '' : ' checked')
+      + ' onchange="toggleMute(this)" title="勾选=机器人回复该群；取消=完全不掺和"></td>'
+      + '<td>' + g.name + '</td>'
       + '<td><span class="copy-chip" onclick="copyText(\\'' + g.gid + '\\')">' + g.gid + ' 📋</span></td>'
       + '<td><span class="copy-chip" onclick="copyText(\\'' + g.umo + '\\')">' + g.umo + ' 📋</span></td></tr>';
   });
-  document.getElementById('groupsBody').innerHTML = rows || '<tr><td colspan="3" style="color:#c0aab0">暂无已知群（收到消息后出现）</td></tr>';
+  document.getElementById('groupsBody').innerHTML = rows || '<tr><td colspan="4" style="color:#c0aab0">暂无已知群（收到消息后出现）</td></tr>';
+}
+
+function toggleMute(cb) {
+  var session = cb.getAttribute('data-session');
+  var muted = !cb.checked;
+  fetch('/api/session-toggle', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({session: session, muted: muted}),
+  }).then(function(r){return r.json()}).then(function(res){
+    if (res.ok) {
+      toast(muted ? '🔇 已关闭该会话回复（立即生效）' : '🔊 已恢复该会话回复（立即生效）', 'success');
+    } else {
+      toast('❌ 操作失败: ' + res.error, 'error');
+      cb.checked = !muted;
+    }
+  }).catch(function(e){
+    toast('❌ 操作失败: ' + e.message, 'error');
+    cb.checked = !muted;
+  });
 }
 
 function scanAdminChecks() {
@@ -551,16 +588,37 @@ function fillAstrbotForm(d) {
   document.getElementById('ab_wl_list').value = (d.id_whitelist || []).join('\\n');
   document.getElementById('ab_ar_enable').value = d.ar_enable ? '1' : '0';
   document.getElementById('ab_ar_poss').value = d.ar_possibility;
-  document.getElementById('ab_ar_list').value = (d.ar_whitelist || []).join('\\n');
+  // 主动回复白名单可视化：已知群 → 勾选框；未知条目 → 自定义文本框
+  var wl = (d.ar_whitelist || []).map(function(x){return String(x).trim()});
+  var known = {};
+  var html = '';
+  peopleData.groups.forEach(function(g){
+    known[String(g.gid)] = true; known[g.umo] = true; known[g.session] = true;
+    var hit = wl.indexOf(String(g.gid)) >= 0 || wl.indexOf(g.umo) >= 0 || wl.indexOf(g.session) >= 0;
+    html += '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;cursor:pointer">'
+      + '<input type="checkbox" data-gid="' + g.gid + '"' + (hit ? ' checked' : '') + '> ' + g.name + '</label>';
+  });
+  document.getElementById('ab_ar_groups').innerHTML = html || '<span style="color:#c0aab0;font-size:12px">暂无已知群</span>';
+  var extra = wl.filter(function(x){
+    return !peopleData.groups.some(function(g){ return x === String(g.gid) || x === g.umo || x === g.session; });
+  });
+  document.getElementById('ab_ar_extra').value = extra.join('\\n');
 }
 
 function saveAstrbotCfg() {
+  var arWl = [];
+  document.querySelectorAll('#ab_ar_groups input[type=checkbox]:checked').forEach(function(cb){
+    arWl.push(cb.getAttribute('data-gid'));
+  });
+  document.getElementById('ab_ar_extra').value.split(/[,，\\n]+/).forEach(function(x){
+    x = x.trim(); if (x) arWl.push(x);
+  });
   var body = {
     id_whitelist_enable: document.getElementById('ab_wl_enable').value === '1',
     id_whitelist: document.getElementById('ab_wl_list').value.split(/[,，\\n]+/).filter(Boolean),
     ar_enable: document.getElementById('ab_ar_enable').value === '1',
     ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
-    ar_whitelist: document.getElementById('ab_ar_list').value.split(/[,，\\n]+/).filter(Boolean),
+    ar_whitelist: arWl,
   };
   fetch('/api/astrbot', {
     method:'POST', headers:{'Content-Type':'application/json'},
@@ -701,6 +759,20 @@ class WebHandler(BaseHTTPRequestHandler):
                 body = json.loads(self.rfile.read(length).decode("utf-8"))
                 ok, msg = people.update_astrbot_settings(body)
                 self.send_json({"ok": ok, "error": "" if ok else msg})
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+        elif self.path == "/api/session-toggle":
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                session = str(body.get("session", "")).strip()
+                muted = bool(body.get("muted"))
+                if not session:
+                    self.send_json({"ok": False, "error": "缺少 session"}, 400)
+                    return
+                state.set_session_muted(session, muted)
+                log.info(f"[Web] 会话 {session} 回复已{'关闭' if muted else '开启'}")
+                self.send_json({"ok": True, "session": session, "muted": muted})
             except Exception as e:
                 self.send_json({"ok": False, "error": str(e)}, 500)
         else:

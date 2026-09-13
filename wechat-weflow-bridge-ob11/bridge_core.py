@@ -264,16 +264,16 @@ class WeFlowBridge:
         is_group = (data.get("sessionType", "") == "group") or bool(group_name_raw) or "@chatroom" in session_id_data
         sender_in_group = self._sender_of(data)
 
+        # 面板里被关闭回复的会话：所有消息（包括 @ 机器人）直接丢弃，
+        # 机器人完全不掺和——用于"一个群里有多个机器人"的场景
+        if state.is_session_muted(session_id_data):
+            self._log_skip(data, "该会话已在面板关闭回复")
+            return
+
         # 群里有人 @ 机器人 → 按 (群, 发送者) 记录时刻（供图片「同一次请求」判断）
         mentioned = is_group and any(f"@{n}" in content for n in config.BOT_NICKNAMES)
         if mentioned:
             state.note_group_mention(session_id_data, sender_in_group)
-
-        # 指令直通：群里以 "/" 开头的消息（/sid、/help、/reset…）**无需 @** 也放行，
-        # 与 AstrBot 自身的 wake_prefix 语义一致。不放行的话，mention 模式下
-        # 这些内置指令会被桥接提前丢掉，用户永远等不到回复。
-        # 注意：这里只放宽「是否放行」，不参与图片合并 —— 图片仍只认真正的 @。
-        is_command = is_group and content.lstrip().startswith("/")
 
         # ---------- 图片 ----------
         # 两条路径都保留，由 config.IMAGE_CAPTION_ENABLED 决定：
@@ -303,12 +303,14 @@ class WeFlowBridge:
             return
 
         # ---------- 文本 ----------
+        # 群聊指令（/sid 等）也必须 @ 机器人才放行：避免同一个群里多个机器人
+        # 对同一条 "/help" 抢答。@ 了之后仍走无外壳透传（见 process_sender）。
         now = time.time()
         if state.was_sent_recently(content):
             log.info(f"⏭️ 自回复去重跳过: {content[:30]}")
             return
 
-        if is_group and state.group_reply_mode == "mention" and not (mentioned or is_command):
+        if is_group and state.group_reply_mode == "mention" and not mentioned:
             self._log_skip(data, "群消息未 @机器人（mention 模式）")
             return
 
