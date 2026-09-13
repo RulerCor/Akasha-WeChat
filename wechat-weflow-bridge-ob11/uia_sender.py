@@ -80,6 +80,9 @@ class BaseSender:
     def send_image(self, contact: str, image_path: str) -> bool:
         raise NotImplementedError
 
+    def send_file(self, contact: str, file_path: str) -> bool:
+        raise NotImplementedError
+
 
 class UiaSender(BaseSender):
     """
@@ -1100,6 +1103,92 @@ class UiaSender(BaseSender):
             except Exception as e:
                 log.error(f"[UIA✗] 图片 → {contact}: {e}")
                 return False
+
+    def send_file(self, contact: str, file_path: str) -> bool:
+        """
+        通过剪贴板（CF_HDROP 文件列表）发送任意文件
+
+        Args:
+            contact: 联系人
+            file_path: 本地文件路径
+        """
+        with self._lock:
+            if not self._ready:
+                return False
+            if not os.path.isfile(file_path):
+                log.error(f"文件不存在: {file_path}")
+                return False
+
+            try:
+                if not self._ensure_window():
+                    return False
+                self._activate()
+
+                if self.search_enabled and contact:
+                    if not self._is_chat_open(contact):
+                        self._switch_to_contact(contact)
+                    self._last_contact = contact
+
+                # 复制文件到剪贴板（文件拖放格式）
+                self._copy_file_to_clipboard(file_path)
+                time.sleep(0.2)
+
+                if not self._locate_input():
+                    return False
+
+                if self._use_coord_fallback:
+                    import ctypes
+                    from ctypes import wintypes
+                    hwnd = self._hwnd()
+                    if hwnd:
+                        rect = wintypes.RECT()
+                        ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rect))
+                        input_x = rect.left + int((rect.right - rect.left) * 0.3)
+                        input_y = rect.top + int((rect.bottom - rect.top) * 0.92)
+                        ctypes.windll.user32.SetCursorPos(input_x, input_y)
+                        ctypes.windll.user32.mouse_event(0x0002, 0, 0, 0, 0)
+                        ctypes.windll.user32.mouse_event(0x0004, 0, 0, 0, 0)
+                    time.sleep(0.3)
+                    self._auto.SendKeys('{Ctrl}v')
+                    time.sleep(0.8)
+                    self._auto.SendKeys('{Enter}')
+                    log.info(f"[UIA✓] 文件 → {contact}: {os.path.basename(file_path)} (无鼠标模式)")
+                    return True
+
+                try:
+                    self._input_control.SetFocus()
+                    time.sleep(0.1)
+                except Exception:
+                    self._click_input_center()
+                self._auto.SendKeys('{Ctrl}v')
+                time.sleep(0.8)
+
+                if not self._send_current(self._input_control, verify=False):
+                    log.error(f"[UIA✗] 文件 → {contact}: 已粘贴但未能发出")
+                    return False
+
+                log.info(f"[UIA✓] 文件 → {contact}: {os.path.basename(file_path)}")
+                return True
+
+            except Exception as e:
+                log.error(f"[UIA✗] 文件 → {contact}: {e}")
+                return False
+
+    def _copy_file_to_clipboard(self, path: str):
+        """复制文件到剪贴板（CF_HDROP 文件拖放格式，聊天框 Ctrl+V 即发送该文件）"""
+        abs_path = os.path.abspath(path)
+        try:
+            subprocess.run([
+                "powershell", "-WindowStyle", "Hidden", "-Command",
+                "Add-Type -AssemblyName System.Windows.Forms;"
+                f"$files = New-Object System.Collections.Specialized.StringCollection;"
+                f"$files.Add('{abs_path}') | Out-Null;"
+                "[System.Windows.Forms.Clipboard]::SetFileDropList($files)"
+            ], check=True, timeout=10)
+            log.debug("PowerShell 已复制文件到剪贴板 (CF_HDROP)")
+        except Exception as e:
+            log.error(f"复制文件到剪贴板失败: {e}")
+            raise
 
     def _copy_image_to_clipboard(self, path: str):
         """复制图片到剪贴板（通过 PowerShell，避免 PIL 对象被当作文本复制）"""

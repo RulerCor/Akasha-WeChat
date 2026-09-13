@@ -269,12 +269,20 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
         </div>
         <div class="settings-row">
           <div class="settings-field" style="flex-basis:100%">
-            <label>随机插话范围（勾选的群才可能插话；<b>不影响 @ 唤醒的正常回复</b>；全不勾 = 所有群生效）</label>
+            <label>随机插话白名单（勾选的群才可能插话；<b>不影响 @ 唤醒的正常回复</b>；全不勾 = 所有群生效）</label>
             <div id="ab_ar_groups" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:6px 2px"></div>
           </div>
           <div class="settings-field" style="flex-basis:100%">
-            <label>其他自定义条目（不在上面列表里的群 ID / UMO，逗号或换行分隔）</label>
+            <label>白名单其他自定义条目（不在上面列表里的群 ID / UMO，逗号或换行分隔）</label>
             <textarea id="ab_ar_extra" rows="2" placeholder="留空即可"></textarea>
+          </div>
+          <div class="settings-field" style="flex-basis:100%">
+            <label>随机插话黑名单（勾选的群<b>绝不插话</b>，优先级高于白名单；不影响 @ 唤醒的正常回复）</label>
+            <div id="ab_ar_black_groups" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:6px 2px"></div>
+          </div>
+          <div class="settings-field" style="flex-basis:100%">
+            <label>黑名单其他自定义条目（不在上面列表里的群 ID / UMO，逗号或换行分隔）</label>
+            <textarea id="ab_ar_black_extra" rows="2" placeholder="留空即可"></textarea>
           </div>
         </div>
         <div class="hint-text">
@@ -607,6 +615,19 @@ function fillAstrbotForm(d) {
     return !peopleData.groups.some(function(g){ return x === String(g.gid) || x === g.umo || x === g.session; });
   });
   document.getElementById('ab_ar_extra').value = extra.join('\\n');
+  // 主动回复黑名单可视化（与白名单同样逻辑）
+  var bl = (d.ar_blacklist || []).map(function(x){return String(x).trim()});
+  var bhtml = '';
+  peopleData.groups.forEach(function(g){
+    var hit = bl.indexOf(String(g.gid)) >= 0 || bl.indexOf(g.umo) >= 0 || bl.indexOf(g.session) >= 0;
+    bhtml += '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;cursor:pointer">'
+      + '<input type="checkbox" data-gid="' + g.gid + '"' + (hit ? ' checked' : '') + '> ' + g.name + '</label>';
+  });
+  document.getElementById('ab_ar_black_groups').innerHTML = bhtml || '<span style="color:#c0aab0;font-size:12px">暂无已知群</span>';
+  var bextra = bl.filter(function(x){
+    return !peopleData.groups.some(function(g){ return x === String(g.gid) || x === g.umo || x === g.session; });
+  });
+  document.getElementById('ab_ar_black_extra').value = bextra.join('\\n');
 }
 
 function saveAstrbotCfg() {
@@ -617,12 +638,20 @@ function saveAstrbotCfg() {
   document.getElementById('ab_ar_extra').value.split(/[,，\\n]+/).forEach(function(x){
     x = x.trim(); if (x) arWl.push(x);
   });
+  var arBl = [];
+  document.querySelectorAll('#ab_ar_black_groups input[type=checkbox]:checked').forEach(function(cb){
+    arBl.push(cb.getAttribute('data-gid'));
+  });
+  document.getElementById('ab_ar_black_extra').value.split(/[,，\\n]+/).forEach(function(x){
+    x = x.trim(); if (x) arBl.push(x);
+  });
   var body = {
     id_whitelist_enable: document.getElementById('ab_wl_enable').value === '1',
     id_whitelist: document.getElementById('ab_wl_list').value.split(/[,，\\n]+/).filter(Boolean),
     ar_enable: document.getElementById('ab_ar_enable').value === '1',
     ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
     ar_whitelist: arWl,
+    ar_blacklist: arBl,
   };
   fetch('/api/astrbot', {
     method:'POST', headers:{'Content-Type':'application/json'},

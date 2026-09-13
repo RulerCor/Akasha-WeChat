@@ -23,6 +23,8 @@ class BaseSender:
         raise NotImplementedError
     def send_image(self, contact: str, image_path: str) -> bool:
         raise NotImplementedError
+    def send_file(self, contact: str, file_path: str) -> bool:
+        raise NotImplementedError
 
 
 class WeFlowApiSender(BaseSender):

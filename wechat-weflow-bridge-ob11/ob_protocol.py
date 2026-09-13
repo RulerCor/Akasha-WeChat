@@ -292,6 +292,54 @@ async def _handle_ob_api(data: dict):
                             except Exception:
                                 pass
 
+            elif seg_type == "file":
+                # 文件段：AstrBot 发来的 File 组件，file 字段通常是 file:/// URI
+                file_val = seg_data.get("file", "") or ""
+                fname = seg_data.get("name", "") or ""
+                fpath = None
+                tmp_made = None
+
+                try:
+                    if file_val.startswith("file://"):
+                        # file:///C:/... → 本地路径
+                        from urllib.parse import unquote, urlparse
+                        fpath = unquote(urlparse(file_val).path).lstrip("/") if False else None
+                        # Windows: urlparse("file:///C:/x") → path="/C:/x"；
+                        # 用 url2pathname 更稳
+                        from urllib.request import url2pathname
+                        fpath = url2pathname(urlparse(file_val).path)
+                    elif file_val.startswith("base64://"):
+                        import base64
+                        suffix = os.path.splitext(fname)[1] or ".bin"
+                        fd = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+                        fd.write(base64.b64decode(file_val[9:]))
+                        fd.close()
+                        fpath = tmp_made = fd.name
+                    elif file_val.startswith(("http://", "https://")):
+                        suffix = os.path.splitext(fname)[1] or ".bin"
+                        fd = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+                        fd.close()
+                        import urllib.request as _ur
+                        _ur.urlretrieve(file_val, fd.name)
+                        fpath = tmp_made = fd.name
+                    else:
+                        fpath = file_val
+
+                    if fpath and os.path.isfile(fpath):
+                        await asyncio.to_thread(
+                            state.sender_instance.send_file, contact, fpath)
+                        log.info(f"[OB11] 文件已发送至 {contact}: {os.path.basename(fpath)}")
+                    else:
+                        log.warning(f"[OB11] 文件未找到，无法发送: {file_val[:120]}")
+                except Exception as e:
+                    log.error(f"[OB11] 文件发送失败: {e}")
+                finally:
+                    if tmp_made:
+                        try:
+                            os.unlink(tmp_made)
+                        except Exception:
+                            pass
+
             elif seg_type == "face":
                 await asyncio.to_thread(state.sender_instance.send_text, contact, "[表情]")
                 log.info(f"[OB11] 表情已发送至 {contact}")

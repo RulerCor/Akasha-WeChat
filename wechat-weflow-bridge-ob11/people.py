@@ -166,6 +166,7 @@ def read_overview() -> dict:
         "ar_enable": bool(ltm.get("enable", False)),
         "ar_possibility": ltm.get("possibility_reply", 0.1),
         "ar_whitelist": ltm.get("whitelist") or [],
+        "ar_blacklist": ltm.get("blacklist") or [],
     }
 
 
@@ -196,6 +197,8 @@ def update_astrbot_settings(payload: dict):
             pass
     if "ar_whitelist" in payload:
         ar["whitelist"] = [str(x).strip() for x in payload["ar_whitelist"] if str(x).strip()]
+    if "ar_blacklist" in payload:
+        ar["blacklist"] = [str(x).strip() for x in payload["ar_blacklist"] if str(x).strip()]
 
     try:
         _write_astrbot_cfg(cfg, bom)
