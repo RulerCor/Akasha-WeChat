@@ -4,6 +4,32 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## [1.0.0]
+
+**版号制的起点**（此前为 `1.0.1-rc.1 ~ rc.7` 预发布序列，全部归档在下方）。
+从这一版起：版本号只用 `vX.Y.Z`，用 `scripts/build_release.py` 出包，
+产物落在 `release/versions/vX.Y.Z/` 归档 + `release/newestbuild/` 最新镜像
+（约定对齐 `C:\WechatBotShare`）。
+
+### 变更
+
+- **目录整合**：桥接运行环境与 AstrBot 一并迁入项目根 `runtime/`（bridge / astrbot），
+  仓库、模拟器、文档、发布产物同处一个根目录，整目录可搬迁。
+- **路径全部相对化**：配置里的 `astrbot_config_file`、`astrbot_attachments` 改为相对路径，
+  以「项目根（桥接目录的上一级）」为基准；留空时按常见布局自动搜索
+  （runtime/astrbot、同级 AstrBot…）。**拷到任何电脑、任何盘符、任何目录都能直接跑**。
+- **发布流程脚本化**：`scripts/build_release.py` 读取 `VERSION`，自动生成版本归档、
+  刷新 newestbuild、回滚备份（backups/pre-vX.Y.Z-*）与可选纯净 zip。
+
+### 继承的历史改动（rc.1 ~ rc.7 一览）
+
+- rc.2 群聊内置指令透传（`/sid` 等不再被"某某在群某某中说："外壳顶掉）
+- rc.3 管理员/白名单可视化；同人同 ID（`user_id=md5(wxid)`，加一次全局生效）
+- rc.4 群指令需 @ 触发、每群回复开关、白名单可视化、设置页重组
+- rc.5 面板分工修正（图片理解交还 AstrBot；随机插话文案对齐）
+- rc.6 修复 all 模式逐条必回（非 @ 消息不再被硬塞 At 段）
+- rc.7 合并 mention/all 为「标准模式」
+
 ## [1.0.1-rc.7]
 
 这一版的主题：**合并 mention / all两种普通模式**。

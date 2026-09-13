@@ -41,7 +41,51 @@ config = load_config()
 
 WE_FLOW_BASE_URL = config["weflow_base_url"]
 ACCESS_TOKEN = config["access_token"]
-ASTRBOT_ATTACHMENTS = config.get("astrbot_attachments", "")
+BRIDGE_DIR = os.path.dirname(CONFIG_FILE)
+# 项目根 = 桥接目录的上一级（例如 Akasha-Wechat_RC/runtime/ 下的 bridge/ → runtime/）。
+# 所有相对路径都以它为基准，这样整个目录拷贝到任何电脑、任何位置都能直接用。
+PROJECT_ROOT = os.path.abspath(os.path.join(BRIDGE_DIR, ".."))
+
+# ============ 项目标识（长期可识别） ============
+PROJECT_NAME = "Akasha-WeChat_RC"
+_VERSION_FILE = os.path.join(BRIDGE_DIR, "VERSION")
+try:
+    with open(_VERSION_FILE, encoding="utf-8") as _f:
+        PROJECT_VERSION = _f.read().strip() or "0.0.0"
+except Exception:
+    PROJECT_VERSION = "0.0.0"
+
+
+def _resolve_dir_or_file(value: str, sub_path: str) -> str:
+    """把配置里的路径解析成绝对路径。
+
+    - 绝对路径：原样使用；
+    - 相对路径：以 PROJECT_ROOT 为基准（找不到再试 BRIDGE_DIR）；
+    - 没配置：按常见布局自动搜索（runtime/astrbot、同级 AstrBot、上一级 astrbot…）。
+
+    这样"搬到别的电脑/别的盘"时不用改任何配置。
+    """
+    cands: list[str] = []
+    if value:
+        if os.path.isabs(value):
+            cands.append(value)
+        else:
+            cands.append(os.path.normpath(os.path.join(PROJECT_ROOT, value)))
+            cands.append(os.path.normpath(os.path.join(BRIDGE_DIR, value)))
+    else:
+        for base in (PROJECT_ROOT, os.path.dirname(PROJECT_ROOT)):
+            for name in ("astrbot", "AstrBot"):
+                cands.append(os.path.join(base, name, *sub_path.split("/")))
+            cands.append(os.path.join(base, *sub_path.split("/")))
+    for c in cands:
+        if c and os.path.exists(c):
+            return c
+    # 都没找到：返回第一个候选（相对路径配置时以 PROJECT_ROOT 为基准）
+    return cands[0] if cands else ""
+
+
+ASTRBOT_ATTACHMENTS = _resolve_dir_or_file(
+    config.get("astrbot_attachments", ""), "data/attachments")
 BOT_NICKNAMES = config["bot_nicknames"]
 BOT_WXID = config.get("bot_wxid", "")
 SEND_METHOD = config.get("send_method", "weflow_api")
@@ -56,19 +100,6 @@ WEB_HOST = config.get("web_host", "0.0.0.0")
 GROUP_REPLY_MODE = config.get("group_reply_mode", "all")
 if GROUP_REPLY_MODE == "mention":
     GROUP_REPLY_MODE = "all"
-
-# ============ 项目标识（长期可识别） ============
-#
-# 这是上游 alingalingling/Akasha-WeChat 的 RC 分支。名字与版本号固定写在这里 +
-# 同目录 VERSION 文件，方便日志、面板、issue 里一眼分辨"跑的是哪一版"，
-# 不依赖目录名（目录可能被改名）。
-PROJECT_NAME = "Akasha-WeChat_RC"
-_VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
-try:
-    with open(_VERSION_FILE, encoding="utf-8") as _f:
-        PROJECT_VERSION = _f.read().strip() or "0.0.0"
-except Exception:
-    PROJECT_VERSION = "0.0.0"
 
 # 切换联系人的方式：
 #   "auto"   —— 先在左侧会话列表按名字点击，找不到再退回 Ctrl+F 搜索（默认）
@@ -105,13 +136,9 @@ IMAGE_MAX_BYTES = int(config.get("image_max_bytes", 8 * 1024 * 1024))
 ASTRBOT_OB_URL = config.get("astrbot_ob_url", "ws://127.0.0.1:19777")
 
 # AstrBot 主配置（cmd_config.json）路径：面板「成员与权限」要往这里同步
-# 管理员列表和白名单/主动回复设置。留空则按 ../AstrBot/data/cmd_config.json 猜测。
-ASTRBOT_CONFIG_FILE = config.get("astrbot_config_file", "")
-if not ASTRBOT_CONFIG_FILE:
-    _guess = os.path.abspath(os.path.join(os.path.dirname(CONFIG_FILE),
-                                          "..", "AstrBot", "data", "cmd_config.json"))
-    if os.path.exists(_guess):
-        ASTRBOT_CONFIG_FILE = _guess
+# 管理员列表和白名单/主动回复设置。留空则按常见布局自动搜索（见 _resolve_dir_or_file）。
+ASTRBOT_CONFIG_FILE = _resolve_dir_or_file(
+    config.get("astrbot_config_file", ""), "data/cmd_config.json")
 
 # 图片描述配置（支持 ollama 或 openai 兼容 API）
 IMAGE_CAPTION_PROVIDER = config.get("image_caption_provider", "ollama")  # "ollama" / "openai"

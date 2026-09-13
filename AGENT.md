@@ -64,9 +64,16 @@
 - **离线回归**：可以抓一段 WeFlow SSE（`curl -N .../api/v1/push/messages`）存成文本，再逐条喂给 `add_to_buffer` 做回放测试，不用真的发微信消息
 - **对照上游**：`diff` 上游 `wechat-weflow-bridge-ob11/*`，确认没有意外删除
 
-## 5. 发布流程
+## 5. 发布流程（版号制，v1.0.0 起）
 
 1. 改代码 → 本地验证
 2. `CHANGELOG.md` 追加一条（说明改了什么、为什么）
-3. `VERSION` 按 `上游版本-rc.N` 递增
-4. 提交推送；如需同步上游更新，先在上游仓库 fetch 后再合入，保留原目录结构
+3. `VERSION` 递增：**格式固定 `X.Y.Z`**（不再用 rc 后缀）；改动版本只改 `wechat-weflow-bridge-ob11/VERSION` 这一个文件
+4. 出包：`python scripts/build_release.py`（加 `--zip` 生成可外发纯净包）——
+   自动产生 `release/versions/vX.Y.Z/` 归档、刷新 `release/newestbuild/`、
+   把上一次镜像挪进 `release/backups/pre-vX.Y.Z-*`
+5. 提交推送；如需同步上游更新，先在上游仓库 fetch 后再合入，保留原目录结构
+
+约定：`release/` 整体不入库；`runtime/`（本地运行环境，含 venv 与业务数据）不入库；
+代码与配置里**不写死绝对路径**——相对路径以「项目根（桥接目录的上一级）」为基准，
+AstrBot 相关配置留空时会自动按常见布局搜索。

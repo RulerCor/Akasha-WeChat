@@ -2,7 +2,7 @@
     "_comment": "微信 <-> AstrBot 桥接 - OneBot v11 版配置。图片识别有两条路：image_caption_model 留空 = 图片原样交给 AstrBot（由它决定用主模型直看还是转述模型）；填了模型名 = 桥接先按 image_caption_* 把图转成文字再发。",
     "weflow_base_url": "http://127.0.0.1:5031",
     "access_token": "你的WeFlow_Access_Token",
-    "astrbot_attachments": "C:\\astrbot\\data\\attachments",
+    "astrbot_attachments": "astrbot/data/attachments",
     "bot_nicknames": [
         "机器人昵称"
     ],
@@ -13,7 +13,7 @@
     "web_port": 8766,
     "group_reply_mode": "all",
     "astrbot_ob_url": "ws://127.0.0.1:11229/ws",
-    "astrbot_config_file": "",
+    "astrbot_config_file": "astrbot/data/cmd_config.json",
     "ollama_base_url": "http://127.0.0.1:61000",
     "ollama_model": "llava:7b",
     "ollama_timeout": 60,

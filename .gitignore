@@ -29,3 +29,9 @@ sim/data/
 sim/*.log
 sim/模拟对话测试报告.md
 __pycache__/
+
+# ===== 本地运行环境（桥接 + AstrBot，含 venv 与业务数据，绝不入库）=====
+runtime/
+
+# ===== 发布产物（用 scripts/build_release.py 生成，不入库）=====
+release/

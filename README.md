@@ -119,11 +119,39 @@ sim/                        附属工具：微信对话模拟器（见 sim/READM
 └── README.md               用途、依赖与注意事项
 ```
 
-## 版本与维护约定
+## 版本与出包（版号制）
 
-- 版本号遵循 `上游版本-rc.N`（当前 `1.0.1-rc.1`），上游升级时同步前半段
+从 **v1.0.0** 起，本项目按 `vX.Y.Z` 走版号（此前 `1.0.1-rc.1~rc.7` 为预发布，已归档在 `CHANGELOG.md`）。
+版本号始终写在 `wechat-weflow-bridge-ob11/VERSION` 单行文件里，改版本只改这一个文件。
+
+出包统一用脚本（路径全相对，任何电脑任何位置都能跑）：
+
+```bat
+python scripts/build_release.py            :: 归档当前版本 + 刷新 newestbuild
+python scripts/build_release.py --zip      :: 另外生成「纯净版」zip（可外发）
+```
+
+产物结构（对齐 `C:\WechatBotShare` 的约定，`release/` 不入库）：
+
+```
+release/
+├── versions/vX.Y.Z/     该版本完整快照（归档，不再改动）
+├── newestbuild/         始终是最新的完整镜像（代码 + 文档 + 运行时数据快照）
+├── backups/pre-vX.Y.Z-* 构建前的上一次 newestbuild（回滚用）
+└── Akasha-WeChat_纯净版-vX.Y.Z.zip   已清除密钥/venv/日志，可外发
+```
+
+其余维护约定：
+
 - 每次改动都要在 `CHANGELOG.md` 留一条；改动涉及"约定/坑"时同步 `AGENT.md`
 - **不删上游既有代码**（含未使用的导入、重复实现、看着像死代码的部分）——修 bug 可以，顺手清理不行，避免与上游合并时冲突
+
+## 目录与路径约定
+
+- 本地运行环境在 `runtime/`（`bridge/` 桥接、`astrbot/` AstrBot，含 venv 与业务数据），**不入库**
+- 代码中不写死绝对路径：`config.json` 里的 `astrbot_config_file`、`astrbot_attachments`
+  都是相对路径，以「项目根（桥接目录的上一级）」为基准；留空时会自动按
+  `runtime/astrbot`、`../AstrBot` 等常见布局搜索——所以整个目录拷到别的电脑也能直接跑
 
 ## 隐私提醒
 
