@@ -95,7 +95,7 @@ try:
 except Exception as e:
     print("err", e)
 
-if s._popup_menu_open(timeout=1.0): s._auto.SendKeys("{Esc}")
+
 time.sleep(0.3)
-if s._popup_menu_open(timeout=1.0): s._auto.SendKeys("{Esc}")
+
 print("\n已按 Esc 收起")

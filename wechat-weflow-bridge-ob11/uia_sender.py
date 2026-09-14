@@ -1255,81 +1255,43 @@ class UiaSender(BaseSender):
                 continue
         return None
 
-    # 右键菜单里常见的兄弟项，用来判断「菜单到底弹出来了没有」。
-    # 重要：只有确认菜单存在才按 Esc 收起 —— 直接对微信主窗口按 Esc
-    # 会把窗口关掉（实测踩过），所以绝不盲按。
+    # ⚠️ 历史教训（2026-09-14，连踩三次）：**任何时候都不要对微信主窗口按 Esc**。
+    #    Esc 落到主窗口上会直接把微信窗口关掉。同理，也不要用"猜菜单在不在"的方式
+    #    决定是否按 Esc —— 微信正常 UI 里就有 Menu 类控件，误判率极高。
+    #    现在的策略：**完全不用 Esc**。菜单若真的开着，后续点击输入框/发送时
+    #    会自然关闭；我们只负责降级为普通发送即可。
     CTX_MENU_SIBLINGS = ("复制", "转发", "收藏", "删除", "撤回", "多选",
                          "提醒", "翻译", "置顶", "拍一拍", "引用")
 
-    def _popup_menu_open(self, timeout: float = 1.2) -> bool:
-        """判断右键菜单是否真的弹出来了（找菜单特征控件或已知菜单项）。"""
+    def _find_menu_item_strict(self, option: str, timeout: float = 2.0):
+        """在右键后弹出的菜单里找指定项。
+
+        只认「顶层弹窗」里的菜单项，避免把微信主界面里同名的常驻控件当成菜单
+        （曾经因此误判，进而误按 Esc 关掉了窗口）。找不到就返回 None，
+        调用方自行降级 —— 不做任何按键操作。
+        """
         import uiautomation as auto
 
-        def probe(ctrl, depth=0, maxd=8, budget=None):
+        def probe(ctrl, depth=0, maxd=6, budget=None):
             if budget is None:
-                budget = [400]
+                budget = [300]
             if depth > maxd or budget[0] <= 0:
-                return False
+                return None
             try:
                 for c in ctrl.GetChildren():
                     budget[0] -= 1
                     if budget[0] <= 0:
-                        return False
+                        return None
                     try:
                         nm = (c.Name or "").strip()
-                        cls = (c.ClassName or "").lower()
                         ct = c.ControlTypeName or ""
-                        if nm in self.CTX_MENU_SIBLINGS:
-                            return True
-                        if "menu" in cls or "popup" in cls or "Menu" in ct:
-                            return True
+                        if nm == option and ct in ("MenuItemControl", "ListItemControl",
+                                                   "ButtonControl", "TextControl",
+                                                   "CustomControl"):
+                            return c
                     except Exception:
                         pass
-                    if probe(c, depth + 1, maxd, budget):
-                        return True
-            except Exception:
-                pass
-            return False
-
-        end = time.time() + timeout
-        while time.time() < end:
-            if self._window and probe(self._window):
-                return True
-            try:
-                for w in auto.GetRootControl().GetChildren():
-                    try:
-                        if not w.Exists(0) or (w.ClassName or "") == "mmui::MainWindow":
-                            continue
-                        if probe(w, 0, 5, [200]):
-                            return True
-                    except Exception:
-                        continue
-            except Exception:
-                pass
-            time.sleep(0.15)
-        return False
-
-    def _context_menu_pick(self, option: str, timeout: float = 3.0):
-        """在刚弹出的上下文菜单里点选指定项。
-
-        微信 4.x 的右键菜单可能是独立顶层窗口或挂在微信窗口内，两边都找。
-        找不到返回 False（调用方负责按 Esc 收掉菜单）。
-        """
-        import uiautomation as auto
-
-        targets = []
-
-        def find_item(ctrl, depth=0, maxd=8):
-            if depth > maxd:
-                return None
-            try:
-                for c in ctrl.GetChildren():
-                    nm = (c.Name or "").strip()
-                    if nm == option and c.ControlTypeName in (
-                            "MenuItemControl", "ButtonControl", "ListItemControl",
-                            "TextControl", "CustomControl"):
-                        return c
-                    r = find_item(c, depth + 1, maxd)
+                    r = probe(c, depth + 1, maxd, budget)
                     if r:
                         return r
             except Exception:
@@ -1338,38 +1300,22 @@ class UiaSender(BaseSender):
 
         end = time.time() + timeout
         while time.time() < end:
-            # 1) 微信窗口内
-            if self._window:
-                hit = find_item(self._window)
-                if hit:
-                    targets.append(hit)
-            # 2) 其它顶层窗口（独立菜单窗口）
-            if not targets:
-                try:
-                    for w in auto.GetRootControl().GetChildren():
-                        try:
-                            if not w.Exists(0):
-                                continue
-                            hit = find_item(w, 0, 6)
-                            if hit:
-                                targets.append(hit)
-                                break
-                        except Exception:
-                            continue
-                except Exception:
-                    pass
-            if targets:
-                try:
-                    targets[0].Click()
-                    return True
-                except Exception:
+            try:
+                for w in auto.GetRootControl().GetChildren():
                     try:
-                        self._click_control_center(targets[0])
-                        return True
+                        if not w.Exists(0):
+                            continue
+                        if (w.ClassName or "") == "mmui::MainWindow":
+                            continue      # 跳过微信主窗口，只看独立弹层
+                        hit = probe(w, 0, 6, [250])
+                        if hit:
+                            return hit
                     except Exception:
-                        return False
-            time.sleep(0.15)
-        return False
+                        continue
+            except Exception:
+                pass
+            time.sleep(0.2)
+        return None
 
     def send_quote(self, contact: str, quote_content: str, text: str) -> bool:
         """原生引用回复：右键原消息 → 「引用」→ 输入正文 → 发送。
@@ -1398,19 +1344,26 @@ class UiaSender(BaseSender):
                     return self.send_text(contact, text)
 
                 item.RightClick()
-                time.sleep(0.35)
+                time.sleep(0.4)
 
-                # 先确认菜单真的弹出来了：没弹出来就别按 Esc，
-                # 否则 Esc 会落到微信主窗口上把窗口关掉。
-                menu_open = self._popup_menu_open(timeout=1.5)
-                picked = self._context_menu_pick(self.QUOTE_MENU_NAME, timeout=2.5) if menu_open else False
-
-                if not picked:
-                    if menu_open:
-                        self._auto.SendKeys("{Esc}")   # 只在确实有菜单时才收起
-                        time.sleep(0.1)
-                    log.info("引用：未能选中「引用」（菜单已弹出=%s），降级普通发送" % menu_open)
+                # 只在「独立弹层」里找「引用」——绝不在微信主窗口里按 Esc。
+                # 找不到就降级普通发送：后续点击输入框会自然关掉任何残留菜单。
+                picked_ctl = self._find_menu_item_strict(
+                    self.QUOTE_MENU_NAME, timeout=2.0)
+                if picked_ctl is None:
+                    log.info("引用：未找到「引用」菜单项，降级普通发送")
                     return self.send_text(contact, text)
+
+                try:
+                    picked_ctl.Click()
+                except Exception:
+                    try:
+                        self._click_control_center(picked_ctl)
+                    except Exception:
+                        log.info("引用：菜单项点击失败，降级普通发送")
+                        return self.send_text(contact, text)
+
+                time.sleep(0.4)
 
                 time.sleep(0.4)
 

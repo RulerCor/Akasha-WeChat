@@ -98,7 +98,7 @@ hit = any(nm == "引用" for _, nm in found)
 print(f"\n>>> 「引用」菜单项: {'✅ 存在' if hit else '❌ 未找到'}")
 
 # 收掉菜单
-if s._popup_menu_open(timeout=1.0): s._auto.SendKeys("{Esc}")
+
 time.sleep(0.2)
-if s._popup_menu_open(timeout=1.0): s._auto.SendKeys("{Esc}")
+
 print("已按 Esc 收起菜单")
