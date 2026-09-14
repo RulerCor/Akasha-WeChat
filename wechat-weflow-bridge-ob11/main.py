@@ -108,7 +108,6 @@ def _bridge_loop():
         state.running = False
         return
 
-    log.info(f"{config.PROJECT_NAME} v{config.PROJECT_VERSION} (upstream: alingalingling/Akasha-WeChat)")
     log.info(f"Bridge | WeFlow: {config.WE_FLOW_BASE_URL} | OB11: {config.ASTRBOT_OB_URL} | 发送: {config.SEND_METHOD}")
 
     bridge = WeFlowBridge(state.sender_instance)

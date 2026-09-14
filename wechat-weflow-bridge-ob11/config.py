@@ -108,8 +108,15 @@ QUOTE_REPLY_PREFIX = config.get("quote_reply_prefix", False)
 
 # 原生引用回复：右键原消息 → 菜单「引用」→ 输入正文 → 发送，
 # 得到微信自己的引用气泡（而不是 @ 或 〔回复…〕文字模拟）。
-# 需要 UIA 发送方式；失败时自动降级为普通文本发送，不影响送达。
-QUOTE_REPLY_NATIVE = config.get("quote_reply_native", True)
+# ⚠️ 2026-09-14 实测：当前微信 4.x 版本的消息右键菜单是**自绘的、对 UIA 不可见**
+#    （右键 / 悬浮 / 选中后右键三种方式都探测不到任何新控件），所以这条路走不通，
+#    默认已关闭。打开只会平白增加约 3 秒延迟并可能弹出可见菜单。留作以后换版本再试。
+QUOTE_REPLY_NATIVE = config.get("quote_reply_native", False)
+
+# 把 AstrBot 的 @ 段降级成文字「@昵称 」（默认开）。
+# 微信 UIA 点不出真正的 @，而 at 段此前在出站时被静默丢弃 —— 群里根本看不出
+# 这条回复是在回谁。转成文字后至少能说明对象。
+MENTION_AS_TEXT = config.get("mention_as_text", True)
 
 # ============ 项目标识（长期可识别） ============
 # 上游 alingalingling/Akasha-WeChat 的 RC 分支。名字与版本号固定写在这里 +

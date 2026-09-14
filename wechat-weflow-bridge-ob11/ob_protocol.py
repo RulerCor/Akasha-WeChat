@@ -225,6 +225,7 @@ async def _handle_ob_api(data: dict):
         # 两者都关则忽略 reply 段，回复为纯文本。
         quote_prefix = None
         quote_target = None          # 原生引用要定位的原消息内容
+        at_prefix = ""               # @ 段转成的文字前缀
         for seg in message:
             if not isinstance(seg, dict):
                 continue
@@ -241,12 +242,28 @@ async def _handle_ob_api(data: dict):
                     quote_prefix = f"〔回复 {orig.get('sender','?')}：{snippet}〕\n"
                 continue
 
+            if seg_type == "at":
+                # AstrBot 开 reply_with_mention 时会带 @ 段。微信侧无法做原生引用，
+                # 而 UIA 也点不出 @（at 段此前被静默丢弃，导致群回复看不出在回谁）。
+                # 这里把它降级成文字「@昵称 」，至少让群里知道在叫谁。
+                qq = str(seg_data.get("qq", "")).strip()
+                if qq and qq != "all" and config.MENTION_AS_TEXT:
+                    try:
+                        nm = state.get_member_name(int(qq))
+                    except (TypeError, ValueError):
+                        nm = None
+                    at_prefix = f"@{nm or qq} "
+                continue
+
             if seg_type == "text":
                 text = seg_data.get("text", "")
                 if text:
                     if quote_prefix:
                         text = quote_prefix + text
                         quote_prefix = None
+                    if at_prefix and not text.lstrip().startswith("@"):
+                        text = at_prefix + text
+                    at_prefix = ""
                     if quote_target:
                         # 原生引用发出（内部失败会自动降级）
                         await asyncio.to_thread(

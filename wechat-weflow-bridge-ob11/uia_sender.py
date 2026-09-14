@@ -127,7 +127,10 @@ class UiaSender(BaseSender):
             return False
 
     def __init__(self, search_enabled: bool = True):
-        self._lock = threading.Lock()
+        # ⚠️ 必须是可重入锁（RLock）：send_quote 会在持锁状态下调用 send_text
+        #    做降级发送，普通 Lock 会在第二次 acquire 时永久自锁（实测卡死
+        #    桥接发送线程 80s+ 不返回）。
+        self._lock = threading.RLock()
         self._auto = None
         self._ready = False
 

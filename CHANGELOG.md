@@ -4,41 +4,44 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
-## [1.2.0]
+## [1.2.1]
 
-这一版的主题：**治「沉浸在自己的世界里」——上下文爆炸 + 原生引用回复**。
+这一版的主题：**上下文爆炸治理 + 出站段（引用/@）修复**。
 
-### 修复
+> v1.2.0 是本地中间构建、未对外发布，本版包含其全部改动。
 
-- **上下文无限膨胀**：`/stats` 实测单会话已达 **1,224,323 tokens**。根因是
-  `agent_runner.config.compression.max_turns = -1`（永不按轮数截断）。
-  已改为 **30 轮**——下次对话即硬截断到最近 30 轮，无需手动清空、不丢近期记忆。
+### 修复（严重）
+
+- **UIA 发送器死锁**：`_lock` 用了不可重入的 `threading.Lock`，而 `send_quote` 会在
+  持锁状态下调用 `send_text` 降级发送 → 第二次 acquire **永久自锁**，实测卡死发送线程
+  80s+ 不返回。生产影响：AstrBot 每发一条带 `reply` 段的回复都会卡死桥接发送线程。
+  已改为 `threading.RLock`。
+- **上下文无限膨胀**：`/stats` 实测单会话达 **1,224,323 tokens**。根因是
+  `agent_runner.config.compression.max_turns = -1`（永不按轮数截断）。治理方案见「变更」。
 - **主动回复概率被还原**：`possibility_reply` 从 0.1 改回 **0.03**（此前改过又被覆盖）。
-
-### 新增
-
-- **微信原生引用回复**（`quote_reply_native`，默认开）：AstrBot 开启 `reply_with_quote`
-  后回复链带 `reply` 段，桥接现在会**右键原消息 → 上下文菜单「引用」→ 发正文**，
-  得到微信自己的引用气泡，而不是丢掉该段（此前 `at` 段也是被静默丢弃的，
-  所以群里看到的回复既没有 @ 也没有引用）。
-  实现参考 wxauto4 的 `HumanMessage.quote()`（right_click + select_option("引用")）。
-  消息列表定位：`mmui::MessageView > ListControl(mmui::RecyclerListView)
-  > ListItemControl(mmui::ChatTextItemView)`，按内容前缀匹配，并归一化
-  U+2005 等特殊空格（微信 @ 后是四分之一空格，不归一就匹配不上）。
-  **失败一律自动降级为普通文本发送**，不影响送达。
-- 新增配置项 `quote_reply_native`（默认 true）；`quote_reply_prefix` 降级为
-  「原生不可用时的文本模拟」。
-- 新增 `scripts/analyze_log.py`、`scripts/analyze_mine.py`：日志分析工具，
-  统计各场景回复率、回复长度、分段情况（排障用，不参与打包）。
+- **AstrBot 面板看不到黑名单**：此前只加了默认值与类型 schema，漏了 WebUI 提示区
+  （`CONFIG_METADATA_3`）。已补 `provider_ltm_settings.active_reply.blacklist`。
+- **`at` 段被静默丢弃**：出站只处理 `reply/text/image/file/face`，`at` 不在其中 ——
+  所以群里的回复看不出在回谁。
 
 ### 变更
 
-- **上下文治理改为 token 阈值优先**（原为轮数硬截断）：把所有文本对话模型的
-  `max_context_tokens` 设为 65536，超阈值走 `llm_compress` 把旧对话**总结成摘要**保留；
-  `max_turns` 放宽到 100 只作兜底。理由：轮数截断是硬丢弃会真的忘，token 压缩保留语义。
+- **上下文治理改为 token 阈值优先**（原为轮数硬截断）：所有文本对话模型的
+  `max_context_tokens` 设为 **65536**，超阈值走 `llm_compress` 把旧对话**总结成摘要**保留；
+  `max_turns` 放宽到 **100** 只作兜底。理由：轮数截断是硬丢弃会真的忘，token 压缩保留语义。
   （此前 MiniMax-M3 窗口 1M、agnes-3.0-flash 512K，不设就是放任上下文涨到百万级。）
-- 新增 `sim/sim_test_suite.py`：模拟器综合测试套件（10 项：功能如实答 / 模型名 /
-  知识库 AK+终末地 / 称呼规则 / 语言跟随 英日 / 简洁度 / 上下文记忆），一键跑并输出汇总。
+  ⚠️ 换模型时记得给新模型也设 `max_context_tokens`。
+- **原生引用默认关闭**（`quote_reply_native=false`）：实测当前微信 4.x 的消息右键菜单是
+  **自绘的、对 UIA 完全不可见**（右键 / 悬浮 / 先选中再右键三种方式均零新增控件、
+  零新增顶层窗口），wxauto4 那套 `right_click + select_option("引用")` 在此版本上不可用。
+  实现代码保留，将来微信版本变化可直接打开再试。
+- **新增 `mention_as_text`（默认开）**：把 `at` 段降级成文字「@昵称 」，
+  群里终于看得出这条回复在回谁；已自带 `@` 或 `@全体` 时不重复加。
+- **新增 `sim/sim_test_suite.py`**：模拟器综合测试套件（10 项：功能如实答 / 模型名 /
+  知识库 AK+终末地 / 称呼规则 / 语言跟随 英日 / 简洁度 / 上下文记忆），一键跑并输出汇总，
+  实测 10/10 通过。
+- **新增分析脚本** `scripts/analyze_log.py`、`scripts/analyze_mine.py`：统计各场景
+  回复率、回复长度、分段情况（排障用，不参与打包）。
 
 ## [1.1.0]
 
