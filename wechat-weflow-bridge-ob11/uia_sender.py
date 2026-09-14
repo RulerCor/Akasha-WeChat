@@ -83,6 +83,10 @@ class BaseSender:
     def send_file(self, contact: str, file_path: str) -> bool:
         raise NotImplementedError
 
+    def send_quote(self, contact: str, quote_content: str, text: str) -> bool:
+        """引用回复。默认降级为普通文本（子类可覆盖实现原生引用）。"""
+        return self.send_text(contact, text)
+
 
 class UiaSender(BaseSender):
     """
@@ -1173,6 +1177,215 @@ class UiaSender(BaseSender):
             except Exception as e:
                 log.error(f"[UIA✗] 文件 → {contact}: {e}")
                 return False
+
+    # ---------- 原生引用回复 ----------
+    # 微信 4.x 的引用气泡：右键目标消息 → 上下文菜单「引用」→ 输入正文 → 发送。
+    # 参考 wxauto4 的 HumanMessage.quote()（right_click + select_option("引用")）。
+    # 消息列表结构：mmui::MessageView > ListControl(mmui::RecyclerListView)
+    #               > ListItemControl(mmui::ChatTextItemView)
+
+    MSG_LIST_CLASS = "RecyclerListView"
+    MSG_ITEM_CLASS = "ChatTextItemView"
+    QUOTE_MENU_NAME = "引用"
+
+    def _find_message_list(self):
+        """定位当前会话的消息列表控件。"""
+        win = self._window
+        if not win:
+            return None
+
+        # 消息列表在控件树里很深（约 15 层：MainWindow → … → MessageView
+        # → RecyclerListView），深度要留够；同时给节点预算防止卡顿。
+        budget = [4000]
+
+        def walk(ctrl, depth=0, maxd=22):
+            if depth > maxd or budget[0] <= 0:
+                return None
+            try:
+                for c in ctrl.GetChildren():
+                    budget[0] -= 1
+                    if budget[0] <= 0:
+                        return None
+                    if self.MSG_LIST_CLASS in (c.ClassName or ""):
+                        return c
+                    r = walk(c, depth + 1, maxd)
+                    if r:
+                        return r
+            except Exception:
+                pass
+            return None
+
+        return walk(win)
+
+    def _find_message_item(self, content: str):
+        """在消息列表里按内容找最近一条匹配的消息项。
+
+        只取前若干字符做前缀匹配：换行的长文本 UIA 里 Name 会带换行，
+        而原始消息内容可能已被桥接改写（例如加了「某某在群某某中说：」外壳）。
+        """
+        lst = self._find_message_list()
+        if not lst or not content:
+            return None
+
+        # 归一化空白：微信 @ 后面是 U+2005（四分之一空格），
+        # 而 WeFlow 推来的原文可能是普通空格，不归一就匹配不上。
+        def norm(s: str) -> str:
+            out = []
+            for ch in (s or ""):
+                out.append(" " if (ch.isspace() or ch in "\u2005\u200b\ufeff") else ch)
+            return "".join(out).strip()
+
+        key = norm(content)[:24]
+        if len(key) < 4:
+            return None
+        try:
+            items = lst.GetChildren()
+        except Exception:
+            return None
+        # 从后往前找（最近的消息）
+        for it in reversed(items):
+            try:
+                cls = it.ClassName or ""
+                if self.MSG_ITEM_CLASS not in cls:
+                    continue
+                nm = norm(it.Name)
+                if key in nm:
+                    return it
+            except Exception:
+                continue
+        return None
+
+    def _context_menu_pick(self, option: str, timeout: float = 3.0):
+        """在刚弹出的上下文菜单里点选指定项。
+
+        微信 4.x 的右键菜单可能是独立顶层窗口或挂在微信窗口内，两边都找。
+        找不到返回 False（调用方负责按 Esc 收掉菜单）。
+        """
+        import uiautomation as auto
+
+        targets = []
+
+        def find_item(ctrl, depth=0, maxd=8):
+            if depth > maxd:
+                return None
+            try:
+                for c in ctrl.GetChildren():
+                    nm = (c.Name or "").strip()
+                    if nm == option and c.ControlTypeName in (
+                            "MenuItemControl", "ButtonControl", "ListItemControl",
+                            "TextControl", "CustomControl"):
+                        return c
+                    r = find_item(c, depth + 1, maxd)
+                    if r:
+                        return r
+            except Exception:
+                pass
+            return None
+
+        end = time.time() + timeout
+        while time.time() < end:
+            # 1) 微信窗口内
+            if self._window:
+                hit = find_item(self._window)
+                if hit:
+                    targets.append(hit)
+            # 2) 其它顶层窗口（独立菜单窗口）
+            if not targets:
+                try:
+                    for w in auto.GetRootControl().GetChildren():
+                        try:
+                            if not w.Exists(0):
+                                continue
+                            hit = find_item(w, 0, 6)
+                            if hit:
+                                targets.append(hit)
+                                break
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
+            if targets:
+                try:
+                    targets[0].Click()
+                    return True
+                except Exception:
+                    try:
+                        self._click_control_center(targets[0])
+                        return True
+                    except Exception:
+                        return False
+            time.sleep(0.15)
+        return False
+
+    def send_quote(self, contact: str, quote_content: str, text: str) -> bool:
+        """原生引用回复：右键原消息 → 「引用」→ 输入正文 → 发送。
+
+        失败（找不到原消息 / 菜单没出来 / 不支持引用）时自动降级为普通文本发送，
+        保证消息一定送达。
+        """
+        with self._lock:
+            if not self._ready:
+                return self.send_text(contact, text)
+            try:
+                if not self._ensure_window():
+                    return self.send_text(contact, text)
+                self._activate()
+
+                if self.search_enabled and contact:
+                    if not self._is_chat_open(contact):
+                        if not self._switch_to_contact(contact):
+                            log.warning(f"引用：无法切到 '{contact}'，降级普通发送")
+                            return self.send_text(contact, text)
+                    self._last_contact = contact
+
+                item = self._find_message_item(quote_content)
+                if item is None:
+                    log.info("引用：未定位到原消息，降级普通发送")
+                    return self.send_text(contact, text)
+
+                item.RightClick()
+                time.sleep(0.35)
+
+                if not self._context_menu_pick(self.QUOTE_MENU_NAME, timeout=3.0):
+                    self._auto.SendKeys("{Esc}")
+                    time.sleep(0.1)
+                    log.info("引用：上下文菜单未找到「引用」，降级普通发送")
+                    return self.send_text(contact, text)
+
+                time.sleep(0.4)
+
+                if not self._locate_input():
+                    return self.send_text(contact, text)
+
+                ctrl = self._input_control
+                try:
+                    ctrl.SetFocus()
+                    time.sleep(0.05)
+                except Exception:
+                    pass
+
+                if not (set_value(ctrl, "") and set_value(ctrl, text)):
+                    self._click_input_center()
+                    import pyperclip
+                    pyperclip.copy(text)
+                    time.sleep(0.08)
+                    self._auto.SendKeys("{Ctrl}v")
+
+                time.sleep(0.1)
+                if not self._send_current(ctrl, verify=False):
+                    log.error(f"[UIA✗] 引用 → {contact}: 已填入但未能发出，降级普通发送")
+                    return self.send_text(contact, text)
+
+                log.info(f"[UIA✓] 引用 → {contact}: {text[:50]}...")
+                return True
+
+            except Exception as e:
+                log.warning(f"引用失败，降级普通发送: {e}")
+                try:
+                    self._auto.SendKeys("{Esc}")
+                except Exception:
+                    pass
+                return self.send_text(contact, text)
 
     def _copy_file_to_clipboard(self, path: str):
         """复制文件到剪贴板（CF_HDROP 文件拖放格式，聊天框 Ctrl+V 即发送该文件）"""

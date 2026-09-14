@@ -27,5 +27,6 @@
     "switch_method": "auto",
     "log_skipped_messages": true,
     "quote_reply_prefix": false,
+    "quote_reply_native": true,
     "web_host": "0.0.0.0"
 }

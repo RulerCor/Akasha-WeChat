@@ -217,11 +217,14 @@ async def _handle_ob_api(data: dict):
         contact = state.get_contact(target_id, str(target_id))
 
         # 逐段处理：文字和图片分别发送
-        # 引用回复前缀（可选）：AstrBot 开启 reply_with_quote 后，回复链开头是
-        # {"type":"reply","data":{"id":N}} 段。微信 UIA 做不了原生引用，
-        # 开启 quote_reply_prefix 时把它翻译成「〔回复 某某：原文…〕」拼在下一段文字前；
-        # 默认关闭，直接忽略 reply 段。
+        # 引用回复（可选）：AstrBot 开启 reply_with_quote 后，回复链开头是
+        # {"type":"reply","data":{"id":N}} 段。
+        #   · quote_reply_native（默认开）= 微信原生引用气泡：右键原消息 →
+        #     菜单「引用」→ 发正文。失败自动降级普通发送，不影响送达。
+        #   · quote_reply_prefix = 文本模拟「〔回复 某某：原文…〕」，仅在原生不可用时用。
+        # 两者都关则忽略 reply 段，回复为纯文本。
         quote_prefix = None
+        quote_target = None          # 原生引用要定位的原消息内容
         for seg in message:
             if not isinstance(seg, dict):
                 continue
@@ -229,11 +232,13 @@ async def _handle_ob_api(data: dict):
             seg_data = seg.get("data", {})
 
             if seg_type == "reply":
-                if config.QUOTE_REPLY_PREFIX:
-                    orig = state.get_message(seg_data.get("id"))
-                    if orig:
-                        snippet = (orig.get("content") or "").replace("\n", " ")[:40]
-                        quote_prefix = f"〔回复 {orig.get('sender','?')}：{snippet}〕\n"
+                orig = state.get_message(seg_data.get("id"))
+                if config.QUOTE_REPLY_NATIVE:
+                    if orig and (orig.get("content") or "").strip():
+                        quote_target = orig.get("content")
+                elif orig and config.QUOTE_REPLY_PREFIX:
+                    snippet = (orig.get("content") or "").replace("\n", " ")[:40]
+                    quote_prefix = f"〔回复 {orig.get('sender','?')}：{snippet}〕\n"
                 continue
 
             if seg_type == "text":
@@ -242,7 +247,15 @@ async def _handle_ob_api(data: dict):
                     if quote_prefix:
                         text = quote_prefix + text
                         quote_prefix = None
-                    await asyncio.to_thread(state.sender_instance.send_text, contact, text)
+                    if quote_target:
+                        # 原生引用发出（内部失败会自动降级）
+                        await asyncio.to_thread(
+                            state.sender_instance.send_quote,
+                            contact, quote_target, text)
+                        quote_target = None
+                    else:
+                        await asyncio.to_thread(
+                            state.sender_instance.send_text, contact, text)
                     # 记录自己发出的内容：这条消息会被 WeFlow 读回来，
                     # 若不拦截会被当成用户输入再回一遍（自问自答）
                     state.note_sent_text(text)

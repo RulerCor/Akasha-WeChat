@@ -46,15 +46,6 @@ BRIDGE_DIR = os.path.dirname(CONFIG_FILE)
 # 所有相对路径都以它为基准，这样整个目录拷贝到任何电脑、任何位置都能直接用。
 PROJECT_ROOT = os.path.abspath(os.path.join(BRIDGE_DIR, ".."))
 
-# ============ 项目标识（长期可识别） ============
-PROJECT_NAME = "Akasha-WeChat_RC"
-_VERSION_FILE = os.path.join(BRIDGE_DIR, "VERSION")
-try:
-    with open(_VERSION_FILE, encoding="utf-8") as _f:
-        PROJECT_VERSION = _f.read().strip() or "0.0.0"
-except Exception:
-    PROJECT_VERSION = "0.0.0"
-
 
 def _resolve_dir_or_file(value: str, sub_path: str) -> str:
     """把配置里的路径解析成绝对路径。
@@ -111,9 +102,25 @@ SWITCH_METHOD = config.get("switch_method", "auto")
 # 打开后日志里能看到消息确实收到了、只是被策略丢弃，便于区分「没收到」和「被跳过」。
 LOG_SKIPPED_MESSAGES = config.get("log_skipped_messages", True)
 
-# 引用回复前缀（〔回复 某某：原文〕）。微信 UIA 无法做原生引用气泡，只能文本模拟；
+# 引用回复前缀（〔回复 某某：原文〕）。文本模拟，仅在原生引用不可用时才有意义；
 # 默认关闭 —— 关闭后 reply 段直接忽略，回复为纯文本。
 QUOTE_REPLY_PREFIX = config.get("quote_reply_prefix", False)
+
+# 原生引用回复：右键原消息 → 菜单「引用」→ 输入正文 → 发送，
+# 得到微信自己的引用气泡（而不是 @ 或 〔回复…〕文字模拟）。
+# 需要 UIA 发送方式；失败时自动降级为普通文本发送，不影响送达。
+QUOTE_REPLY_NATIVE = config.get("quote_reply_native", True)
+
+# ============ 项目标识（长期可识别） ============
+# 上游 alingalingling/Akasha-WeChat 的 RC 分支。名字与版本号固定写在这里 +
+# 同目录 VERSION 文件，方便日志/面板/issue 一眼分辨版本，不依赖目录名。
+PROJECT_NAME = "Akasha-WeChat_RC"
+_VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
+try:
+    with open(_VERSION_FILE, encoding="utf-8") as _f:
+        PROJECT_VERSION = _f.read().strip() or "0.0.0"
+except Exception:
+    PROJECT_VERSION = "0.0.0"
 
 # 群聊图片读取门槛（秒）：图片必须和「同一个人的 @」属于同一次请求才读取。
 #   - @ 之前发的图：暂存这么长时间，等同一人发 @ 文本时一并读取

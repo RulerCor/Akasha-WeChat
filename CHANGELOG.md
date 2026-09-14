@@ -4,6 +4,33 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## [1.2.0]
+
+这一版的主题：**治「沉浸在自己的世界里」——上下文爆炸 + 原生引用回复**。
+
+### 修复
+
+- **上下文无限膨胀**：`/stats` 实测单会话已达 **1,224,323 tokens**。根因是
+  `agent_runner.config.compression.max_turns = -1`（永不按轮数截断）。
+  已改为 **30 轮**——下次对话即硬截断到最近 30 轮，无需手动清空、不丢近期记忆。
+- **主动回复概率被还原**：`possibility_reply` 从 0.1 改回 **0.03**（此前改过又被覆盖）。
+
+### 新增
+
+- **微信原生引用回复**（`quote_reply_native`，默认开）：AstrBot 开启 `reply_with_quote`
+  后回复链带 `reply` 段，桥接现在会**右键原消息 → 上下文菜单「引用」→ 发正文**，
+  得到微信自己的引用气泡，而不是丢掉该段（此前 `at` 段也是被静默丢弃的，
+  所以群里看到的回复既没有 @ 也没有引用）。
+  实现参考 wxauto4 的 `HumanMessage.quote()`（right_click + select_option("引用")）。
+  消息列表定位：`mmui::MessageView > ListControl(mmui::RecyclerListView)
+  > ListItemControl(mmui::ChatTextItemView)`，按内容前缀匹配，并归一化
+  U+2005 等特殊空格（微信 @ 后是四分之一空格，不归一就匹配不上）。
+  **失败一律自动降级为普通文本发送**，不影响送达。
+- 新增配置项 `quote_reply_native`（默认 true）；`quote_reply_prefix` 降级为
+  「原生不可用时的文本模拟」。
+- 新增 `scripts/analyze_log.py`、`scripts/analyze_mine.py`：日志分析工具，
+  统计各场景回复率、回复长度、分段情况（排障用，不参与打包）。
+
 ## [1.1.0]
 
 这一版的主题：**主动回复黑名单 + 文件发送**。
