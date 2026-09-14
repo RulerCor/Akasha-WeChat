@@ -95,6 +95,16 @@ python main.py          # 或双击 start.bat（会开一个可见的控制台�
 
 打开面板 <http://127.0.0.1:8766> 看运行状态与实时日志（`web_host` 默认 `0.0.0.0`，局域网可访问；只想要本机就改成 `127.0.0.1`）。
 
+## 文档导航
+
+| 文档 | 看什么 |
+|---|---|
+| **[`docs/开发文档.md`](docs/开发文档.md)** | **开发前读这份**：架构、核心机制、配置参考、AstrBot 补丁清单、排障 |
+| `AGENT.md` | 红线与已知坑（改代码前的必读警告） |
+| `CHANGELOG.md` | 每个版本改了什么、为什么 |
+| `docs/architecture.html` | 可交互架构图（浏览器打开） |
+| `sim/README.md` | 微信对话模拟器（离线测说话效果） |
+
 ## 目录结构
 
 ```
@@ -104,6 +114,7 @@ Akasha-WeChat_RC/
 ├── CHANGELOG.md              开发日志（相对上游的改动史）
 ├── .gitignore
 ├── docs/
+│   ├── 开发文档.md           ★ 开发、配置、排障主文档
 │   ├── upstream-SETUP.md     上游「从零开始搭建指南」
 │   └── upstream-CLAUDE.md    上游给 AI 的模块速查
 └── wechat-weflow-bridge-ob11/    ← 代码目录（沿用上游路径）

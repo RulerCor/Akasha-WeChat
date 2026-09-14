@@ -1255,6 +1255,60 @@ class UiaSender(BaseSender):
                 continue
         return None
 
+    # 右键菜单里常见的兄弟项，用来判断「菜单到底弹出来了没有」。
+    # 重要：只有确认菜单存在才按 Esc 收起 —— 直接对微信主窗口按 Esc
+    # 会把窗口关掉（实测踩过），所以绝不盲按。
+    CTX_MENU_SIBLINGS = ("复制", "转发", "收藏", "删除", "撤回", "多选",
+                         "提醒", "翻译", "置顶", "拍一拍", "引用")
+
+    def _popup_menu_open(self, timeout: float = 1.2) -> bool:
+        """判断右键菜单是否真的弹出来了（找菜单特征控件或已知菜单项）。"""
+        import uiautomation as auto
+
+        def probe(ctrl, depth=0, maxd=8, budget=None):
+            if budget is None:
+                budget = [400]
+            if depth > maxd or budget[0] <= 0:
+                return False
+            try:
+                for c in ctrl.GetChildren():
+                    budget[0] -= 1
+                    if budget[0] <= 0:
+                        return False
+                    try:
+                        nm = (c.Name or "").strip()
+                        cls = (c.ClassName or "").lower()
+                        ct = c.ControlTypeName or ""
+                        if nm in self.CTX_MENU_SIBLINGS:
+                            return True
+                        if "menu" in cls or "popup" in cls or "Menu" in ct:
+                            return True
+                    except Exception:
+                        pass
+                    if probe(c, depth + 1, maxd, budget):
+                        return True
+            except Exception:
+                pass
+            return False
+
+        end = time.time() + timeout
+        while time.time() < end:
+            if self._window and probe(self._window):
+                return True
+            try:
+                for w in auto.GetRootControl().GetChildren():
+                    try:
+                        if not w.Exists(0) or (w.ClassName or "") == "mmui::MainWindow":
+                            continue
+                        if probe(w, 0, 5, [200]):
+                            return True
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+            time.sleep(0.15)
+        return False
+
     def _context_menu_pick(self, option: str, timeout: float = 3.0):
         """在刚弹出的上下文菜单里点选指定项。
 
@@ -1346,10 +1400,16 @@ class UiaSender(BaseSender):
                 item.RightClick()
                 time.sleep(0.35)
 
-                if not self._context_menu_pick(self.QUOTE_MENU_NAME, timeout=3.0):
-                    self._auto.SendKeys("{Esc}")
-                    time.sleep(0.1)
-                    log.info("引用：上下文菜单未找到「引用」，降级普通发送")
+                # 先确认菜单真的弹出来了：没弹出来就别按 Esc，
+                # 否则 Esc 会落到微信主窗口上把窗口关掉。
+                menu_open = self._popup_menu_open(timeout=1.5)
+                picked = self._context_menu_pick(self.QUOTE_MENU_NAME, timeout=2.5) if menu_open else False
+
+                if not picked:
+                    if menu_open:
+                        self._auto.SendKeys("{Esc}")   # 只在确实有菜单时才收起
+                        time.sleep(0.1)
+                    log.info("引用：未能选中「引用」（菜单已弹出=%s），降级普通发送" % menu_open)
                     return self.send_text(contact, text)
 
                 time.sleep(0.4)
@@ -1381,10 +1441,7 @@ class UiaSender(BaseSender):
 
             except Exception as e:
                 log.warning(f"引用失败，降级普通发送: {e}")
-                try:
-                    self._auto.SendKeys("{Esc}")
-                except Exception:
-                    pass
+                # 注意：这里刻意不按 Esc —— 盲按 Esc 会把微信窗口关掉。
                 return self.send_text(contact, text)
 
     def _copy_file_to_clipboard(self, path: str):

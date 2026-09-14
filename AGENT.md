@@ -39,7 +39,16 @@
 - `uiautomation` 2.x 移除了 `IsValuePatternAvailable` 和 `Control.SetValue`；要用 `GetPropertyValue(PropertyId.IsValuePatternAvailablePropertyId)` 和 `GetValuePattern().SetValue()`
 - `SendKeys` 是发给**当前焦点控件**的，不是发给调用它的控件；发之前必须先 `SetFocus()`
 - 判断是否真的发出去，唯一可靠判据是**输入框被清空**（发送按钮在空输入框时是禁用态，点了不报错）
+- **⚠️ 绝不要对微信主窗口盲按 `Esc`**：`SendKeys("{Esc}")` 落到主窗口上会**把微信窗口关掉**
+  （实测踩过两次，用户会以为程序崩了）。要收起右键菜单，必须先用
+  `uia_sender._popup_menu_open()` 确认菜单真的弹出来了才能按 Esc。
+- **消息列表在控件树约 15 层深**：`mmui::MessageView > ListControl(mmui::RecyclerListView)
+  > ListItemControl(mmui::ChatTextItemView)`。遍历深度给到 22 才稳。
+- **微信 @ 后面是 U+2005（四分之一空格）**，WeFlow 推来的原文可能是普通空格；
+  按内容匹配消息前必须归一化空白，否则命中不了。
 - 主窗口类名 `mmui::MainWindow`；打开会话时标题是 `Weixin`，未打开任何会话时才是「微信」
+- **微信窗口必须保持打开**：UIA 发送依赖窗口，窗口关了（只在托盘后台跑）则所有回复发不出去，
+  但收信仍正常（WeFlow 读库不依赖窗口）—— 症状是"收得到、从不回"
 
 **会话 / 身份**
 - 微信 wxid 转数字 ID **不能**用内置 `hash()`：Python 对字符串 hash 每进程随机化，重启后同一联系人会变成新会话（面板出现重复会话）。现在用 MD5
@@ -63,6 +72,18 @@
 - **只读接口**：日志里 `[OB11] API: get_group_member_info …`，返回值在 `resp_data["data"]`
 - **离线回归**：可以抓一段 WeFlow SSE（`curl -N .../api/v1/push/messages`）存成文本，再逐条喂给 `add_to_buffer` 做回放测试，不用真的发微信消息
 - **对照上游**：`diff` 上游 `wechat-weflow-bridge-ob11/*`，确认没有意外删除
+- **回复率/长度体检**：`python scripts/analyze_log.py`（全量）、`scripts/analyze_mine.py`（按人+场景）；
+  期望值：私聊 ~100%、群@ ~100%、群非@ ≈ 概率值（当前 3%）
+- **上下文体检**：群里发 `/stats`，看 `Total` token 数。若持续 >10 万，检查
+  `agent_runner.config.compression.max_turns` 是否被改回 `-1`
+
+**读日志的两个坑**（写分析脚本时必看）
+
+1. 日志**含 ANSI 转义码**（`\x1b[32m`），解析前先
+   `re.sub(r"\x1b\[[0-9;]*m", "", raw)`，否则正则全不匹配。
+2. 日志是 **append 的、跨天**的：按 `HH:MM` grep 会混进昨天的同一时刻。
+   另外 `[respond.stage:212] Prepare to send` 的正文含换行时会**折成多行**，
+   只取首行会误判成"回复是空的"（我就这样误判过 21 条）。
 
 ## 5. 发布流程（版号制，v1.0.0 起）
 

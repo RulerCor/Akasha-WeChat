@@ -124,7 +124,7 @@ if not hit:
     for nm in names[:40]:
         print("     ", nm[:50])
 
-s._auto.SendKeys("{Esc}")
+if s._popup_menu_open(timeout=1.0): s._auto.SendKeys("{Esc}")
 time.sleep(0.2)
-s._auto.SendKeys("{Esc}")
+if s._popup_menu_open(timeout=1.0): s._auto.SendKeys("{Esc}")
 print("\n已按 Esc 收起")
