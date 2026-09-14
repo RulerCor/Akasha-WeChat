@@ -76,6 +76,12 @@
   直接杀掉（进程没了、端口消失，日志末尾是 `SAFE_DELETE_BULK_CONFIRM_REQUIRED`）。
   正确写法：`PYTHONPATH= ./.venv/Scripts/python.exe main.py`。
   **用户自己双击 `start.bat` 不受影响**（Explorer 环境没有这个 shim）。
+- **⚠️ AstrBot 的 aiocqhttp 同时只能挂 1 个 OneBot 客户端**（2026-09-14 实测）：
+  主动发送（定时任务 / `send_message_to_user` 跨会话发送）没有事件上下文，
+  aiocqhttp 只能靠 `len(_api_clients)==1` 选路由。**模拟器一开着，所有定时任务必然
+  100% 失败**，而且失败是静默的（空异常 `ApiNotAvailable` → DB 里仍写 completed）。
+  已打补丁 `scripts/patch_aiocqhttp_primary_client.py`；自检用
+  `scripts/cron_test_push.py`。详见 `docs/开发文档.md` §4.9。
 - 本机请求（WeFlow / AstrBot / Ollama）必须在代码层面绕过系统代理；`config.py` 里已有 `NO_PROXY` 兜底，不要改成依赖启动脚本
 - 非正常退出会残留 `bridge.pid`，下次启动会直接拒绝启动并打 `⚠️ bridge.pid 已存在`——清理它再启
 

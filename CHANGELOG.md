@@ -4,6 +4,50 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## [1.2.2]
+
+这一版的主题：**定时任务静默失败根治 + 人设话题边界**。
+
+### 修复（严重）
+
+- **定时任务 / 所有主动发送 100% 静默失败**。用户在群里问「为什么定时任务没按时触发」。
+  实测：任务**准时触发了**（`cron_jobs.last_run_at` 正常跳），失败在发送环节。
+  根因是 `aiocqhttp.WebSocketReverseApi.call_action`：主动发送（无事件上下文）
+  只能靠 `len(_api_clients) == 1` 选路由，而本机同时挂着**模拟器**
+  （`sim/sim_wechat.py`，`X-Self-ID=99009900`）→ 抛 `ApiNotAvailable`。
+  该异常不带参数、`str(e)` 为空，所以 AstrBot 侧只看到
+  `error: failed to send message to session xxx: `（冒号后空白），
+  DB 里却仍写 `completed` / `last_error=None` —— **悄无声息**。
+  实测 2026-09-14 当天 **7 次调用 0 次成功**（含 6:00 早安天气、21:30 催睡群/私聊）。
+  修复：`scripts/patch_aiocqhttp_primary_client.py`，多客户端时排除模拟器，
+  剩余候选不唯一时仍拒绝（绝不猜）。回归测试 `scripts/test_aiocqhttp_routing.py`。
+  **端到端验证通过**：23:16:00 的一次性 cron 实测
+  `Tool send_message_to_user Result: Message sent to session ...`，
+  桥接侧 `[UIA✓] … 文字已发送至 1000000001`，且模拟器仍在连接状态。
+
+### 新增
+
+- `scripts/cron_test_push.py`：主动发送链路自检工具。
+  `--clone <任务ID>` 可复用真实任务的指令做高保真自检，`--cleanup` 清理。
+- `scripts/test_aiocqhttp_routing.py`：补丁的回归测试（4 个场景，含事故场景）。
+- `scripts/patch_persona_topic_guard.py`：给 mon3tr 人设加「话题边界」段落
+  （可 `--revert`，原人设备份到 `data/backup/`）。
+
+### 修复（其他）
+
+- **人设无端倒游戏剧情**：bot 连续多轮主动大段复述《明日方舟》剧情
+  （「我又想起好多罗德岛的事……」），并把群友的**现实**项目与游戏设定混为一谈，
+  甚至编造出历史里根本不存在的人名（"杏仁"）与往事（全库检索 0 命中）。
+  上下文只有 3.5 万 token，**不是上下文爆炸**，而是自我复述形成的正反馈循环
+  （它自己的长输出进了历史，下一轮接着往下编）。已给人设加「话题边界」段落。
+
+### 文档
+
+- `docs/开发文档.md` §4.9：补全定时任务的执行链路（消息只能靠 agent 调工具发出）、
+  「aiocqhttp 只能挂 1 个 OneBot 客户端」铁律、以及自检方法。
+- `docs/开发文档.md` §6：补丁清单新增 `aiocqhttp/api_impl.py`。
+- `AGENT.md`：已知坑新增上述铁律。
+
 ## [1.2.1]
 
 这一版的主题：**上下文爆炸治理 + 出站段（引用/@）修复**。
