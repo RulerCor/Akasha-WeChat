@@ -37,6 +37,13 @@
   实现代码保留，将来微信版本变化可直接打开再试。
 - **新增 `mention_as_text`（默认开）**：把 `at` 段降级成文字「@昵称 」，
   群里终于看得出这条回复在回谁；已自带 `@` 或 `@全体` 时不重复加。
+- **面板补上黑名单文案（前端语言包）**：AstrBot 会把 schema 的 `description`/`hint` 转成
+  i18n key（`ext_group.ltm.<path>.description`），真正显示的文字来自编译好的前端语言包
+  （中/英/俄/日 4 种语言都内嵌在 `dashboard/dist/assets/index-*.js`）。只补 Python schema
+  会导致面板显示**原始 key**。已用 `scripts/patch_astrbot_i18n_blacklist.py` 注入四语言条目。
+- **桥接面板：平台 ID 白名单也改成勾选框**（原来只有主动回复的白/黑名单是勾选框）。
+  抽出 `renderNameList`/`collectNameList` 两个通用函数，三处名单行为统一；
+  不在已知群列表里的条目自动落入「自定义条目」框，不会丢。
 - **新增 `sim/sim_test_suite.py`**：模拟器综合测试套件（10 项：功能如实答 / 模型名 /
   知识库 AK+终末地 / 称呼规则 / 语言跟随 英日 / 简洁度 / 上下文记忆），一键跑并输出汇总，
   实测 10/10 通过。

@@ -253,8 +253,12 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
             <select id="ab_wl_enable"><option value="0">关闭（不过滤）</option><option value="1">开启</option></select>
           </div>
           <div class="settings-field" style="flex-basis:100%">
-            <label>平台 ID 白名单（逗号或换行分隔；填群 ID 或 UMO；留空 = 不限制）</label>
-            <textarea id="ab_wl_list" rows="2" placeholder="如：49538909918&#10;或 wechat_bridge:GroupMessage:xxxxx"></textarea>
+            <label>平台 ID 白名单（勾选群，或用下方自定义条目填 ID / UMO）</label>
+            <div id="ab_wl_groups" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:6px 2px"></div>
+          </div>
+          <div class="settings-field" style="flex-basis:100%">
+            <label>白名单其他自定义条目（不在上面列表里的群 ID / UMO，逗号或换行分隔）</label>
+            <textarea id="ab_wl_extra" rows="2" placeholder="如：49538909918&#10;或 wechat_bridge:GroupMessage:xxxxx"></textarea>
           </div>
         </div>
         <div class="settings-row">
@@ -595,63 +599,55 @@ function saveAdmins() {
   });
 }
 
-function fillAstrbotForm(d) {
-  document.getElementById('ab_wl_enable').value = d.id_whitelist_enable ? '1' : '0';
-  document.getElementById('ab_wl_list').value = (d.id_whitelist || []).join('\\n');
-  document.getElementById('ab_ar_enable').value = d.ar_enable ? '1' : '0';
-  document.getElementById('ab_ar_poss').value = d.ar_possibility;
-  // 主动回复白名单可视化：已知群 → 勾选框；未知条目 → 自定义文本框
-  var wl = (d.ar_whitelist || []).map(function(x){return String(x).trim()});
-  var known = {};
+// 通用：把名单渲染成「已知群勾选框 + 自定义条目文本框」
+// 白名单 / 黑名单 / 平台白名单 三处共用，避免各写一遍、行为不一致
+function renderNameList(groupsId, extraId, values) {
+  var vals = (values || []).map(function(x){return String(x).trim()});
   var html = '';
   peopleData.groups.forEach(function(g){
-    known[String(g.gid)] = true; known[g.umo] = true; known[g.session] = true;
-    var hit = wl.indexOf(String(g.gid)) >= 0 || wl.indexOf(g.umo) >= 0 || wl.indexOf(g.session) >= 0;
+    var hit = vals.indexOf(String(g.gid)) >= 0 || vals.indexOf(g.umo) >= 0 || vals.indexOf(g.session) >= 0;
     html += '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;cursor:pointer">'
       + '<input type="checkbox" data-gid="' + g.gid + '"' + (hit ? ' checked' : '') + '> ' + g.name + '</label>';
   });
-  document.getElementById('ab_ar_groups').innerHTML = html || '<span style="color:#c0aab0;font-size:12px">暂无已知群</span>';
-  var extra = wl.filter(function(x){
-    return !peopleData.groups.some(function(g){ return x === String(g.gid) || x === g.umo || x === g.session; });
+  document.getElementById(groupsId).innerHTML = html
+    || '<span style="color:#c0aab0;font-size:12px">暂无已知群（收到群消息后出现）</span>';
+  var extra = vals.filter(function(x){
+    return !peopleData.groups.some(function(g){
+      return x === String(g.gid) || x === g.umo || x === g.session;
+    });
   });
-  document.getElementById('ab_ar_extra').value = extra.join('\\n');
-  // 主动回复黑名单可视化（与白名单同样逻辑）
-  var bl = (d.ar_blacklist || []).map(function(x){return String(x).trim()});
-  var bhtml = '';
-  peopleData.groups.forEach(function(g){
-    var hit = bl.indexOf(String(g.gid)) >= 0 || bl.indexOf(g.umo) >= 0 || bl.indexOf(g.session) >= 0;
-    bhtml += '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;cursor:pointer">'
-      + '<input type="checkbox" data-gid="' + g.gid + '"' + (hit ? ' checked' : '') + '> ' + g.name + '</label>';
+  document.getElementById(extraId).value = extra.join('\\n');
+}
+
+// 通用：从勾选框 + 自定义条目收集名单
+function collectNameList(groupsId, extraId) {
+  var out = [];
+  document.querySelectorAll('#' + groupsId + ' input[type=checkbox]:checked').forEach(function(cb){
+    out.push(cb.getAttribute('data-gid'));
   });
-  document.getElementById('ab_ar_black_groups').innerHTML = bhtml || '<span style="color:#c0aab0;font-size:12px">暂无已知群</span>';
-  var bextra = bl.filter(function(x){
-    return !peopleData.groups.some(function(g){ return x === String(g.gid) || x === g.umo || x === g.session; });
+  document.getElementById(extraId).value.split(/[,，\\n]+/).forEach(function(x){
+    x = x.trim(); if (x) out.push(x);
   });
-  document.getElementById('ab_ar_black_extra').value = bextra.join('\\n');
+  return out;
+}
+
+function fillAstrbotForm(d) {
+  document.getElementById('ab_wl_enable').value = d.id_whitelist_enable ? '1' : '0';
+  renderNameList('ab_wl_groups', 'ab_wl_extra', d.id_whitelist);
+  document.getElementById('ab_ar_enable').value = d.ar_enable ? '1' : '0';
+  document.getElementById('ab_ar_poss').value = d.ar_possibility;
+  renderNameList('ab_ar_groups', 'ab_ar_extra', d.ar_whitelist);
+  renderNameList('ab_ar_black_groups', 'ab_ar_black_extra', d.ar_blacklist);
 }
 
 function saveAstrbotCfg() {
-  var arWl = [];
-  document.querySelectorAll('#ab_ar_groups input[type=checkbox]:checked').forEach(function(cb){
-    arWl.push(cb.getAttribute('data-gid'));
-  });
-  document.getElementById('ab_ar_extra').value.split(/[,，\\n]+/).forEach(function(x){
-    x = x.trim(); if (x) arWl.push(x);
-  });
-  var arBl = [];
-  document.querySelectorAll('#ab_ar_black_groups input[type=checkbox]:checked').forEach(function(cb){
-    arBl.push(cb.getAttribute('data-gid'));
-  });
-  document.getElementById('ab_ar_black_extra').value.split(/[,，\\n]+/).forEach(function(x){
-    x = x.trim(); if (x) arBl.push(x);
-  });
   var body = {
     id_whitelist_enable: document.getElementById('ab_wl_enable').value === '1',
-    id_whitelist: document.getElementById('ab_wl_list').value.split(/[,，\\n]+/).filter(Boolean),
+    id_whitelist: collectNameList('ab_wl_groups', 'ab_wl_extra'),
     ar_enable: document.getElementById('ab_ar_enable').value === '1',
     ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
-    ar_whitelist: arWl,
-    ar_blacklist: arBl,
+    ar_whitelist: collectNameList('ab_ar_groups', 'ab_ar_extra'),
+    ar_blacklist: collectNameList('ab_ar_black_groups', 'ab_ar_black_extra'),
   };
   fetch('/api/astrbot', {
     method:'POST', headers:{'Content-Type':'application/json'},
