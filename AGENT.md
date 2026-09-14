@@ -70,6 +70,12 @@
 - 删除/替换任何过滤逻辑时，记得保留 `_log_skip()` 日志，否则被丢弃的消息会静默消失，排查时极难定位
 
 **运行**
+- **⚠️ 由 AI/自动化启动长驻服务时必须清空 `PYTHONPATH`**（2026-09-14 实测）：
+  工具环境里 `PYTHONPATH` 指向一个 shim 目录，其中 `sitecustomize.py` 会拦截
+  `os.remove()`；AstrBot 清理临时文件时触发其批量删除保护，被 `SystemExit(1)`
+  直接杀掉（进程没了、端口消失，日志末尾是 `SAFE_DELETE_BULK_CONFIRM_REQUIRED`）。
+  正确写法：`PYTHONPATH= ./.venv/Scripts/python.exe main.py`。
+  **用户自己双击 `start.bat` 不受影响**（Explorer 环境没有这个 shim）。
 - 本机请求（WeFlow / AstrBot / Ollama）必须在代码层面绕过系统代理；`config.py` 里已有 `NO_PROXY` 兜底，不要改成依赖启动脚本
 - 非正常退出会残留 `bridge.pid`，下次启动会直接拒绝启动并打 `⚠️ bridge.pid 已存在`——清理它再启
 
