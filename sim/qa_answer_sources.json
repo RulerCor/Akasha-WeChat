@@ -1,0 +1,1307 @@
+[
+ {
+  "id": "B01",
+  "group": "B",
+  "q": "325 是什么梗？",
+  "ans": "魔法Zc目录在仙术杯第五届翻车，结算 325 分",
+  "kws": [
+   "325",
+   "Zc",
+   "仙术杯"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "325": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "Zc": [
+    "AstrBot_kb"
+   ],
+   "仙术杯": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "325",
+   "Zc",
+   "仙术杯"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B02",
+  "group": "B",
+  "q": "325 那局用的是哪个干员做核心？",
+  "ans": "焰影苇草",
+  "kws": [
+   "焰影苇草",
+   "苇草"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "焰影苇草": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "苇草": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "焰影苇草",
+   "苇草"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B03",
+  "group": "B",
+  "q": "325 翻车的是哪一关？",
+  "ans": "利刃所指（戏称\"不周山\"/\"落Z坡\"）",
+  "kws": [
+   "利刃所指",
+   "不周山",
+   "落Z坡"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "利刃所指": [
+    "AstrBot_kb"
+   ],
+   "不周山": [
+    "AstrBot_kb"
+   ],
+   "落Z坡": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "利刃所指",
+   "不周山",
+   "落Z坡"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B04",
+  "group": "B",
+  "q": "\"不周山\"这个外号怎么来的？",
+  "ans": "Zc 本人姓周",
+  "kws": [],
+  "short_kws": [
+   "周"
+  ],
+  "warn": false,
+  "hits": {},
+  "found": [],
+  "missing": []
+ },
+ {
+  "id": "B05",
+  "group": "B",
+  "q": "799 是谁的外号？",
+  "ans": "干员提丰",
+  "kws": [
+   "提丰"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "提丰": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "提丰"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B06",
+  "group": "B",
+  "q": "799 这个数字是怎么算出来的？",
+  "ans": "提丰二技能多目标时对单 DPS 折半为 799",
+  "kws": [
+   "799",
+   "提丰",
+   "DPS"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "799": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "提丰": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "DPS": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "799",
+   "提丰",
+   "DPS"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B07",
+  "group": "B",
+  "q": "\"家电组大战\"说的是哪两个人？",
+  "ans": "提丰 vs 莱伊（最强狙击之争）",
+  "kws": [
+   "提丰",
+   "莱伊"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "提丰": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "莱伊": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "提丰",
+   "莱伊"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B08",
+  "group": "B",
+  "q": "7999 是谁的满配三技能 DPS？",
+  "ans": "丰川祥子（联动角色）",
+  "kws": [
+   "丰川祥子",
+   "祥子"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "丰川祥子": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "祥子": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "丰川祥子",
+   "祥子"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B09",
+  "group": "B",
+  "q": "\"蟑螂圣经\"出自哪个 UP 主？",
+  "ans": "发誓不做夜猫子",
+  "kws": [
+   "夜猫子",
+   "发誓"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "夜猫子": [
+    "AstrBot_kb"
+   ],
+   "发誓": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "夜猫子",
+   "发誓"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B10",
+  "group": "B",
+  "q": "仙术杯是谁办的？",
+  "ans": "龙哥哥今天又鸽了",
+  "kws": [
+   "龙哥哥"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "龙哥哥": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "龙哥哥"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B11",
+  "group": "B",
+  "q": "仙术杯是什么类型的比赛？",
+  "ans": "集成战略（肉鸽）民间赛事",
+  "kws": [
+   "集成战略",
+   "肉鸽"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "集成战略": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "肉鸽": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "集成战略",
+   "肉鸽"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B12",
+  "group": "B",
+  "q": "海猫络合物是谁？",
+  "ans": "明日方舟 / 终末地制作人，鹰角核心人物",
+  "kws": [
+   "海猫",
+   "制作人"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "海猫": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "制作人": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "海猫",
+   "制作人"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B13",
+  "group": "B",
+  "q": "数字外号 42 指谁？",
+  "ans": "史尔特尔",
+  "kws": [
+   "史尔特尔"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "史尔特尔": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "史尔特尔"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B14",
+  "group": "B",
+  "q": "ff0 指谁？",
+  "ans": "华法林",
+  "kws": [
+   "华法林"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "华法林": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "华法林"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B15",
+  "group": "B",
+  "q": "ew 指谁？",
+  "ans": "维什戴尔（异格 W）",
+  "kws": [
+   "维什戴尔"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "维什戴尔": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "维什戴尔"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B16",
+  "group": "B",
+  "q": "\"叔叔\"指谁？",
+  "ans": "玛恩纳",
+  "kws": [
+   "玛恩纳"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "玛恩纳": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "玛恩纳"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B17",
+  "group": "B",
+  "q": "干员\"棘刺\"的谐音外号是？",
+  "ans": "鸡翅",
+  "kws": [
+   "鸡翅"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "鸡翅": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "鸡翅"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B18",
+  "group": "B",
+  "q": "终末地是什么时候全球公测的？",
+  "ans": "2026 年 1 月 22 日",
+  "kws": [
+   "2026",
+   "1月22"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "2026": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "1月22": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "2026",
+   "1月22"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B19",
+  "group": "B",
+  "q": "终末地 1.0 版本叫什么？",
+  "ans": "零号委托",
+  "kws": [
+   "零号委托"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "零号委托": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "零号委托"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B20",
+  "group": "B",
+  "q": "终末地的主要舞台在哪？",
+  "ans": "塔卫二（Talos-II，不是泰拉）",
+  "kws": [
+   "塔卫二"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "塔卫二": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "塔卫二"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B21",
+  "group": "B",
+  "q": "终末地的开发工作室是？",
+  "ans": "鹰角网络 峘形山工作室",
+  "kws": [
+   "峘形山"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "峘形山": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "峘形山"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B22",
+  "group": "B",
+  "q": "终末地游戏图标上的角色是谁？",
+  "ans": "佩丽卡",
+  "kws": [
+   "佩丽卡"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "佩丽卡": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "佩丽卡"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B23",
+  "group": "B",
+  "q": "终末地公测首次登录赠送哪个干员？",
+  "ans": "余烬",
+  "kws": [
+   "余烬"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "余烬": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "余烬"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B24",
+  "group": "B",
+  "q": "终末地相比本传去掉了哪三个职业大类？",
+  "ans": "医疗、特种、狙击",
+  "kws": [
+   "医疗",
+   "特种",
+   "狙击"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "医疗": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "特种": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "狙击": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "医疗",
+   "特种",
+   "狙击"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B25",
+  "group": "B",
+  "q": "终末地新加了哪个职业大类？",
+  "ans": "突击",
+  "kws": [
+   "突击"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "突击": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "突击"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B26",
+  "group": "B",
+  "q": "终末地有哪五种伤害类型？",
+  "ans": "物理、灼热、电磁、寒冷、自然",
+  "kws": [
+   "物理",
+   "灼热",
+   "电磁",
+   "寒冷",
+   "自然"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "物理": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "灼热": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "电磁": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "寒冷": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "自然": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "物理",
+   "灼热",
+   "电磁",
+   "寒冷",
+   "自然"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B27",
+  "group": "B",
+  "q": "终末地武器有哪五大类？",
+  "ans": "单手剑、双手剑、长柄武器、手铳、施术单元",
+  "kws": [
+   "单手剑",
+   "双手剑",
+   "长柄",
+   "手铳",
+   "施术单元"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "单手剑": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "双手剑": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "长柄": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "手铳": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "施术单元": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "单手剑",
+   "双手剑",
+   "长柄",
+   "手铳",
+   "施术单元"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B28",
+  "group": "B",
+  "q": "终末地的\"协议核心\"是做什么的？",
+  "ans": "用协议传送技术\"打印\"设备，把集成工业带到处处",
+  "kws": [
+   "打印",
+   "集成工业",
+   "传送"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "打印": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "集成工业": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ],
+   "传送": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "打印",
+   "集成工业",
+   "传送"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B29",
+  "group": "B",
+  "q": "终末地里过载会怎样？",
+  "ans": "跳闸",
+  "kws": [
+   "跳闸"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "跳闸": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "跳闸"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B30",
+  "group": "B",
+  "q": "哪个干员的档案玩过 325 梗？",
+  "ans": "梨诺",
+  "kws": [
+   "梨诺"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "梨诺": [
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "梨诺"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B31",
+  "group": "B",
+  "q": "[本体] 矿石病的理论致死率是多少？",
+  "ans": "100%",
+  "kws": [
+   "100"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "100": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "100"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B32",
+  "group": "B",
+  "q": "[本体] 矿石病的主要传播途径有哪三种？",
+  "ans": "接触、血液、母婴",
+  "kws": [
+   "接触",
+   "血液",
+   "母婴"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "接触": [
+    "Mon3trBot"
+   ],
+   "血液": [
+    "Mon3trBot"
+   ],
+   "母婴": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "接触",
+   "血液",
+   "母婴"
+  ],
+  "missing": []
+ },
+ {
+  "id": "B33",
+  "group": "B",
+  "q": "[本体] 源石技艺在莱塔尼亚分为几系？",
+  "ans": "六系",
+  "kws": [],
+  "short_kws": [
+   "六",
+   "6"
+  ],
+  "warn": false,
+  "hits": {},
+  "found": [],
+  "missing": []
+ },
+ {
+  "id": "B34",
+  "group": "B",
+  "q": "[本体] 罗德岛的创始人和公开领导人分别是谁？",
+  "ans": "创始人凯尔希，公开领导人阿米娅",
+  "kws": [
+   "凯尔希",
+   "阿米娅"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "凯尔希": [
+    "Mon3trBot"
+   ],
+   "阿米娅": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "凯尔希",
+   "阿米娅"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C01",
+  "group": "C",
+  "q": "博士是什么身份？",
+  "ans": "罗德岛战术指挥官（曾失忆）",
+  "kws": [
+   "战术指挥官",
+   "指挥"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "战术指挥官": [
+    "Mon3trBot"
+   ],
+   "指挥": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "战术指挥官",
+   "指挥"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C02",
+  "group": "C",
+  "q": "阿米娅是什么种族？",
+  "ans": "卡特斯 / 奇美拉",
+  "kws": [
+   "卡特斯",
+   "奇美拉"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "卡特斯": [
+    "Mon3trBot"
+   ],
+   "奇美拉": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "卡特斯",
+   "奇美拉"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C03",
+  "group": "C",
+  "q": "凯尔希在罗德岛担任什么职务？",
+  "ans": "医疗部主管（也是创始人）",
+  "kws": [
+   "医疗部",
+   "创始"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "医疗部": [
+    "Mon3trBot"
+   ],
+   "创始": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "医疗部",
+   "创始"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C04",
+  "group": "C",
+  "q": "塔露拉是哪个组织的领袖？",
+  "ans": "整合运动",
+  "kws": [
+   "整合运动"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "整合运动": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "整合运动"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C05",
+  "group": "C",
+  "q": "塔露拉的种族是？",
+  "ans": "德拉克",
+  "kws": [
+   "德拉克"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "德拉克": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "德拉克"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C06",
+  "group": "C",
+  "q": "陈晖洁原本在哪个部门？",
+  "ans": "龙门近卫局",
+  "kws": [
+   "近卫局"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "近卫局": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "近卫局"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C07",
+  "group": "C",
+  "q": "陈的种族是？",
+  "ans": "龙（Lung）",
+  "kws": [],
+  "short_kws": [
+   "龙"
+  ],
+  "warn": false,
+  "hits": {},
+  "found": [],
+  "missing": []
+ },
+ {
+  "id": "C08",
+  "group": "C",
+  "q": "龙门的总督是谁？",
+  "ans": "魏彦吾",
+  "kws": [
+   "魏彦吾"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "魏彦吾": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "魏彦吾"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C09",
+  "group": "C",
+  "q": "银灰是哪个家族的族长？",
+  "ans": "希瓦艾什",
+  "kws": [
+   "希瓦艾什"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "希瓦艾什": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "希瓦艾什"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C10",
+  "group": "C",
+  "q": "银灰的种族是？",
+  "ans": "菲林",
+  "kws": [
+   "菲林"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "菲林": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "菲林"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C11",
+  "group": "C",
+  "q": "塞雷娅是哪个机构的联合创始人？",
+  "ans": "莱茵生命",
+  "kws": [
+   "莱茵生命"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "莱茵生命": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "莱茵生命"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C12",
+  "group": "C",
+  "q": "塞雷娅的种族是？",
+  "ans": "瓦伊凡",
+  "kws": [
+   "瓦伊凡"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "瓦伊凡": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "瓦伊凡"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C13",
+  "group": "C",
+  "q": "斯卡蒂和幽灵鲨属于哪个组织？",
+  "ans": "深海猎人",
+  "kws": [
+   "深海猎人"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "深海猎人": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "深海猎人"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C14",
+  "group": "C",
+  "q": "能天使的种族是？",
+  "ans": "萨科塔",
+  "kws": [
+   "萨科塔"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "萨科塔": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "萨科塔"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C15",
+  "group": "C",
+  "q": "能天使隶属哪个物流公司？",
+  "ans": "企鹅物流",
+  "kws": [
+   "企鹅物流"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "企鹅物流": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "企鹅物流"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C16",
+  "group": "C",
+  "q": "德克萨斯和拉普兰德的种族是？",
+  "ans": "鲁珀",
+  "kws": [
+   "鲁珀"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "鲁珀": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "鲁珀"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C17",
+  "group": "C",
+  "q": "艾雅法拉是什么职业？",
+  "ans": "术师",
+  "kws": [
+   "术师"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "术师": [
+    "Mon3trBot",
+    "AstrBot_kb"
+   ]
+  },
+  "found": [
+   "术师"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C18",
+  "group": "C",
+  "q": "特蕾西娅是哪个国家的魔王？",
+  "ans": "卡兹戴尔",
+  "kws": [
+   "卡兹戴尔"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "卡兹戴尔": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "卡兹戴尔"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C19",
+  "group": "C",
+  "q": "整合运动后期被谁操控？",
+  "ans": "科西切（\"不死的黑蛇\"）",
+  "kws": [
+   "科西切",
+   "黑蛇"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "科西切": [
+    "Mon3trBot"
+   ],
+   "黑蛇": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "科西切",
+   "黑蛇"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C20",
+  "group": "C",
+  "q": "罗德岛（组织）是哪一年成立的？",
+  "ans": "1094 年秋",
+  "kws": [
+   "1094"
+  ],
+  "short_kws": [],
+  "warn": true,
+  "hits": {
+   "1094": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "1094"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C21",
+  "group": "C",
+  "q": "乌萨斯帝国的首都是？",
+  "ans": "圣骏堡",
+  "kws": [
+   "圣骏堡"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "圣骏堡": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "圣骏堡"
+  ],
+  "missing": []
+ },
+ {
+  "id": "C22",
+  "group": "C",
+  "q": "乌萨斯帝国的货币是？",
+  "ans": "切尔文",
+  "kws": [
+   "切尔文"
+  ],
+  "short_kws": [],
+  "warn": false,
+  "hits": {
+   "切尔文": [
+    "Mon3trBot"
+   ]
+  },
+  "found": [
+   "切尔文"
+  ],
+  "missing": []
+ }
+]
