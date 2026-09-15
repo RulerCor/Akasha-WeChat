@@ -29,6 +29,25 @@
   旧写法的截图与用户反馈完全一致，新写法干净 —— 这类「点击后才出现」的
   UI 问题靠静态截图是发现不了的，留个可复跑的回归工具。
 
+### 验证记录（2026-09-16 00:22）
+
+**「定时任务发错会话」的修复（1.2.6）已通过真实链路端到端验证。**
+
+- 方法：把微信先停到「文件传输助手」当诱饵，再用 `--clone` 复用线上任务的指令插入一条
+  一次性 cron 任务（目标＝博士私聊），重启 AstrBot 等它自然触发。
+- 结果：
+  - AstrBot：`Tool 'send_message_to_user' Result: Message sent to session wechat_bridge:FriendMessage:1000000001`
+  - 桥接：`已切到会话: RulerCordelius（列表匹配，等级 3）` → `[UIA✓] 文字已发送至 RulerCordelius`
+  - WeFlow：消息落在**私聊**（00:22:11），**诱饵会话没有**收到 —— 正是修复前会发错的地方
+- 附带查清两件事（详见 `docs/开发文档.md` §4.9.1 / §4.9.2）：
+  1. 自检指令若写成「系统指令式」会被 AstrBot 的 `safety_mode` 判为提示词注入而拒答，
+     或**谎报成功**（回了"已处理完成"却没调用发送工具）→ 自检一律 `--clone` 真实指令。
+  2. `data/logs/astrbot.log` 启动后即停写、stdout 又块缓冲 → 排障要用
+     `PYTHONUNBUFFERED=1 ... -u run_astrbot.py run` 启动。
+- 新增工具：`scripts/park_wechat.py`（把微信停到诱饵会话）、`scripts/dump_conv.py`
+  （看 agent 到底回了什么）、`scripts/clean_test_artifacts.py`（清自检留下的 cron 任务与
+  对话历史垃圾，会先备份）。
+
 ## [1.2.6]
 
 这一版的主题：**原生引用打通 + 定时任务发错会话根治 + 知识库接线**。

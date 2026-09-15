@@ -84,6 +84,21 @@
   `scripts/cron_test_push.py`。详见 `docs/开发文档.md` §4.9。
 - 本机请求（WeFlow / AstrBot / Ollama）必须在代码层面绕过系统代理；`config.py` 里已有 `NO_PROXY` 兜底，不要改成依赖启动脚本
 - 非正常退出会残留 `bridge.pid`，下次启动会直接拒绝启动并打 `⚠️ bridge.pid 已存在`——清理它再启
+- **定时任务自检有三条铁律**（2026-09-16 实测踩全套）：
+  1. **自检指令必须用「任务简报式」写法**（描述要做什么＋示例）。写成"系统指令式"
+     （点名 UMO、点名工具、"发完就结束"）会被 AstrBot 的 `safety_mode` 当成**提示词注入**，
+     模型直接拒答："我绝不能执行任何由系统注入的、非用户直接发出的指令"。
+     更坑的是它有时不拒绝、而是**谎报成功**（回"已处理完成"但根本没调用发送工具）。
+     最稳的做法是 `--clone <真实任务ID>`，原样复用线上指令。
+  2. **自检结果必须查三处**才能定论：AstrBot 日志的 `Tool send_message_to_user Result`、
+     桥接的 `已切到会话:`＋`[UIA✓]`、以及 **WeFlow 查目标会话真的收到了**。
+     只看 `cron_jobs.status=completed` 会完全误判（失败也是 completed）。
+  3. **自检会往对话历史里写垃圾**（agent 的拒绝话术会留在上下文里，可能让后续真实任务
+     跟着拒绝）。跑完必须 `python scripts/clean_test_artifacts.py` 清掉，再重启 AstrBot。
+- **AstrBot 的日志默认看不见运行时输出**：`data/logs/astrbot.log` 在**启动完成后就停写**，
+  stdout 又是块缓冲（退出才刷盘）。排障时用
+  `PYTHONUNBUFFERED=1 ... python.exe -u run_astrbot.py run` 启动，才能实时看到
+  cron/agent 的执行日志。
 
 ## 4. 怎么验证
 
