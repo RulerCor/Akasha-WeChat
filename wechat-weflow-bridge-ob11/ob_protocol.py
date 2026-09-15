@@ -172,6 +172,58 @@ _READ_API = {
 }
 
 
+# ============ 出站昵称纠错 ============
+#
+# 现象：模型（尤其是中文语料为主的）会顺手把日语汉字"简体化"，
+# 于是群友「群友C」被叫成「群友C」。人设里已经下了死命令，
+# 但仍会漏，所以在出站前用工整的名册再兜一道。
+#
+# 安全边界：只有当「被简体化后的写法」能**唯一对应到一个已知名字**时才替换，
+# 也就是整串匹配已知的群友名/群名。普通文字（比如"广东""车站"）不在名册里，
+# 完全不受影响。
+_JA_TO_CN_VARIANT = {
+    "広": "广", "沢": "泽", "気": "气", "桜": "樱", "円": "圆", "渋": "涩",
+    "転": "转", "辺": "边", "経": "经", "続": "续", "単": "单", "売": "卖",
+    "図": "图", "団": "团", "県": "县", "歳": "岁", "雑": "杂", "恵": "惠",
+    "徳": "德", "増": "增", "営": "营", "層": "层", "掲": "揭", "拡": "扩",
+    "廃": "废", "弐": "贰", "蔵": "藏", "緑": "绿", "軽": "轻", "黒": "黑",
+    "歯": "齿", "涼": "凉", "浜": "滨", "験": "验", "険": "险", "権": "权",
+    "観": "观", "歓": "欢", "歎": "叹", "歴": "历", "残": "残", "毎": "每",
+    "様": "样", "総": "总", "繊": "纤", "継": "继", "締": "缔", "緩": "缓",
+    "練": "练", "縁": "缘", "縦": "纵", "縮": "缩", "優": "优", "価": "价",
+    "倹": "俭", "倫": "伦", "個": "个", "倣": "仿", "値": "值", "傷": "伤",
+}
+
+_name_fix_cache = {"ts": 0.0, "map": {}}
+
+
+def _build_name_variant_map() -> dict:
+    """{简体化变体: 正确原名}，只收录名册里确实存在的名字。"""
+    out = {}
+    for name in state.known_display_names():
+        if len(name) < 2:
+            continue
+        variant = "".join(_JA_TO_CN_VARIANT.get(ch, ch) for ch in name)
+        if variant != name:
+            out[variant] = name
+    return out
+
+
+def fix_display_names(text: str) -> str:
+    """把出站文本里被模型简体化的群友名/群名改回来。"""
+    if not text:
+        return text
+    now = time.time()
+    if now - _name_fix_cache["ts"] > 300:   # 名册 10 分钟刷一次，这里 5 分钟重建
+        _name_fix_cache["map"] = _build_name_variant_map()
+        _name_fix_cache["ts"] = now
+    for wrong, right in _name_fix_cache["map"].items():
+        if wrong in text:
+            text = text.replace(wrong, right)
+            log.info(f"[OB11] 昵称纠错：{wrong} → {right}")
+    return text
+
+
 async def _handle_ob_api(data: dict):
     """处理 AstrBot 发来的 API 请求。"""
     action = data.get("action", "")
@@ -258,6 +310,7 @@ async def _handle_ob_api(data: dict):
             if seg_type == "text":
                 text = seg_data.get("text", "")
                 if text:
+                    text = fix_display_names(text)
                     if quote_prefix:
                         text = quote_prefix + text
                         quote_prefix = None

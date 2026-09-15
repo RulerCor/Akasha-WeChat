@@ -390,6 +390,28 @@ def all_persons() -> dict:
         return {k: dict(v) for k, v in _persons.items()}
 
 
+def known_display_names() -> set:
+    """全部已知展示名（人名候选名 + 各群成员名 + 群名）。
+
+    供出站文本做「昵称纠错」：模型常把日语汉字自动简体化（広→广），
+    叫错群友名字。只有能对应到已知名字时才纠正，避免误伤普通文字。
+    """
+    out = set()
+    with _api_lock:
+        for p in _persons.values():
+            for n in (p.get("names") or []):
+                if isinstance(n, str) and n.strip():
+                    out.add(n.strip())
+        for r in _group_rosters.values():
+            for n in (r.get("names") or {}):
+                if isinstance(n, str) and n.strip():
+                    out.add(n.strip())
+        for n in _chat_names.values():
+            if isinstance(n, str) and n.strip():
+                out.add(n.strip())
+    return out
+
+
 _group_rosters: dict[str, dict] = {}    # chatroom → {"names": {候选名: wxid}, "ts": 更新时刻}
 
 
