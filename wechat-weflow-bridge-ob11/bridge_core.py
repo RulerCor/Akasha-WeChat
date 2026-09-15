@@ -236,8 +236,13 @@ class WeFlowBridge:
         msg_type = data.get("type", 0) or data.get("msgType", 0)
         if data.get("sourceName", "") in config.BOT_NICKNAMES:
             return "机器人自己发的"
-        if config.BOT_WXID and data.get("talkerId", "") == config.BOT_WXID:
-            return "来自机器人本机账号"
+        # 微信 4.x 有时会给 wxid 带上 _xxxx 后缀（WeFlow 的 talkerId 不带），
+        # 两边都可能是"主干"或"带后缀"，用前缀互比避免漏掉自己发的消息。
+        if config.BOT_WXID and data.get("talkerId", ""):
+            _bot = config.BOT_WXID
+            _talker = str(data.get("talkerId", ""))
+            if _talker == _bot or _bot.startswith(_talker) or _talker.startswith(_bot):
+                return "来自机器人本机账号"
         if msg_type in (34,):  # 34=语音
             return "语音消息（type=34）"
         if content and ("[语音]" in content or "[表情]" in content):

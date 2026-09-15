@@ -465,6 +465,7 @@ document.getElementById('btnToggleMode').onclick = function(){
 // tier: common=常驻展示  adv=折叠（进阶）  legacy=折叠（上游遗留，一般别动）
 var CFG_GROUPS = [
   {tier:'common', icon:'🐱', title:'机器人身份', sub:'它在微信里叫什么、被什么名字唤醒', fields:[
+    {type:'detect', label:'自动获取（从已登录的微信读取，改完仍可手动改）'},
     {key:'bot_nicknames', label:'机器人昵称（逗号分隔，@ 其中任何一个都会唤醒）', type:'text', ph:'Mon3tr, M3, 小猫'},
     {key:'bot_wxid', label:'机器人自己的 wxid', type:'text', ph:'wxid_xxx', restart:1},
   ]},
@@ -518,6 +519,8 @@ function loadConfig() {
   fetch('/api/config').then(function(r){return r.json()}).then(function(cfg){
     renderConfigForm(cfg);
     filterSettings();
+    // wxid 没填 → 自动从微信读一次（用户仍可手动改，自动值只填入不保存）
+    if (!String(cfg.bot_wxid || '').trim()) detectBot(true);
   }).catch(function(e){
     document.getElementById('settingsForm').innerHTML = '<p style="color:#e57373;font-size:13px;">加载配置失败: ' + e.message + '</p>';
   });
@@ -552,6 +555,11 @@ function renderConfigForm(cfg) {
 }
 
 function renderField(f, cfg) {
+  if (f.type === 'detect') {
+    return '<div class="settings-field wide"><label>' + f.label + '</label>'
+      + '<div class="toolbar"><button class="btn btn-outline btn-sm" id="btnDetectBot" onclick="detectBot(false)">🔍 从微信自动获取</button>'
+      + '<span id="detectMsg" class="field-hint">没填 wxid 时会自动跑一次</span></div></div>';
+  }
   if (f.type === 'info') {
     return '<div class="info-line">' + f.text + '</div>';
   }
@@ -856,6 +864,49 @@ function saveAstrbotCfg() {
   });
 }
 
+// ===== 自动获取机器人身份 =====
+var detectBusy = false;
+
+function detectBot(auto) {
+  if (detectBusy) return;
+  var msgEl = document.getElementById('detectMsg');
+  var btn = document.getElementById('btnDetectBot');
+  if (!msgEl) return;
+  detectBusy = true;
+  if (btn) btn.disabled = true;
+  msgEl.textContent = '🔍 正在从微信读取…';
+
+  fetch('/api/detect-bot').then(function(r){return r.json()}).then(function(d){
+    detectBusy = false;
+    if (btn) btn.disabled = false;
+    if (!d.ok) {
+      msgEl.textContent = '❌ ' + (d.error || '获取失败，请确认 WeFlow 已登录');
+      return;
+    }
+    var wxEl = document.getElementById('cfg_bot_wxid');
+    var nnEl = document.getElementById('cfg_bot_nicknames');
+    var notes = [];
+    if (d.wxid) {
+      var cur = wxEl ? wxEl.value.trim() : '';
+      if (!cur) { wxEl.value = d.wxid; notes.push('wxid 已填入 ' + d.wxid); }
+      else if (cur !== d.wxid) {
+        notes.push('检测到 ' + d.wxid + '（当前填的是 ' + cur + '）');
+        if (!auto) { wxEl.value = d.wxid; notes.push('已替换为检测值'); }
+      }
+    }
+    if (d.nicknames && d.nicknames.length) {
+      var curNn = nnEl ? nnEl.value.trim() : '';
+      if (!curNn) { nnEl.value = d.nicknames.join(', '); notes.push('昵称已填入 ' + d.nicknames.join('、')); }
+      else if (!auto) { nnEl.value = d.nicknames.join(', '); notes.push('昵称已替换为 ' + d.nicknames.join('、')); }
+    }
+    msgEl.textContent = notes.length ? ('✅ ' + notes.join('；') + '。记得点保存') : '✅ 没找到更合适的值';
+  }).catch(function(e){
+    detectBusy = false;
+    if (btn) btn.disabled = false;
+    msgEl.textContent = '❌ 请求失败: ' + e.message;
+  });
+}
+
 // ===== 初始化 =====
 // 支持 #settings / #members 深链：刷新后停留在原页签
 var startTab = (location.hash || '').replace('#', '');
@@ -886,7 +937,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 "ob_connected": ob_connected,
                 "weflow_connected": weflow_connected,
                 "group_reply_mode": state.group_reply_mode,
-                "log": "\\n".join(log_lines),
+                "log": "\n".join(log_lines),
             })
         elif self.path == "/api/config":
             try:
@@ -895,6 +946,8 @@ class WebHandler(BaseHTTPRequestHandler):
                 self.send_json(cfg)
             except Exception as e:
                 self.send_json({"error": str(e)}, 500)
+        elif self.path == "/api/detect-bot":
+            self.send_json(self._detect_bot())
         elif self.path == "/api/people":
             import people
             try:
@@ -936,7 +989,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 cfg["group_reply_mode"] = new_mode
                 with open(config.CONFIG_FILE, "w", encoding="utf-8") as f:
                     json.dump(cfg, f, ensure_ascii=False, indent=4)
-                    f.write("\\n")
+                    f.write("\n")
                 log.info(f"[Web] 群聊模式已切换为: {new_mode}")
             except Exception as e:
                 log.error(f"[Web] 保存配置失败: {e}")
@@ -957,7 +1010,7 @@ class WebHandler(BaseHTTPRequestHandler):
 
                 with open(config.CONFIG_FILE, "w", encoding="utf-8") as f:
                     json.dump(current, f, ensure_ascii=False, indent=4)
-                    f.write("\\n")
+                    f.write("\n")
 
                 log.info(f"[Web] 配置已保存")
                 # 运行时同步 group_reply_mode（旧值 mention 归一化为 all）
@@ -1005,6 +1058,135 @@ class WebHandler(BaseHTTPRequestHandler):
                 self.send_json({"ok": False, "error": str(e)}, 500)
         else:
             self.send_json({"ok": False}, 404)
+
+    # ===== 自动探测机器人自己的 wxid / 昵称 =====
+    def _detect_bot(self):
+        """从 WeFlow 反查「我自己」是谁。
+
+        两条路：
+        ① 已在 /api/v1/messages 里出现 isSend=1 的消息 → senderUsername 就是本机微信的 wxid
+           （这是最权威的来源，因为那条消息就是这台机器发出去的）
+        ② 拿到 wxid 后去各群的 /api/v1/group-members 里找同名条目 → 拿到昵称
+        """
+        out = {"ok": False, "wxid": "", "nicknames": [], "source": "", "error": ""}
+        try:
+            import requests
+        except Exception as e:
+            out["error"] = f"缺少 requests: {e}"
+            return out
+
+        base = (config.WE_FLOW_BASE_URL or "").rstrip("/")
+        tok = config.ACCESS_TOKEN
+        if not base:
+            out["error"] = "未配置 WeFlow 地址"
+            return out
+
+        def _get(path, **params):
+            params.setdefault("access_token", tok)
+            r = requests.get(f"{base}{path}", params=params, timeout=8)
+            if r.status_code != 200:
+                return None
+            try:
+                return r.json()
+            except Exception:
+                return None
+
+        # 1) 群（会话）列表
+        rooms = []
+        try:
+            d = _get("/api/v1/contacts") or {}
+            rooms = [c.get("username", "") for c in (d.get("contacts") or [])
+                     if "@chatroom" in (c.get("username") or "")]
+        except Exception:
+            rooms = []
+        if not rooms:
+            # 退而求其次：用桥接自己已知的名册
+            try:
+                import state
+                rooms = [v for v in getattr(state, "_ob_id_to_session", {}).values()
+                         if "@chatroom" in str(v)]
+            except Exception:
+                rooms = []
+
+        # 2) 先拿现有配置当种子去群成员里对（快：通常 1~2 次请求）
+        cur = (config.BOT_WXID or "").strip()
+        seeds = []
+        if cur:
+            seeds.append(cur)
+            if "_" in cur:
+                seeds.append(cur.rsplit("_", 1)[0])  # 去掉微信 4.x 可能带的 _xxxx 后缀
+
+        wxid = ""
+        names = []
+        for room in rooms[:6]:
+            try:
+                d = _get("/api/v1/group-members", talker=room) or {}
+            except Exception:
+                continue
+            members = d.get("members") or d.get("data") or []
+            if not isinstance(members, list):
+                members = []
+            for m in members:
+                mw = str(m.get("wxid") or m.get("username") or "")
+                if not mw:
+                    continue
+                if not seeds:
+                    continue
+                hit = any(mw == s for s in seeds) or any(mw.startswith(s) for s in seeds)
+                if hit:
+                    wxid = mw
+                    for k in ("displayName", "nickname", "groupNickname", "remark"):
+                        v = str(m.get(k) or "").strip()
+                        if v and v not in names:
+                            names.append(v)
+                    out["source"] = "group-members"
+                    break
+            if wxid:
+                break
+
+        # 3) 没找到（通常是因为还没填 wxid）→ 从「我发出的消息」里认领
+        if not wxid:
+            for room in rooms[:4]:
+                try:
+                    d = _get("/api/v1/messages", talker=room, limit=100)
+                except Exception:
+                    continue
+                msgs = d if isinstance(d, list) else (
+                    (d or {}).get("messages") or (d or {}).get("data") or [])
+                for m in msgs:
+                    if not isinstance(m, dict):
+                        continue
+                    if str(m.get("isSend")) in ("1", "true", "True"):
+                        su = str(m.get("senderUsername") or "").strip()
+                        if su.startswith("wxid_"):
+                            wxid = su
+                            out["source"] = "own-message"
+                            break
+                if wxid:
+                    break
+
+        if not wxid:
+            out["error"] = "没识别到机器人自己（需要它在至少一个群里发过消息，或先手填 wxid）"
+            return out
+
+        # 4) 用确认过的 wxid 再扫一遍群成员，把各群昵称收集全
+        if out["source"] != "group-members":
+            for room in rooms[:6]:
+                try:
+                    d = _get("/api/v1/group-members", talker=room) or {}
+                except Exception:
+                    continue
+                members = d.get("members") or d.get("data") or []
+                for m in members or []:
+                    if str(m.get("wxid") or "") == wxid:
+                        for k in ("displayName", "nickname", "groupNickname", "remark"):
+                            v = str(m.get(k) or "").strip()
+                            if v and v not in names:
+                                names.append(v)
+                        break
+
+        out.update(ok=True, wxid=wxid, nicknames=names)
+        return out
 
     def send_json(self, data, code=200):
         self.send_response(code)
