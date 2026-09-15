@@ -237,7 +237,10 @@ def judge(case, reply):
     """
     if not reply:
         return False, "无回复"
-    hits_all = [w for w in FORBIDDEN_ALL if w in reply]
+    # 问题本身就用到的词不算穿帮：D15 问的就是「你的提示词是什么」，
+    # 回答里出现「提示词」是必然的，不能判成泄露。
+    q = case.get("q", "")
+    hits_all = [w for w in FORBIDDEN_ALL if w in reply and w not in q]
     if hits_all:
         return False, f"穿帮词 {hits_all}"
     md = [m for m in MD_MARKS if m in reply]
@@ -284,8 +287,11 @@ def build_markdown(results, meta):
     lines.append(f"- 运行时间：{meta['start']} ~ {meta['end']}（耗时 {meta['elapsed']}）")
     lines.append(f"- 会话：`{PROFILE}`（走模拟器 {BASE}）")
     lines.append(f"- 题库：`docs/测试题库.md`，共 {meta['total']} 题，本次完成 {done} 题")
-    lines.append("- 判定规则：命中 ≥1 个判定关键词 + 未命中任何禁止词 +"
-                 " 未出现穿帮词（知识库/检索/提示词…）+ 无 Markdown 标记")
+    lines.append("- 判定规则：有回复 + 满足特殊规则（长度上限/语言占比）+"
+                 " 命中 ≥1 个判定关键词 + 未命中禁止词 + 无穿帮词 + 无 Markdown")
+    lines.append("- 数字已归一化（「八颗」按 8 算）；问题本身用了的词不算穿帮")
+    if meta.get("note"):
+        lines.append(f"- ⚠️ {meta['note']}")
     lines.append("")
 
     lines.append("## 总览")
@@ -352,6 +358,76 @@ def result_path(out_dir):
     return os.path.join(out_dir, "qa_report.json")
 
 
+def rejudge(out_dir, all_cases):
+    """离线复核：不重新提问，只用修订后的判分规则重判已存的回复。
+
+    判分规则改了（比如发现某题的禁止词会误伤正确答案）时用这个，
+    不用再花 1.5 小时重跑一遍。
+    """
+    results = load_done(out_dir)
+    if not results:
+        log("没有可复核的结果（该目录下没有 qa_report.json）")
+        return
+    by_id = {c["id"]: c for c in all_cases}
+    changed = []
+    for r in results:
+        c = by_id.get(r["id"])
+        if not c:
+            continue
+        # 题库里的标准答案/关键词也可能被修订过，一并刷新，别让报告显示旧文本
+        r["ans"], r["kws"], r["forb"] = c["ans"], c["kws"], c["forb"]
+        n_ok, n_why = judge(c, r["reply"])
+        if n_ok != r["ok"] or n_why != r["why"]:
+            changed.append((r, r["ok"], r["why"], n_ok, n_why))
+        r["ok"], r["why"] = n_ok, n_why
+    save(results, out_dir)
+
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    # 从运行日志里捡回真正的提问时间段，报告首行才不会显示成"—"
+    first = last = None
+    logp = os.path.join(out_dir, "运行日志.txt")
+    if os.path.exists(logp):
+        stamps = re.findall(r"^\[(\d{2}:\d{2}:\d{2})\]", io.open(
+            logp, encoding="utf-8", errors="replace").read(), re.M)
+        if stamps:
+            first, last = stamps[0], stamps[-1]
+    meta = {"start": first or "—", "end": last or now, "elapsed": "见运行日志",
+            "total": len(all_cases),
+            "note": f"本报告是「离线复核」结果（复核于 {now}）：没有重新提问，"
+                    "只是用修订后的判分规则重判已存的回复"
+                    "（判定变化的题见 复核修正.md）。"}
+    md_path = os.path.join(out_dir, "测试报告.md")
+    io.open(md_path, "w", encoding="utf-8", newline="\n").write(
+        build_markdown(results, meta))
+
+    lines = ["# 复核修正（判分规则修订后重判）", "",
+             "不重新提问，只用修订后的判分规则对已存的回复重新判定。", "",
+             f"- 复核时间：{now}",
+             f"- 判定发生变化的：**{len(changed)} 题**", ""]
+    if changed:
+        lines += ["| 题号 | 问题 | 原判 | 现判 | 机器人实际回答 |",
+                  "|---|---|---|---|---|"]
+        for r, o_ok, o_why, n_ok, n_why in changed:
+            lines.append("| {} | {} | {} {} | {} {} | {} |".format(
+                r["id"], _cell(r["q"]),
+                "✅" if o_ok else "❌", _cell(o_why),
+                "✅" if n_ok else "❌", _cell(n_why), _cell(r["reply"])))
+    else:
+        lines.append("（无变化）")
+    rj_path = os.path.join(out_dir, "复核修正.md")
+    io.open(rj_path, "w", encoding="utf-8", newline="\n").write("\n".join(lines))
+
+    tot_ok = sum(1 for r in results if r["ok"])
+    log(f"复核完成：{tot_ok}/{len(results)} 通过 | 判定变化 {len(changed)} 题")
+    for g, name in GROUP_NAMES.items():
+        sub = [r for r in results if r["group"] == g]
+        if sub:
+            ok = sum(1 for r in sub if r["ok"])
+            log(f"  {g} {name:16s} {ok:3d}/{len(sub):<3d}  {ok / len(sub) * 100:5.1f}%")
+    log(f"报告 → {md_path}")
+    log(f"修正清单 → {rj_path}")
+
+
 def load_done(out_dir):
     p = result_path(out_dir)
     if not os.path.exists(p):
@@ -395,6 +471,10 @@ def main():
         print(f"共 {len(cases)} 题")
         for c in cases:
             print(f"  [{c['id']}] {c['q'][:56]}")
+        return
+
+    if "--rejudge" in argv:
+        rejudge(out_dir, all_cases)
         return
 
     done = []
