@@ -476,7 +476,7 @@ var CFG_GROUPS = [
       {v:'batch',l:'批处理（一段时间内整群消息合并成一条）'}]},
     {key:'mention_as_text', label:'把 @ 转成文字「@昵称」（微信原生 @ 发不出去时的替代方案）', type:'toggle', def:'true'},
     {key:'quote_reply_prefix', label:'引用回复转文字前缀（把「回复某条消息」变成〔回复 某某：原文〕）', type:'toggle', def:'false'},
-    {key:'quote_reply_native', label:'原生引用气泡（当前微信 4.x 的右键菜单对 UIA 不可见，实测不可用，保持关闭）', type:'toggle', def:'false'},
+    {key:'quote_reply_native', label:'原生引用气泡（右键原消息→引用，2026-09-15 已打通；引用时要先横向找准气泡，会多花 1~6 秒，找不到会自动降级普通发送）', type:'toggle', def:'false'},
   ]},
   {tier:'common', icon:'🖼️', title:'图片', sub:'群里发图怎么处理', fields:[
     {key:'image_mention_window', label:'群图片等待 @ 的时间窗（秒）：图先到，同一人在窗口内 @ 才会读图', type:'number', ph:'120'},
