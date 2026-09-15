@@ -966,7 +966,21 @@ class UiaSender(BaseSender):
             if self.search_enabled and contact:
                 if not self._is_chat_open(contact):
                     if not self._switch_to_contact(contact):
-                        log.warning(f"无法自动切换到 '{contact}'，尝试在当前窗口发送")
+                        # ⚠️ 安全红线（2026-09-15 事故）：以前这里会「尝试在当前窗口发送」，
+                        # 结果定时任务的消息全掉进了当时打开的那个聊天（找不到目标会话名时
+                        # 就会走到这条分支）。宁可不发，也绝不发错人。
+                        cur = self._current_chat_title()
+                        log.error(
+                            f"[UIA✗] 无法切到 '{contact}'（当前窗口 '{cur}'），"
+                            f"为避免发错会话，放弃这次发送")
+                        return False
+                    # 切完再确认一次：搜索切有可能"回车了但界面没动"
+                    if not self._is_chat_open(contact):
+                        cur = self._current_chat_title()
+                        log.error(
+                            f"[UIA✗] 切换后当前会话仍是 '{cur}'，不是 '{contact}'，"
+                            f"放弃发送")
+                        return False
                 self._last_contact = contact
 
             # 定位输入框
@@ -1320,8 +1334,92 @@ class UiaSender(BaseSender):
             time.sleep(0.2)
         return None
 
+    # 右键要落在「气泡」上才会弹菜单：消息项横跨整行（含头像与留白），
+    # 点行中心会点到空白、菜单根本不出来（2026-09-15 实测：x≈62% 才命中）。
+    # 气泡在 UIA 里没有子元素可定位，只能按行宽比例扫；自己发的消息靠右，优先试右侧。
+    QUOTE_X_FRACTIONS = (0.62, 0.72, 0.52, 0.82, 0.42, 0.9)
+
+    def _find_quote_menu(self, timeout: float = 1.2):
+        """右键后找「引用」菜单项。
+
+        菜单是**微信主窗口的子节点**（不是新顶层窗口，也不是 #32768），
+        所以只在主窗口里找；并要求它和「复制/转发/删除」是同一个父控件的兄弟，
+        避免把常驻的同名控件当成菜单（历史教训：误判后按 Esc 会关掉微信）。
+        """
+        import uiautomation as auto
+
+        def menu_item(root, name, budget=260):
+            stack = [root]
+            while stack and budget > 0:
+                c = stack.pop()
+                budget -= 1
+                try:
+                    if (c.Name or "").strip() == name and \
+                            c.ControlTypeName == "MenuItemControl":
+                        return c
+                    for k in c.GetChildren():
+                        stack.append(k)
+                except Exception:
+                    continue
+            return None
+
+        win = self._window
+        if not win:
+            return None
+        end = time.time() + timeout
+        while time.time() < end:
+            try:
+                hit = menu_item(win, self.QUOTE_MENU_NAME)
+                if hit is not None:
+                    try:
+                        parent = hit.GetParentControl()
+                        sibs = {(c.Name or "").strip()
+                                for c in (parent.GetChildren() if parent else [])}
+                    except Exception:
+                        sibs = set()
+                    if ({"复制", "转发"} & sibs) or "删除" in sibs:
+                        return hit
+            except Exception:
+                pass
+            time.sleep(0.15)
+        return None
+
+    def _right_click_until_menu(self, item):
+        """在消息项上横向扫描右键，直到菜单真的弹出来。
+
+        成功返回菜单里的「引用」控件；全都弹不出就返回 None（调用方降级普通发送）。
+        """
+        import uiautomation as auto
+
+        try:
+            r = item.BoundingRectangle
+            left, top = r.left, r.top
+            w, h = r.width(), r.height()
+        except Exception:
+            return None
+        y = top + max(6, int(h * 0.45))
+
+        for frac in self.QUOTE_X_FRACTIONS:
+            x = int(left + w * frac)
+            try:
+                auto.RightClick(x, y)
+            except Exception:
+                continue
+            time.sleep(0.45)
+            hit = self._find_quote_menu(timeout=1.0)
+            if hit is not None:
+                log.info(f"引用：右键命中气泡（x≈{frac:.0%}），菜单已弹出")
+                return hit
+            # 没弹出就换个位置；若刚才误开了别的菜单，点上方空白处关掉
+            try:
+                auto.Click(int(left + w * 0.5), max(2, int(top - 18)))
+            except Exception:
+                pass
+            time.sleep(0.15)
+        return None
+
     def send_quote(self, contact: str, quote_content: str, text: str) -> bool:
-        """原生引用回复：右键原消息 → 「引用」→ 输入正文 → 发送。
+        """原生引用回复：右键原消息气泡 → 「引用」→ 输入正文 → 发送。
 
         失败（找不到原消息 / 菜单没出来 / 不支持引用）时自动降级为普通文本发送，
         保证消息一定送达。
@@ -1346,15 +1444,12 @@ class UiaSender(BaseSender):
                     log.info("引用：未定位到原消息，降级普通发送")
                     return self.send_text(contact, text)
 
-                item.RightClick()
-                time.sleep(0.4)
-
-                # 只在「独立弹层」里找「引用」——绝不在微信主窗口里按 Esc。
-                # 找不到就降级普通发送：后续点击输入框会自然关掉任何残留菜单。
-                picked_ctl = self._find_menu_item_strict(
-                    self.QUOTE_MENU_NAME, timeout=2.0)
+                # 右键必须落在气泡上才会弹菜单（点整行中心会点到空白）。
+                # 菜单是微信主窗口的子节点，用「复制/转发/删除」做兄弟项校验，
+                # 避免把常驻同名控件误当菜单。全程不按 Esc（Esc 会关掉微信窗口）。
+                picked_ctl = self._right_click_until_menu(item)
                 if picked_ctl is None:
-                    log.info("引用：未找到「引用」菜单项，降级普通发送")
+                    log.info("引用：右键未弹出菜单，降级普通发送")
                     return self.send_text(contact, text)
 
                 try:
@@ -1366,9 +1461,7 @@ class UiaSender(BaseSender):
                         log.info("引用：菜单项点击失败，降级普通发送")
                         return self.send_text(contact, text)
 
-                time.sleep(0.4)
-
-                time.sleep(0.4)
+                time.sleep(0.5)
 
                 if not self._locate_input():
                     return self.send_text(contact, text)

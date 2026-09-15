@@ -63,9 +63,46 @@ def set_contact(ob_id, contact: str) -> None:
 
 
 def get_contact(ob_id, default=None):
-    """按 OneBot ID 取微信联系名。"""
+    """按 OneBot ID 取微信联系名。
+
+    优先查直连映射表；查不到时**反查名册**（2026-09-15 事故修复）：
+    定时任务/跨会话发送只知道 OneBot ID，而 AstrBot 发来的 group_id/user_id
+    正是本模块 `_wxid_to_int()` 算出来的整数。如果映射表是空的（重启后尚未
+    收到该会话的消息就会这样），以前会退化成"拿原始 ID 当联系人名"→ 切窗口
+    必然失败 → 消息发到当时打开的那个聊天。这里补一条反查，保证拿得到真名。
+    """
     with _contact_lock:
-        return _ob_id_to_contact.get(ob_id, default)
+        hit = _ob_id_to_contact.get(ob_id)
+    if hit:
+        return hit
+    try:
+        want = int(ob_id)
+    except (TypeError, ValueError):
+        return default
+    # ① 群：chatroom 的整数 ID → 群名
+    for room, name in known_groups().items():
+        try:
+            if _wxid_to_int(room) == want and name:
+                return name
+        except Exception:
+            continue
+    # ② 人：私聊的整数 ID → 常用名
+    #    注意：微信聊天标题显示的是**备注名**（WeFlow contacts 的 displayName），
+    #    昵称（nickname）只在搜索结果里出现。这里必须优先用聊天标题那个名字，
+    #    否则会出现"搜索切到了 测试用户，标题却是 RulerCordelius"的错位。
+    for wxid, info in all_persons().items():
+        try:
+            if info.get("uid") != want:
+                continue
+        except Exception:
+            continue
+        nm = get_chat_name(wxid)
+        if not nm:
+            names = info.get("names") or []
+            nm = names[0] if names else None
+        if nm:
+            return nm
+    return default
 
 
 # ============ 只读 API 支撑数据（群信息 / 成员昵称） ============
