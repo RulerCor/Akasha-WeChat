@@ -130,7 +130,9 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
 
 /* 开关 */
 .switch{position:relative;display:inline-block;width:38px;height:21px;flex:none}
-.switch input{opacity:0;width:0;height:0}
+/* 必须显式清掉 .settings-field input 的 padding/border，否则这个 0 尺寸的 checkbox
+   会被撑成约 25×19 的透明方块，占位并影响标签点击区 */
+.switch input{position:absolute;opacity:0;width:0;height:0;margin:0;padding:0;border:0;background:none;appearance:none;-webkit-appearance:none}
 .switch .sl{position:absolute;inset:0;background:#e8d5da;border-radius:999px;transition:.25s;cursor:pointer}
 .switch .sl:before{content:"";position:absolute;height:15px;width:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .switch input:checked+.sl{background:linear-gradient(135deg,#f48fb1,#ec407a)}
@@ -554,6 +556,16 @@ function renderConfigForm(cfg) {
   document.getElementById('settingsForm').innerHTML = html;
 }
 
+// 同步开关右侧的「开/关」文字。
+// 必须用 class 精确定位，不能用 span:last-child —— 那个选择器会先命中 .switch
+// 内部的滑块 <span class="sl">（它是 .switch 的最后一个子元素），把文字写进滑块里，
+// 表现为「字叠在圆点上、还被圆点遮住一半」（2026-09-15 用户反馈）。
+function syncSwitchText(cb) {
+  var row = cb.closest('.switch-row');
+  var t = row && row.querySelector('.st');
+  if (t) t.textContent = cb.checked ? '开' : '关';
+}
+
 function renderField(f, cfg) {
   if (f.type === 'detect') {
     return '<div class="settings-field wide"><label>' + f.label + '</label>'
@@ -577,9 +589,9 @@ function renderField(f, cfg) {
     return '<div class="settings-field wide"><label>' + f.label + badge + '</label>'
       + '<label class="switch-row"><span class="switch"><input type="checkbox"' + id
       + (on ? ' checked' : '')
-      + ' onchange="this.closest(\\'.switch-row\\').querySelector(\\'span:last-child\\').textContent=this.checked?\\'开\\':\\'关\\'">'
+      + ' onchange="syncSwitchText(this)">'
       + '<span class="sl"></span></span>'
-      + '<span>' + (on ? '开' : '关') + '</span></label></div>';
+      + '<span class="st">' + (on ? '开' : '关') + '</span></label></div>';
   }
   if (f.type === 'select') {
     var s = '<div class="settings-field">' + label + '<select' + id + '>';

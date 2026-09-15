@@ -4,6 +4,31 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## [1.2.7]
+
+这一版的主题：**修掉基础设置页开关的显示错乱**（点过开关才会出现，所以很容易漏）。
+
+### 修复
+
+- **开关的「开/关」文字跑进滑块里，被圆点遮住一半**。
+  现象：点过某个开关后，滑块内部多出一个半个字，右边那两个字还停在点击前的状态。
+  根因是 v1.2.3 重构时 `onchange` 用了 `querySelector('span:last-child')` 来定位文字，
+  而这个选择器会**先命中 `.switch` 内部的滑块 `<span class="sl">`**
+  （它是 `.switch` 的最后一个子元素），于是 `textContent` 被写进了滑块本身。
+  改为给文字加 `class="st"` + 独立的 `syncSwitchText(this)` 函数；
+  顺带把 `onchange` 里那串嵌套引号去掉，避免转义踩坑。
+- **开关里的隐藏 checkbox 会被表单样式撑大**：`.settings-field input` 的
+  `padding:8px 11px` / `border:1.5px` 也作用到了 `.switch input` 上，
+  使这个本该 0 尺寸的元素变成约 25×19 的透明块（会占位、影响标签点击区）。
+  已在 `.switch input` 显式清掉 `padding/border/margin/background` 并加 `appearance:none`。
+
+### 新增
+
+- `scripts/verify_switch_fix.py`：用面板**真实的 `<style>`** 生成最小复现页，
+  把「旧写法 / 新写法」并排渲染并自动点击，交给 Edge 无头截图对比。
+  旧写法的截图与用户反馈完全一致，新写法干净 —— 这类「点击后才出现」的
+  UI 问题靠静态截图是发现不了的，留个可复跑的回归工具。
+
 ## [1.2.6]
 
 这一版的主题：**原生引用打通 + 定时任务发错会话根治 + 知识库接线**。
