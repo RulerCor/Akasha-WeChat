@@ -71,6 +71,10 @@ EXTRA_LITERALS = {
     # 仓库/账号地址
     "RulerCordelius/Akasha-WeChat_RC": "YOURNAME/Akasha-WeChat_RC",
     "hicccc77/WeFlow": "upstream/WeFlow",
+    # 本机路径（含 Windows 用户名 —— 一定不能外流）
+    "C:\\Users\\Junqin Zhao": "C:\\AkashaPortable",
+    "C:/Users/Junqin Zhao": "C:/AkashaPortable",
+    "Junqin Zhao": "Akasha User",
 }
 
 
@@ -151,15 +155,21 @@ def build_map(ids):
         x = x.strip()
         if len(x) < 2 or x in BOT_NAMES or x in ASCII_STOP:
             continue
+        # 只自动收中文昵称。
+        # 纯英文名不做自动替换：实测 "Charlie"/"群友I"/"Albert"/"Peter" 这类常见英文名
+        # 会大量命中第三方库的 LICENSE / AUTHORS / 注释（全是误报），
+        # 而它们本身几乎没有识别性。真正要处理的英文标识（测试用户、RulerCordelius）
+        # 在 EXTRA_LITERALS 里手动列了。
         if CJK.search(x):
             literal[x] = f"示例用户{i:03d}"
-        elif len(x) >= 6 and re.fullmatch(r"[A-Za-z0-9_.\- ]+", x):
-            bounded[x] = f"ExampleUser{i:03d}"
     # 手动补充优先（覆盖自动编号，保证文档里的示例可读）
     for k, v in EXTRA_LITERALS.items():
         if len(k) < 2 or k in BOT_NAMES:
             continue
-        if CJK.search(k) or k.endswith("@chatroom") or k.startswith("wxid_"):
+        # 路径 / 群ID / wxid / 中文名 → 整串替换（唯一，无需词边界）
+        plain = (CJK.search(k) or k.endswith("@chatroom") or k.startswith("wxid_")
+                 or "\\" in k or "/" in k)
+        if plain:
             literal[k] = v
         else:
             bounded[k] = v
@@ -258,8 +268,12 @@ def apply_map(root, literal, bounded):
             if c:
                 s = s.replace(k, v)
                 n += c
-        for k, (rx, rep) in bounded.items():
-            s, c = rx.subn(rep, s)
+        # 用 lambda 而不是字符串做替换：替换串里含反斜杠（如 C:\AkashaPortable）时，
+        # re.sub 会把 \A 当成模板转义并报 "bad escape \A"。
+        # 长键优先，避免 `Junqin` 先于 `Junqin Zhao` 命中而留下半截。
+        for k in sorted(bounded, key=len, reverse=True):
+            rx, rep = bounded[k]
+            s, c = rx.subn(lambda _m, _r=rep: _r, s)
             n += c
         if s != orig:
             io.open(p, "w", encoding="utf-8", newline="").write(s)

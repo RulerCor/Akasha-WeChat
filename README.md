@@ -100,6 +100,7 @@ python main.py          # 或双击 start.bat（会开一个可见的控制台�
 | 文档 | 看什么 |
 |---|---|
 | **[`docs/开发文档.md`](docs/开发文档.md)** | **开发前读这份**：架构、核心机制、配置参考、AstrBot 补丁清单、排障 |
+| **[`docs/依赖与目录说明.md`](docs/依赖与目录说明.md)** | **搬家/换电脑前读这份**：每个目录是什么、哪些依赖在文件夹内、哪些在外部、开发环境与便携版的区别 |
 | `AGENT.md` | 红线与已知坑（改代码前的必读警告） |
 | `CHANGELOG.md` | 每个版本改了什么、为什么 |
 | `docs/architecture.html` | 可交互架构图（浏览器打开） |
@@ -115,8 +116,19 @@ Akasha-WeChat_RC/
 ├── .gitignore
 ├── docs/
 │   ├── 开发文档.md           ★ 开发、配置、排障主文档
+│   ├── 依赖与目录说明.md      ★ 每个目录/依赖在哪、换电脑怎么办
 │   ├── upstream-SETUP.md     上游「从零开始搭建指南」
 │   └── upstream-CLAUDE.md    上游给 AI 的模块速查
+├── vendor/                   随项目走的第三方依赖（不入库，约 750MB）
+│   ├── python/               免安装 Python 基座（两个 venv 都指向它）
+│   └── weflow/               WeFlow 程序本体
+├── runtime/                  本地运行环境（不入库）
+│   ├── bridge/               桥接运行副本 + venv + 配置 + 数据
+│   └── astrbot/              AstrBot 运行副本 + venv（框架代码在其 site-packages 内）
+├── release/                  发布产物（不入库）
+│   ├── versions/vX.Y.Z/      各版本源码快照
+│   └── portable/*.zip        便携版（免安装，给别人用）
+├── scripts/                  工具脚本（打包/补丁/脱敏/诊断/自检）
 └── wechat-weflow-bridge-ob11/    ← 代码目录（沿用上游路径）
     ├── main.py bridge_core.py ob_protocol.py ob_client.py
     ├── senders.py uia_sender.py web_panel.py state.py config.py

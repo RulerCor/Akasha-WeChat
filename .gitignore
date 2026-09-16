@@ -33,5 +33,10 @@ __pycache__/
 # ===== 本地运行环境（桥接 + AstrBot，含 venv 与业务数据，绝不入库）=====
 runtime/
 
+# ===== 随项目走的第三方依赖（基座 Python、WeFlow 程序本体；约 750MB，不入库）=====
+# 说明见 docs/依赖与目录说明.md。放这里是为了让开发文件夹自包含：
+# 两个 venv 的 pyvenv.cfg 都指向 vendor/python，不再依赖 WorkBuddy 自带环境。
+vendor/
+
 # ===== 发布产物（用 scripts/build_release.py 生成，不入库）=====
 release/

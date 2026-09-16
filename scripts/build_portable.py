@@ -63,8 +63,12 @@ RT_BRIDGE = os.path.join(ROOT, "runtime", "bridge")
 RELEASE_PORTABLE = os.path.join(ROOT, "release", "portable")
 DEFAULT_STAGE = r"C:\_akasha_build"
 
+VENDOR = os.path.join(ROOT, "vendor")
+
 # WeFlow 程序本体（只拷这个目录；用户数据在 %APPDATA%\WeFlow，绝不能拷）
+# 优先用开发文件夹里的 vendor/weflow —— 这样打包不依赖"WeFlow 恰好装在哪台机器/哪个路径"
 WEFLOW_CANDIDATES = [
+    os.path.join(VENDOR, "weflow"),
     os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "WeFlow"),
     r"C:\Program Files\WeFlow",
 ]
@@ -101,8 +105,19 @@ def rmtree_fast(path):
         shutil.rmtree(path, ignore_errors=True)
 
 
+# zip 直写时的字节级替换。
+# 为什么用字节级：venv 里有 GBK/UTF-8 混杂的文本（activate、locale、第三方脚本），
+# 先解码再编码会把非 UTF-8 的内容弄坏。而这些模式全是纯 ASCII，
+# 在 GBK 与 UTF-8 里编码完全一致，直接 replace 字节最安全。
+BYTE_FIX = [
+    (b"C:\\Users\\Junqin Zhao", b"C:\\AkashaPortable"),
+    (b"C:/Users/Junqin Zhao", b"C:/AkashaPortable"),
+    (b"Junqin Zhao", b"Akasha User"),
+]
+
+
 def zip_add_tree(zf, src, arc_prefix, exclude_dirs=()):
-    """把 src 目录直接写进 zip（不落地）。
+    """把 src 目录直接写进 zip（不落地），并做字节级脱敏。
 
     为什么这么做：本机对"新建大量小文件"极慢（Defender 实时扫描，实测 ~4 文件/秒），
     AstrBot 的 venv 有近 5 万个小文件，先拷到磁盘再打 zip 要两个小时。
@@ -119,12 +134,102 @@ def zip_add_tree(zf, src, arc_prefix, exclude_dirs=()):
             rel = os.path.relpath(full, src)
             arc = f"{arc_prefix}/{rel}".replace("\\", "/")
             try:
-                zf.write(full, arc)
-                b += os.path.getsize(full)
+                sz = os.path.getsize(full)
+                if f.lower() == "pyvenv.cfg":
+                    # 写成干净的占位路径，而不是"被替换后的阉割路径"。
+                    # 启动脚本每次都会用当前实际路径重写这个文件，所以这里只是占位。
+                    zf.writestr(arc, "home = C:\\AkashaPortable\\python\r\n"
+                                     "include-system-site-packages = false\r\n"
+                                     "version = 3.13.14\r\n")
+                    b += sz
+                    n += 1
+                    continue
+                data = io.open(full, "rb").read()
+                fixed = data
+                for old, new in BYTE_FIX:
+                    if old in fixed:
+                        fixed = fixed.replace(old, new)
+                if fixed is data:
+                    zf.write(full, arc)
+                else:
+                    zf.writestr(arc, fixed)
+                b += sz
                 n += 1
             except OSError as e:
                 log(f"    ⚠️ 跳过 {rel}: {e}")
     return n, b
+
+
+# 判定 zip 内某个路径是否属于"我们自己的文件"。
+# 只有我们自己的文件才跑全量中文昵称检查 —— 第三方库的数据文件里
+# 本来就含大量常见词（jieba 的中文词典里有"妈妈/爸爸/家人"，
+# LICENSE/AUTHORS 里有 Charlie/群友I 这类常见英文名），那是误报，不是隐私。
+_OUR_TOP_FILES = {"AGENT.md", "README.md", "CHANGELOG.md", "BUILD_INFO.md",
+                  "使用说明.md"}
+_OUR_PREFIXES = ("tools/", "docs/", "sim/", "app/bridge/", "app/sim/",
+                 "app/astrbot/data/", "app/astrbot/kb_docs/")
+
+
+def _is_our_file(inner):
+    """inner 是去掉包名根目录之后的相对路径。"""
+    if inner.startswith(_OUR_PREFIXES):
+        return True
+    if inner in _OUR_TOP_FILES:
+        return True
+    if "/" not in inner and inner.lower().endswith(".bat"):
+        return True
+    return False
+
+
+def verify_zip(zip_path, literal, bounded):
+    """对**最终 zip 本体**再扫一遍。
+
+    staging 审计覆盖不到"直接写进 zip 的大目录"（python / 两个 venv），
+    所以这里必须再查一次成品 —— 实测 venv 的 pyvenv.cfg 与 activate*
+    里带过本机绝对路径。
+
+    分两档：
+      · hard：唯一性强的串（wxid / 群ID / 本机路径 / 用户名）→ **全包检查**
+      · soft：中文昵称 → 只查我们自己的文件（第三方词典里全是常见词）
+    """
+    t0 = time.time()
+    hard = [k for k in literal
+            if k.startswith("wxid_") or k.endswith("@chatroom")
+            or k.startswith("C:\\") or k.startswith("C:/") or "Junqin" in k]
+    soft = [k for k in literal if k not in hard]
+    hard_b = [(k.encode("utf-8"), k) for k in hard] + [(b"Junqin", "Junqin")]
+    soft_b = [(k.encode("utf-8"), k) for k in soft]
+
+    BIN = (".pyc", ".dll", ".exe", ".pak", ".bin", ".png", ".jpg", ".ico",
+           ".faiss", ".db", ".zip", ".pyd", ".so", ".ttf", ".woff", ".woff2",
+           ".dat", ".node", ".asar")
+    bad = {}
+    with zipfile.ZipFile(zip_path) as z:
+        root = z.namelist()[0].split("/")[0] + "/"
+        for n in z.namelist():
+            if n.endswith("/"):
+                continue
+            inner = n[len(root):] if n.startswith(root) else n
+            is_our = _is_our_file(inner)
+            binary = n.endswith(BIN)
+            try:
+                b = z.read(n)
+            except Exception:
+                continue
+            found = [label for pat, label in hard_b if pat in b]
+            if is_our and not binary:
+                found += [label for pat, label in soft_b if pat in b]
+            if found:
+                bad[n] = sorted(set(found))[:4]
+    log(f"  扫描成品 zip（{zipfile.ZipFile(zip_path).namelist().__len__()} 条目，"
+        f"{time.time()-t0:.0f}s）")
+    if not bad:
+        log("  ✅ 成品 zip 零隐私残留（hard 全包检查 + soft 限自有文件）")
+        return 0
+    log(f"  ❌ 成品 zip 仍有 {len(bad)} 个文件含隐私：")
+    for n, f in list(bad.items())[:15]:
+        log(f"      {n}  ->  {f}")
+    return len(bad)
 
 
 def log(msg):
@@ -141,15 +246,23 @@ def version():
 
 
 def base_python_dir():
-    """从 venv 的 pyvenv.cfg 反查基座解释器目录。"""
+    """定位基座解释器目录。
+
+    优先用开发文件夹里的 `vendor/python`（自包含，不依赖外部环境），
+    没有才回落到 venv 的 pyvenv.cfg 里记录的 home。
+    """
+    v = os.path.join(VENDOR, "python")
+    if os.path.isfile(os.path.join(v, "python.exe")):
+        return v
     cfg = os.path.join(RT_BRIDGE, ".venv", "pyvenv.cfg")
     if os.path.isfile(cfg):
         for line in io.open(cfg, encoding="utf-8", errors="replace"):
             if line.lower().startswith("home"):
                 p = line.split("=", 1)[1].strip()
                 if os.path.isdir(p):
+                    log("  ⚠️ 未找到 vendor/python，回落到 pyvenv.cfg 记录的基座")
                     return p
-    raise SystemExit("❌ 找不到基座 Python 目录（读 pyvenv.cfg 失败）")
+    raise SystemExit("❌ 找不到基座 Python 目录（vendor/python 与 pyvenv.cfg 都不可用）")
 
 
 def find_weflow():
@@ -599,14 +712,19 @@ def main():
     hr("6/8 复制工具与文档")
     dst_tools = os.path.join(stage, "tools")
     os.makedirs(dst_tools, exist_ok=True)
+    # 只带"收件人真会用得上"的脚本。
+    # 故意不带 build_portable.py / sanitize_privacy.py：
+    #   它们是**构建期工具**（我们出包时用的），收件人没有开发数据也用不上；
+    #   而且它们内部必然写着扫描模式（含真实标识符），带进去只会自找麻烦。
     TOOLS = ["patch_aiocqhttp_primary_client.py", "patch_astrbot_i18n_blacklist.py",
              "patch_kb_wording.py", "patch_persona_kb_framing.py",
              "patch_persona_topic_guard.py", "patch_persona_name_rule.py",
-             "check_patches.py", "sanitize_privacy.py", "build_portable.py",
+             "check_patches.py",
              "cron_test_push.py", "clean_test_artifacts.py", "dump_conv.py",
              "dump_bridge_window.py", "shot_wechat.py", "kb_lookup.py",
-             "clear_input.py", "park_wechat.py", "test_aiocqhttp_routing.py",
-             "test_ob_segments.py", "test_send_media.py", "test_session_switch.py"]
+             "clear_input.py", "park_wechat.py",
+             "test_aiocqhttp_routing.py", "test_ob_segments.py",
+             "test_send_media.py", "test_session_switch.py"]
     cnt = 0
     for f in TOOLS:
         s = os.path.join(ROOT, "scripts", f)
@@ -630,18 +748,17 @@ def main():
     shutil.copy2(os.path.join(ROOT, "scripts", "firstrun_config.py"),
                  os.path.join(dst_tools, "firstrun_config.py"))
 
+    # 启动器与随包说明（生成在脱敏之前，确保它们本身也被扫一遍）
+    write_launchers(stage)
+    shutil.copy2(os.path.join(ROOT, "scripts", "portable_readme.md"),
+                 os.path.join(stage, "使用说明.md"))
+
     import sanitize_privacy as sp
     ids = sp.collect_identifiers()
     literal, bounded_raw = sp.build_map(ids)
     bounded = sp.compile_bounded(bounded_raw)
-    log("  正在对整包做文本脱敏（含文档 / 变更日志 / 测试脚本）...")
+    log("  正在对整包做文本脱敏（含文档 / 变更日志 / 脚本 / 本机路径）...")
     sp.apply_map(stage, literal, bounded)
-
-    write_launchers(stage)
-
-    # 说明文档
-    shutil.copy2(os.path.join(ROOT, "scripts", "portable_readme.md"),
-                 os.path.join(stage, "使用说明.md"))
 
     # ---------- 8. 校验 ----------
     hr("8/8 校验：整包必须零隐私残留")
@@ -683,6 +800,10 @@ def main():
         log(f"  zip 共 {n_staged + n_big} 文件 / {sz/1024/1024:.0f} MB "
             f"（用时 {time.time()-t0:.0f}s）")
         log(f"  {zip_path}")
+
+        if verify_zip(zip_path, literal, bounded):
+            log("\n❌ 成品包校验失败，请修正后重跑。")
+            return 1
 
     if args.extract:
         hr("解包到构建目录（供实测，本机逐文件写入较慢）")
