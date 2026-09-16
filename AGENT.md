@@ -99,6 +99,24 @@
   stdout 又是块缓冲（退出才刷盘）。排障时用
   `PYTHONUNBUFFERED=1 ... python.exe -u run_astrbot.py run` 启动，才能实时看到
   cron/agent 的执行日志。
+- **发消息前必须把输入框清空**（`UiaSender.clear_input()`）：微信输入框里的「引用节点」
+  是富文本对象，`ValuePattern.SetValue("")` **删不掉**（清空后读回来是空串，界面上却仍有
+  一个空引用块）。残留会引出两个历史疑难：① 后续发送把垃圾一起带上 → 群里出现
+  **空的引用气泡**；② `_send_current` 用"输入框是否为空"判成败会永远失败，媒体发送被迫
+  改成 `verify=False`（点一下按钮就算成功），**"发了没发"完全不可知**（就是"消息卡在
+  输入框里"那个现象）。必须 Ctrl+A + Delete 真删。
+- **剪贴板绝不用 PowerShell 子进程**：原实现 `subprocess.run(["powershell", ...])` 调
+  WinForms 写剪贴板，在受限环境（自动化工具/沙箱启动的进程）里**会被拦截**，稳定卡
+  30 秒后失败 → **图片/文件永远发不出去**。已改成 ctypes 直写 Win32 剪贴板
+  （CF_HDROP ≈ 4ms、CF_DIB ≈ 0.3s）。⚠️ 必须显式声明 `argtypes/restype`，
+  否则 64 位下句柄被截断成 32 位，`GlobalLock` 返回 NULL（报 access violation）。
+- **桥接接收必须串行**（`ob_client.py` 单 worker 队列）：AstrBot 的「分条回复」是按顺序
+  `await event.send()` 逐条发的；桥接若用 `create_task` 并发处理，多条 UIA 发送会互相
+  竞争，落屏顺序会乱（用户看到的"同一件事颠三倒四说两遍"）。串行之后 AstrBot 必须等
+  前一条回响应才发下一条，**乱序在结构上不再可能**。
+- **主动发送的路由兜底必须是独立的 `if`，不能写成 `elif`**：`event_ws` 可能指向一个
+  已经不在 `_api_clients` 里的连接，`api_ws` 会保持 None 并抛空异常。改成兜底 `if` 后，
+  无论哪条分支落空都能回退到「排除模拟器后仅剩的那个客户端」。
 
 ## 4. 怎么验证
 

@@ -30,10 +30,10 @@ async def _fake_fetch(seq, timeout):
     return {"status": "ok", "retcode": 0, "data": {"message_id": 1}}
 
 
-async def run_case(title, clients, expect):
+async def run_case(title, clients, expect, **extra):
     api = api_impl.WebSocketReverseApi(clients, set(), 5.0)
     try:
-        await api.call_action("send_group_msg", group_id=2000000001)
+        await api.call_action("send_group_msg", group_id=2000000001, **extra)
         got = "sent"
     except ApiNotAvailable:
         got = "ApiNotAvailable"
@@ -74,12 +74,41 @@ async def main():
             "ApiNotAvailable",
         )
     )
+    # 5) ★ 20260916 新增：显式 self_id 查不到（api_ws=None）→ 兜底到桥接。
+    #    实测 2026-09-16 06:00 的早安任务就是这样失败的：
+    #    同一年同一秒内一条成功、两条失败，报错为冒号后空白（空异常）。
+    results.append(
+        await run_case(
+            "self_id 查不到 + 桥接在场（应兜底）",
+            {BRIDGE_SELF_ID: bridge, SIM_SELF_ID: sim},
+            "sent",
+            self_id="404404",
+        )
+    )
+    # 6) 显式 self_id 查不到，且只剩模拟器 → 必须拒绝（绝不能发给模拟器）
+    results.append(
+        await run_case(
+            "self_id 查不到 + 只有模拟器（应拒绝）",
+            {SIM_SELF_ID: sim},
+            "ApiNotAvailable",
+            self_id="404404",
+        )
+    )
+    # 7) 显式 self_id 命中 → 直接发给它
+    results.append(
+        await run_case(
+            "显式 self_id 命中桥接",
+            {BRIDGE_SELF_ID: bridge, SIM_SELF_ID: sim},
+            "sent",
+            self_id=BRIDGE_SELF_ID,
+        )
+    )
 
     print()
     print("发给桥接的消息数:", len(bridge.sent), "| 发给模拟器的消息数:", len(sim.sent))
-    # 桥接应收到 2 条（场景 1、2）；模拟器只应收到 1 条（场景 3 独占时）；
-    # 场景 2（事故现场）绝不能落到模拟器手里。
-    ok = all(results) and len(bridge.sent) == 2 and len(sim.sent) == 1
+    # 桥接应收到 4 条（场景 1、2、5、7）；模拟器只应收到 1 条（场景 3 独占时）；
+    # 场景 2（事故现场）与场景 5（兜底）绝不能落到模拟器手里。
+    ok = all(results) and len(bridge.sent) == 4 and len(sim.sent) == 1
     print("\n结果:", "✅ 全部通过" if ok else "❌ 存在失败")
     return 0 if ok else 1
 

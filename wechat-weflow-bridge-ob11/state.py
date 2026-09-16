@@ -102,6 +102,17 @@ def get_contact(ob_id, default=None):
             nm = names[0] if names else None
         if nm:
             return nm
+    # ③ 兜底：任何已知会话名（含「文件传输助手」这类**不是联系人**的会话）。
+    #    这类会话不在名册里，以前会退化成裸 ID → 发送时去搜索一串数字
+    #    （实测 06:00 的早安任务就出现了 "会话列表未找到 '1000000012'"）。
+    for wxid, name in list(_chat_names.items()):
+        if not name:
+            continue
+        try:
+            if _wxid_to_int(wxid) == want:
+                return name
+        except Exception:
+            continue
     return default
 
 

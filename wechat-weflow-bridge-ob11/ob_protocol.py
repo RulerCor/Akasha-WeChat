@@ -268,6 +268,14 @@ async def _handle_ob_api(data: dict):
         message = params.get("message", [])
         contact = state.get_contact(target_id, str(target_id))
 
+        # 原始消息链落日志：分条/引用/顺序类问题全靠它定位。
+        # （正文里常含换行，排障时务必先合并续行再看，见 dump_bridge_window.py）
+        try:
+            log.info(f"[OB11] ← {action} target={target_id} chain="
+                     f"{json.dumps(message, ensure_ascii=False)[:500]}")
+        except Exception:
+            pass
+
         # 逐段处理：文字和图片分别发送
         # 引用回复（可选）：AstrBot 开启 reply_with_quote 后，回复链开头是
         # {"type":"reply","data":{"id":N}} 段。
@@ -309,7 +317,10 @@ async def _handle_ob_api(data: dict):
 
             if seg_type == "text":
                 text = seg_data.get("text", "")
-                if text:
+                # 纯空白段直接跳过：AstrBot 分条回复时可能产出只剩空白/换行的段，
+                # 发出去就是「空气泡」，还会把它携带的引用/At 一起浪费掉。
+                # 跳过时**保留** quote_target / at_prefix，让它们并入下一段正文。
+                if text and text.strip():
                     text = fix_display_names(text)
                     if quote_prefix:
                         text = quote_prefix + text

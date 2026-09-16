@@ -4,6 +4,56 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## [1.2.8]
+
+这一版的主题：**发送链路的四个真 bug（顺序颠倒 / 空引用气泡 / 路由空异常 / 文件发不出去）**。
+
+### 修复（严重）
+
+- **消息顺序会颠倒**（用户报"同一件事颠三倒四说了两三遍"）。
+  根因：`ob_client.py` 用 `asyncio.create_task` **并发**处理 AstrBot 的 API 请求，
+  而 AstrBot 的「分条回复」是按顺序逐条 `await event.send()` 发的 —— 桥接这边并发处理
+  会让多条 UIA 发送互相竞争，落屏顺序随机（实测：开头那句被挪到了最后）。
+  **改为单 worker 队列串行消费**：到达顺序 == 发送顺序。副效果是 AstrBot 必须等前一条
+  回响应才发下一条，**乱序在结构上不再可能**（实测 19:52 两次发送间隔 4 秒，就是它在等）。
+- **空引用气泡 / 消息卡在输入框**。根因：微信输入框里的「引用节点」是富文本对象，
+  `ValuePattern.SetValue("")` **删不掉**（读回来是空串，界面上仍留一个空引用块）。
+  残留引出两个历史疑难：① 后续发送夹带垃圾 → 群里出现**空的引用气泡**；
+  ② `_send_current` 用"输入框是否为空"判成败会永远失败，媒体发送被迫改成
+  `verify=False`（点一下按钮就算成功）→ **"发了没发"完全不可知**（就是"卡在输入框"）。
+  新增 `UiaSender.clear_input()`（Ctrl+A + Delete 真删，幂等），并在
+  `send_text / send_quote / send_image / send_file` 发送前调用；
+  媒体发送的校验改回 `verify=True`，失败时也清一次，不留残留。
+- **图片/文件永远发不出去**。根因：剪贴板走 `subprocess.run(["powershell", ...])` 调
+  WinForms，在受限环境（自动化工具/沙箱启动的进程）里**调用被拦截**，稳定卡 30 秒后失败。
+  改成 **ctypes 直写 Win32 剪贴板**（CF_HDROP ≈ 4ms、CF_DIB ≈ 0.3s），不再依赖任何子进程。
+  ⚠️ 64 位下必须显式声明 `argtypes/restype`，否则句柄被截断成 32 位、`GlobalLock` 返回 NULL。
+- **定时任务发送路由兜底不完整**（AstrBot 侧补丁）。原来写成 `elif`（只在"多客户端"时
+  生效）；而 `event_ws` 指向已失效连接、或显式传的 `self_id` 查不到时，`api_ws` 会保持
+  None 并抛**空异常** → 同一年同一秒内出现"一条成功、两条失败"。
+  改为独立的 `if`：**任何分支落空都兜底**（排除模拟器后仅剩一个客户端才用）。
+
+### 新增
+
+- `uia_sender.clear_input()`：可靠清空输入框（含富文本引用节点），已进 AGENT.md 铁律。
+- 桥接出站新增**原始消息链日志**：`[OB11] ← {action} target=… chain=[…]`，
+  分条/引用/顺序类问题靠它定位（正文可能含换行，解析务必先合并续行）。
+- `state.get_contact` 增加**通用反查**：任何已知会话名（含「文件传输助手」这类非联系人）
+  都能由整数 ID 还原真名，不再退化成裸 ID 去搜索。
+- `scripts/shot_wechat.py`：微信窗口截图工具（人工确认发送结果，可 `--right` 只截聊天区）。
+- `scripts/test_send_media.py`：媒体外发实测（文件 + 图片，目标固定为「文件传输助手」）。
+- `scripts/test_ob_segments.py`：出站分段回归 10 项（空白段/引用合并/@合并/顺序/图片/文件）。
+- `patch_aiocqhttp_primary_client.py` 支持 `--selftest`（还原→重打，逐字节比对等价）。
+
+### 验证（端到端，实测通过）
+
+- **媒体外发**：SVG 文件 + PNG 图片成功落到「文件传输助手」（WeFlow 确认 `isSend=1`）。
+- **定时任务**：一次性 cron（目标=文件传输助手）→ agent 用 `astrbot_file_write_tool`
+  画 SVG → `send_message_to_user`(plain + file) → `Message sent to session …161333918`
+  → 桥接 `[UIA✓] 文件 → 文件传输助手: mon3tr_test.svg`；WeFlow 确认收到且**顺序正确**
+  （19:52:23 文字 → 19:52:28 文件）。
+- 遗留：**群里的多段回复顺序**需要等下一次真实群消息才能用新的 `chain=` 日志复核。
+
 ## [1.2.7]
 
 这一版的主题：**修掉基础设置页开关的显示错乱**（点过开关才会出现，所以很容易漏）。

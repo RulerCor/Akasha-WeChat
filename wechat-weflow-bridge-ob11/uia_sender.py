@@ -889,6 +889,56 @@ class UiaSender(BaseSender):
         except Exception:
             return ""
 
+    def clear_input(self) -> bool:
+        """彻底清空聊天输入框（含残留的「引用节点」/附件占位）。
+
+        为什么必须做（2026-09-16 实测）：
+          微信输入框里的「引用节点」是富文本对象，`ValuePattern.SetValue("")`
+          **删不掉它** —— 清空后 `ValuePattern.Value` 读回来是空字符串，
+          但界面上仍有一个空引用块（实测残留 '￼￼'）。
+        后果有两个，都是历史疑难：
+          ① 后续发送会把残留一起带上 → 群里出现「空的引用气泡」；
+          ② `_send_current` 用「输入框是否为空」判断发送成败会永远失败
+             → 图片/文件发送被迫改成 verify=False（点了按钮就算成功），
+               于是「发了没发」完全不可知（用户报的"卡在输入框里"）。
+        这里用 Ctrl+A + Delete 真正删除选中内容，再回读校验。
+
+        幂等：输入框已空时直接返回 True，不点鼠标、不按键。
+        """
+        if not self._locate_input():
+            return False
+        ctrl = self._input_control
+        if self._input_value(ctrl).strip() == "":
+            return True
+        try:
+            ctrl.SetFocus()
+            time.sleep(0.05)
+        except Exception:
+            pass
+        self._click_input_center()
+        time.sleep(0.15)
+        try:
+            self._auto.SendKeys("{Ctrl}a")
+            time.sleep(0.08)
+            self._auto.SendKeys("{Delete}")
+            time.sleep(0.3)
+        except Exception as e:
+            log.debug(f"清空输入框按键失败: {e}")
+        if self._input_value(ctrl).strip() == "":
+            log.debug("输入框已清空")
+            return True
+        # 兜底：ValuePattern 置空（对纯文本有效）
+        try:
+            set_value(ctrl, "")
+            time.sleep(0.2)
+        except Exception:
+            pass
+        left = self._input_value(ctrl)
+        if left.strip():
+            log.warning(f"输入框未能完全清空，仍残留 {left!r}")
+            return False
+        return True
+
     def _send_current(self, ctrl, verify: bool = True) -> bool:
         """
         把输入框里已有的内容发出去。
@@ -1113,9 +1163,10 @@ class UiaSender(BaseSender):
                 self._auto.SendKeys('{Ctrl}v')
                 time.sleep(0.6)
 
-                # 发图片时输入框里没有文本，清空判据失效，故 verify=False
-                if not self._send_current(self._input_control, verify=False):
+                # 发送前已 clear_input()，所以「输入框被清空」是可靠的成功判据
+                if not self._send_current(self._input_control, verify=True):
                     log.error(f"[UIA✗] 图片 → {contact}: 已粘贴但未能发出")
+                    self.clear_input()      # 清掉残留，别污染下一次发送
                     return False
 
                 log.info(f"[UIA✓] 图片 → {contact}: {os.path.basename(image_path)}")
@@ -1149,6 +1200,9 @@ class UiaSender(BaseSender):
                     if not self._is_chat_open(contact):
                         self._switch_to_contact(contact)
                     self._last_contact = contact
+
+                # 先清空输入框，避免把上次的残留一起发出去（也能让发送可校验）
+                self.clear_input()
 
                 # 复制文件到剪贴板（文件拖放格式）
                 self._copy_file_to_clipboard(file_path)
@@ -1184,8 +1238,10 @@ class UiaSender(BaseSender):
                 self._auto.SendKeys('{Ctrl}v')
                 time.sleep(0.8)
 
-                if not self._send_current(self._input_control, verify=False):
+                # 发送前已 clear_input()，所以「输入框被清空」是可靠的成功判据
+                if not self._send_current(self._input_control, verify=True):
                     log.error(f"[UIA✗] 文件 → {contact}: 已粘贴但未能发出")
+                    self.clear_input()      # 清掉残留，别污染下一次发送
                     return False
 
                 log.info(f"[UIA✓] 文件 → {contact}: {os.path.basename(file_path)}")
@@ -1494,37 +1550,128 @@ class UiaSender(BaseSender):
                 # 注意：这里刻意不按 Esc —— 盲按 Esc 会把微信窗口关掉。
                 return self.send_text(contact, text)
 
-    def _copy_file_to_clipboard(self, path: str):
-        """复制文件到剪贴板（CF_HDROP 文件拖放格式，聊天框 Ctrl+V 即发送该文件）"""
-        abs_path = os.path.abspath(path)
+    # ---------- 剪贴板（纯 ctypes，不依赖 PowerShell）----------
+    #
+    # 历史实现用 `subprocess.run(["powershell", ...])` 调 WinForms 写剪贴板，
+    # 有两个致命问题（2026-09-16 实测）：
+    #   ① 在受限环境里（自动化工具/沙箱启动的进程）调用会被拦截，
+    #      稳定卡 30 秒后失败 → 图片/文件**永远发不出去**，
+    #      日志只有一句 "timed out after 10 seconds"；
+    #   ② 即使放行也要 1~3 秒（PowerShell 启动 + Add-Type 编译）。
+    # 改为 ctypes 直写 Win32 剪贴板：实测 CF_HDROP ≈ 4ms、CF_DIB ≈ 0.3s，
+    # 且不依赖任何子进程，受限环境同样可用。
+    #
+    # ⚠️ 必须显式声明 argtypes/restype：64 位下 HGLOBAL/HANDLE 是指针，
+    #    不声明 restype 会被截断成 32 位，GlobalLock 会返回 NULL
+    #    （表现为 access violation 写 0x0）。
+
+    CF_HDROP = 15
+    CF_DIB = 8
+    _GMEM_MOVEABLE = 0x0002
+
+    @staticmethod
+    def _clipboard_api():
+        import ctypes
+        from ctypes import wintypes
+        u = ctypes.windll.user32
+        k = ctypes.windll.kernel32
+        k.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
+        k.GlobalAlloc.restype = ctypes.c_void_p
+        k.GlobalLock.argtypes = [ctypes.c_void_p]
+        k.GlobalLock.restype = ctypes.c_void_p
+        k.GlobalUnlock.argtypes = [ctypes.c_void_p]
+        k.GlobalUnlock.restype = wintypes.BOOL
+        k.GlobalFree.argtypes = [ctypes.c_void_p]
+        k.GlobalFree.restype = ctypes.c_void_p
+        u.OpenClipboard.argtypes = [ctypes.c_void_p]
+        u.OpenClipboard.restype = wintypes.BOOL
+        u.EmptyClipboard.restype = wintypes.BOOL
+        u.SetClipboardData.argtypes = [wintypes.UINT, ctypes.c_void_p]
+        u.SetClipboardData.restype = ctypes.c_void_p
+        u.CloseClipboard.restype = wintypes.BOOL
+        return u, k
+
+    @staticmethod
+    def _open_clipboard(user32, retries=12, delay=0.15):
+        """剪贴板可能被别的进程短暂占用，重试若干次。"""
+        for _ in range(retries):
+            if user32.OpenClipboard(None):
+                return True
+            time.sleep(delay)
+        return False
+
+    @classmethod
+    def _set_clipboard_bytes(cls, fmt: int, buf: bytes) -> bool:
+        """把一段字节放进 HGLOBAL，并以指定剪贴板格式写入。"""
+        import ctypes
+        user32, kernel32 = cls._clipboard_api()
+        h = kernel32.GlobalAlloc(cls._GMEM_MOVEABLE, len(buf))
+        if not h:
+            log.error("剪贴板: GlobalAlloc 失败")
+            return False
+        ptr = kernel32.GlobalLock(h)
+        if not ptr:
+            kernel32.GlobalFree(h)
+            log.error("剪贴板: GlobalLock 失败")
+            return False
+        ctypes.memmove(ptr, buf, len(buf))
+        kernel32.GlobalUnlock(h)
+
+        if not cls._open_clipboard(user32):
+            kernel32.GlobalFree(h)
+            log.error("剪贴板: OpenClipboard 失败（被占用？）")
+            return False
         try:
-            subprocess.run([
-                "powershell", "-WindowStyle", "Hidden", "-Command",
-                "Add-Type -AssemblyName System.Windows.Forms;"
-                f"$files = New-Object System.Collections.Specialized.StringCollection;"
-                f"$files.Add('{abs_path}') | Out-Null;"
-                "[System.Windows.Forms.Clipboard]::SetFileDropList($files)"
-            ], check=True, timeout=10)
-            log.debug("PowerShell 已复制文件到剪贴板 (CF_HDROP)")
-        except Exception as e:
-            log.error(f"复制文件到剪贴板失败: {e}")
-            raise
+            user32.EmptyClipboard()
+            ok = bool(user32.SetClipboardData(fmt, h))
+        finally:
+            user32.CloseClipboard()
+        if not ok:
+            kernel32.GlobalFree(h)   # 成功时所有权已移交剪贴板，不能释放
+        return ok
+
+    @classmethod
+    def _set_clipboard_files(cls, paths) -> bool:
+        """CF_HDROP：文件拖放格式（聊天框 Ctrl+V 即发送该文件）。"""
+        import ctypes
+        from ctypes import wintypes
+
+        class DROPFILES(ctypes.Structure):
+            _fields_ = [("pFiles", wintypes.DWORD), ("pt", wintypes.POINT),
+                        ("fNC", wintypes.BOOL), ("fWide", wintypes.BOOL)]
+
+        df = DROPFILES()
+        df.pFiles = ctypes.sizeof(DROPFILES)
+        df.fWide = True
+        head = ctypes.string_at(ctypes.byref(df), ctypes.sizeof(df))
+        data = "".join(os.path.abspath(p) + "\x00" for p in paths) + "\x00"
+        return cls._set_clipboard_bytes(cls.CF_HDROP,
+                                       head + data.encode("utf-16-le"))
+
+    @classmethod
+    def _set_clipboard_image(cls, path) -> bool:
+        """CF_DIB：位图（BMP 去掉 14 字节文件头）。"""
+        try:
+            from PIL import Image
+        except ImportError:
+            log.error("剪贴板: 需要 Pillow 才能发图片（pip install Pillow）")
+            return False
+        import io as _io
+        b = _io.BytesIO()
+        Image.open(path).convert("RGB").save(b, "BMP")
+        return cls._set_clipboard_bytes(cls.CF_DIB, b.getvalue()[14:])
+
+    def _copy_file_to_clipboard(self, path: str):
+        if not self._set_clipboard_files([path]):
+            log.error(f"复制文件到剪贴板失败: {path}")
+            raise RuntimeError("set clipboard (CF_HDROP) failed")
+        log.debug("已复制文件到剪贴板 (CF_HDROP)")
 
     def _copy_image_to_clipboard(self, path: str):
-        """复制图片到剪贴板（通过 PowerShell，避免 PIL 对象被当作文本复制）"""
-        abs_path = os.path.abspath(path)
-        try:
-            subprocess.run([
-                "powershell", "-WindowStyle", "Hidden", "-Command",
-                f"Add-Type -AssemblyName System.Windows.Forms;"
-                f"$img = [System.Drawing.Image]::FromFile('{abs_path}');"
-                f"[System.Windows.Forms.Clipboard]::SetImage($img);"
-                f"$img.Dispose()"
-            ], check=True, timeout=10)
-            log.debug("PowerShell 已复制图片到剪贴板")
-        except Exception as e:
-            log.error(f"复制图片到剪贴板失败: {e}")
-            raise
+        if not self._set_clipboard_image(path):
+            log.error(f"复制图片到剪贴板失败: {path}")
+            raise RuntimeError("set clipboard (CF_DIB) failed")
+        log.debug("已复制图片到剪贴板 (CF_DIB)")
 
     # ================================================================
     # 诊断
