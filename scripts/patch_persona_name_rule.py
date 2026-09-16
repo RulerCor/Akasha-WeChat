@@ -39,6 +39,7 @@ RULE = """
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--revert", action="store_true")
+    ap.add_argument("--verify", action="store_true", help="只检查状态，不修改")
     args = ap.parse_args()
 
     c = sqlite3.connect(DB)
@@ -49,6 +50,13 @@ def main() -> int:
         print("⚠️ 找不到 mon3tr 人设")
         return 1
     cur = row[0]
+
+    if args.verify:
+        if MARK in cur:
+            print("补丁状态: ✅ 已打（「名字照抄」段落存在）")
+            return 0
+        print("补丁状态: ❌ 未打")
+        return 1
 
     if args.revert:
         if MARK not in cur:
