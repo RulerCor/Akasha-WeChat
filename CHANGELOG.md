@@ -4,6 +4,60 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## 便携版（免安装打包）—— 随 v1.2.9 一起发布
+
+主题：**让"换台电脑"这件事从"装一整天环境"变成"解压 + 双击"**。
+
+### 新增
+
+- **`scripts/build_portable.py`**：一条命令产出完整便携版
+  （`release/portable/Akasha-WeChat_便携版-vX.Y.Z.zip`）。包里自带：
+  - 免安装 Python 运行时（基座解释器，约 53 MB）
+  - **AstrBot 及其全部依赖**（连它自己的 venv 一起，免 pip）
+  - **桥接及其全部依赖**（同上）
+  - **WeFlow 程序本体**（Electron，直接拷即可运行）
+  - 角色人设、知识库、对话模拟器、维护脚本、项目文档
+
+  **venv 可移植的原理**：Windows 的 venv 靠 `pyvenv.cfg` 里的 `home` 定位基座解释器。
+  启动器在每次启动时把「包内 python 的当前绝对路径」写回该文件，venv 就能在任何路径下运行
+  （已实测：换目录后依赖全部正常导入）。
+
+- **`启动 Akasha.bat`**：一键启动 —— 校正环境路径 → 检查首次配置 → 依次拉起
+  WeFlow / AstrBot / 桥接（自动等端口就绪）→ 自动打开控制面板。
+- **`停止 Akasha.bat`**：按端口一次性停掉 AstrBot 与桥接，并清理 `bridge.pid`。
+- **`① 首次配置.bat` + `scripts/firstrun_config.py`**：交互式向导
+  - WeFlow Token：**优先自动从 `%APPDATA%\WeFlow\WeFlow-config.json` 读取**，读不到才让手填
+  - 机器人微信昵称 / wxid
+  - 对话模型：内置 DeepSeek / Kimi / 硅基流动 / 通义 / OpenRouter / 自定义 六种预设，
+    写入 AstrBot 的 provider 配置并设 `max_context_tokens=65536`
+  - 完成后写 `.first_run_done` 标记，启动脚本据此判断是否已配置
+- **`scripts/sanitize_privacy.py`**：隐私脱敏工具（审计 + 替换，可复用）
+- **`scripts/check_patches.py`**：一条命令总检六项核心补丁是否还在
+- **`使用说明.md`**（随包）：从零上手、常见问题、隐私说明
+
+### 隐私（重要）
+
+便携版**不含任何个人数据**，构建时强制校验：
+
+| 处理 | 内容 |
+|---|---|
+| 剥离 | 全部 API Key、AstrBot 面板口令 / `pbkdf2_password` / `jwt_secret` |
+| 清空 | `data_v4.db` 只留 personas 表；聊天历史、会话映射、定时任务、API Key 全清 |
+| 不带 | 桥接 `data/`（含真实 wxid / 群名 / 人名）；AstrBot 的 `backup/` `logs/` `*.bak_*` |
+| 绝不拷 | **WeFlow 的用户数据目录 `%APPDATA%\WeFlow`**（那里有微信数据库解密密钥） |
+| 脱敏 | 文档、变更日志、源码注释里的真实 wxid / 群 ID / 群名 / 人名 → 占位符 |
+
+构建流程最后一步会对整包跑一遍脱敏审计，**有残留就中止出包**。
+
+### 说明
+
+- 收件人仍需自行准备：**微信桌面版（安装并登录）** 和 **一个模型 API Key** ——
+  前者是腾讯的软件无法随包分发，后者属于个人凭据不能打包。
+- ⚠️ **WeFlow 是第三方程序**：其源码仓库已因腾讯 DMCA 投诉下架，且未附任何开源许可证。
+  按用户要求内置以便"解压即用"，**请勿公开再分发本包**。
+- 构建目录默认用短路径 `C:\_akasha_build`：venv 有近 5 万个小文件，放在深目录会撞
+  Windows 260 字符路径上限；产物再打成 zip 放进 `release/portable/`。
+
 ## [1.2.9]
 
 这一版的主题：**把"伪装成记忆"的知识库措辞改回"如实说明是知识库"，根治"雷霆大回忆"**。

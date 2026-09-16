@@ -164,3 +164,33 @@
 约定：`release/` 整体不入库；`runtime/`（本地运行环境，含 venv 与业务数据）不入库；
 代码与配置里**不写死绝对路径**——相对路径以「项目根（桥接目录的上一级）」为基准，
 AstrBot 相关配置留空时会自动按常见布局搜索。
+
+## 6. 便携版（免安装打包）
+
+`python scripts/build_portable.py` → `release/portable/Akasha-WeChat_便携版-vX.Y.Z.zip`。
+目标是"换台电脑解压即用"，免装 Python / AstrBot / 任何 pip 依赖。
+
+**venv 怎么做到可移植**：Windows 的 venv 靠 `pyvenv.cfg` 的 `home` 找基座解释器。
+启动器每次启动都把「包内 `python\` 的当前绝对路径」写回该文件。
+—— **所以包可以被解压到任意目录**，但**别把 `python\` 目录单独挪走或改名**。
+
+**打包时的三条铁律**
+
+1. **绝不拷 `%APPDATA%\WeFlow`**：那里存的是微信数据库解密密钥（`decryptKey` /
+   `imageXorKey` / `imageAesKey`）和 `httpApiToken`。只拷程序本体
+   （`%LOCALAPPDATA%\Programs\WeFlow`）。这是整件事里最容易出事的一步。
+2. **配置与数据库必须剥干净**：`cmd_config.json` 里的 `provider_sources[*].key`、
+   `dashboard.password/pbkdf2_password/jwt_secret`、`admins_id`、`id_whitelist`、
+   `active_reply` 白黑名单；`data_v4.db` 只留 `personas`，其余表全清。
+3. **出包前必须跑脱敏审计**：`build_portable.py` 最后一步会调
+   `sanitize_privacy.py` 的审计，**有残留就中止**。新增文档/脚本后如果审计报错，
+   先看是不是又写进了真实的 wxid / 群名 / 人名。
+
+**构建目录必须用短路径**（默认 `C:\_akasha_build`）：venv 近 5 万个小文件，
+放在深目录会撞 Windows 的 260 字符路径上限。
+
+**版本号约定**：便携版不单独编号，直接用它所打包的代码版本
+（`便携版-vX.Y.Z` 里的 X.Y.Z = `wechat-weflow-bridge-ob11/VERSION`）。
+
+**收件人仍需自备**：微信桌面版（安装 + 登录，无法打包）、一个模型 API Key
+（个人凭据，首次配置向导里填）。
