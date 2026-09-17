@@ -193,6 +193,31 @@ if __name__ == "__main__":
         except (ValueError, OSError):
             os.remove(PID_FILE)
 
+    def port_in_use(port, host="127.0.0.1"):
+        """Web 面板端口上是否已有人在监听。
+
+        兜底用：gateway 的 HTTPServer 开了 allow_reuse_address，
+        Windows 的 SO_REUSEADDR 允许**两个进程同时绑同一端口**，
+        所以 pid 锁一旦被误删就再也拦不住第二个实例 —— 而两个实例
+        会同时消费微信消息，群里每条消息被回复两次。
+        这里用 connect 探测（TIME_WAIT 不会误报，只有真在监听才会连上）。
+        """
+        import socket
+        s = socket.socket()
+        s.settimeout(0.5)
+        try:
+            s.connect((host, port))
+            return True
+        except OSError:
+            return False
+        finally:
+            s.close()
+
+    if port_in_use(config.WEB_PORT):
+        log.error(f"⚠️ Web 面板端口 {config.WEB_PORT} 已被占用 —— 极可能已有一个桥接在运行")
+        log.error("   拒绝启动第二个实例（否则每条消息会被回复两次）。请先停掉旧实例。")
+        sys.exit(1)
+
     with open(PID_FILE, "w") as f:
         f.write(str(os.getpid()))
 
