@@ -4,6 +4,42 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## 流式响应挂起 + 画图链路打通 + 归档体系（2026-09-20）
+
+### 修复
+
+**流式响应永久挂起（重大）**：让 bot 画图，agent 第一轮成功（生成 SVG 并
+写文件），第二轮 LLM 调用后**整个任务永久消失**——无异常、无超时、无回复，
+后续消息正常处理（仅该任务挂死）。
+Debug 日志定位：`receive_response_body.started` 之后**永远没有 complete**——
+openrouter 免费渠道偶发 chunked 响应不终止，httpx `async for` 无限等待。
+上游 `create_proxy_client` 创建的 AsyncClient **不带 timeout**。
+**修复**：补丁插件第 8 项——包装 `create_proxy_client`，OpenAI 通道强制
+`httpx.Timeout(read=180)`，挂起最多 3 分钟转为 ReadTimeout（上层会重试/切换
+fallback，实测 openrouter 损坏响应 → 自动切 agnes → 正常回复）。
+
+### 画图链路实测贯通
+
+bot 现在可以完整走通「接收画图请求 → agent 生成 SVG → file_write 写文件 →
+发送图片段 → 桥接 Chromium 渲染 PNG → UIA 剪贴板发送微信」。
+实测两轮自画像（`m3_selfie.svg` 等）均在微信中成功送达，渲染产物人工复核
+通过（`release/verify/m3_selfie_rendered.png`，400×440）。
+
+### 新增
+
+- **归档体系**（`docs/RELEASE_PROCESS.md`）：版本号→CHANGELOG→tag→发行版→
+  补丁快照→开发文档→证据，7 步强制流程；历史版本补记（v1.5.0/1.5.1 无 tag
+  记为教训）。
+- **补丁插件开发文档**（`docs/patch_plugin.md`）：设计原理、事故对照表、
+  实现细节（subprocess 坑、import 绑定坑、幂等机制）、升级恢复流程。
+- 补丁插件第 8 项：OpenAI 通道 read timeout。
+
+### 诊断方法沉淀
+
+这类"任务静默消失"的排查路径：开 DEBUG 日志 → 重放请求 → 看
+httpcore `_trace` 的 `receive_response_body.started/complete` 配对——
+只有 started 没有 complete 即为挂起现场。
+
 ## bot 说「发给你了」但图片没到——SVG 假成功（2026-09-19）
 
 ### 修复

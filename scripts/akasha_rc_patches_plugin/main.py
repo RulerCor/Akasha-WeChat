@@ -285,6 +285,51 @@ def _patch_kb_scope():
     return None
 
 
+def _patch_openai_read_timeout():
+    """给 OpenAI 兼容 provider 的 httpx 客户端加 read timeout。
+
+    事故（2026-09-20 00:02 前后）：openrouter 免费渠道偶发返回 chunked
+    响应后**流未正常终止**，httpx 的 async for 永久等待下一个数据块——
+    工具循环任务永久挂起，无异常、无超时、无回复（日志止于
+    receive_response_body.started）。上游 create_proxy_client 创建的
+    AsyncClient **不带 timeout**，SDK 级 timeout 对这种挂起不生效。
+
+    修复：包装 create_proxy_client，所有 OpenAI 兼容 provider 的
+    httpx.AsyncClient 强制携带 read timeout（默认 180s）——挂起的
+    读体最多 3 分钟后抛 ReadTimeout，agent 上层会重试或报错，而非静默挂死。
+    """
+    from astrbot.core.utils import network_utils as nu
+
+    if getattr(nu.create_proxy_client, "_akasha_timeout_patched", False):
+        return None
+
+    original = nu.create_proxy_client
+
+    def create_proxy_client_with_timeout(provider_label, proxy=None,
+                                         headers=None, verify=None,
+                                         httpx_module=None):
+        client = original(provider_label, proxy=proxy, headers=headers,
+                          verify=verify, httpx_module=httpx_module)
+        # 只对 LLM 主通道生效（OpenAI 标签）；嵌入通道（httpx2）保持原样
+        if provider_label == "OpenAI":
+            timeout = httpx_module.Timeout(connect=15.0, read=180.0,
+                                           write=30.0, pool=30.0)
+            client.timeout = timeout
+        return client
+
+    create_proxy_client_with_timeout._akasha_timeout_patched = True
+    nu.create_proxy_client = create_proxy_client_with_timeout
+
+    # openai_source 在模块顶部 from ... import create_proxy_client，
+    # 已绑定到其模块命名空间——需要同步替换
+    from astrbot.core.provider.sources import openai_source as oai
+    if getattr(oai.create_proxy_client, "_akasha_timeout_patched", False) is not True:
+        oai.create_proxy_client = create_proxy_client_with_timeout
+
+    return ("astrbot/core/utils/network_utils.py + openai_source",
+            "httpx read timeout", "read=180s（防流式响应挂起）")
+
+
 def _patch_i18n_blacklist():
     """面板 i18n 黑名单文案（源码文件补丁，import 执行仓库脚本）。"""
     out = _run_patch_script(
@@ -297,6 +342,7 @@ def _patch_i18n_blacklist():
 
 PATCHES = [
     ("provider_getkeys",  "provider get_keys 归一化（修复 All chat models failed）", _patch_provider_getkeys),
+    ("openai_read_timeout", "OpenAI 通道 read timeout（防流式响应挂起）",           _patch_openai_read_timeout),
     ("kb_wording_mgr",    "kb_mgr.format_context 知识库措辞",                        _patch_kb_wording_mgr),
     ("kb_wording_tools",  "knowledge_base_tools 描述+空结果文案",                    _patch_kb_wording_tools),
     ("kb_wording_agent",  "astr_main_agent 注入头探测/兜底",                          _patch_kb_wording_agent),
