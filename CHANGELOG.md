@@ -4,6 +4,35 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## [1.5.2]（2026-09-19）
+
+正式发行版（`build_dist.py`）。相对 v1.5.1 新增两项。
+
+### 新增
+
+- **退出归因** —— 新增 `exit_reason.py`，写 `data/exit_reason.log`。
+  关键洞察：Windows 上 `taskkill /F`（TerminateProcess）**不触发任何
+  Python 清理**，atexit/finally 都不执行，所以判据反过来：
+  **有退出记录 = 自己退的（异常/主动/信号）；没有记录 = 被强杀**。
+  下次启动时自动判定上次是否被强制终止；`set_phase()` 记录死在哪一步；
+  面板新增「🧭 上次是怎么退的」卡片 + `GET /api/exit-reason`。
+- **akasha_ctl.py** —— 按端口反查 PID 的精确启停脚本
+  （status / stop / start / restart）。背景：一次事故中桥接与 AstrBot
+  双双消失，exit_reason.log 显示无退出记录 = 被强杀；根因是按进程名
+  批量杀 python 会波及两者。本脚本**永远不按进程名杀**。
+
+### 附带
+
+- 仓库迁移：老账号被 flag，改用新号 `RulerCor`，仓库为
+  [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat)
+  的 **fork**（沿用上游、保留 diff 基准）。
+
+### 验证
+
+- `scripts/test_exit_reason.py` 三场景（异常/主动/强杀）全部正确归类
+- 真实进程强杀实测：重启后判定「上次被**强制终止**」，判定正确
+- `scripts/verify_exit_reason_panel.py`：面板渲染、JS 错误 0
+
 ## 退出归因：区分「自己崩了」和「被别人杀了」（2026-09-19）
 
 ### 新增
