@@ -211,7 +211,8 @@ def _patch_kb_wording_tools():
     return None
 
 
-def _run_patch_script(script_name: str, keywords_ok: tuple) -> str | None:
+def _run_patch_script(script_name: str, keywords_ok: tuple,
+                      script_args: tuple = ()) -> str | None:
     """以 importlib 执行仓库 scripts/ 下的补丁脚本 main()（同进程、无子进程）。
 
     这些脚本只做文件读写，无副作用依赖；import 方式比 subprocess 可靠
@@ -230,17 +231,27 @@ def _run_patch_script(script_name: str, keywords_ok: tuple) -> str | None:
         f"_akasha_patch_{script_name[:-3]}", script)
     mod = importlib.util.module_from_spec(spec)
     buf = io.StringIO()
+    old_argv = sys.argv
+    # 部分脚本会重定向 sys.stdout.buffer（TextIOWrapper）——StringIO 没有该
+    # 属性，给它补一个假 buffer 避免脚本头部崩溃。
+    class _Buf(io.StringIO):
+        buffer = None
+    buf2 = _Buf()
+    buf2.buffer = io.BytesIO()
     try:
-        with contextlib.redirect_stdout(buf):
+        sys.argv = [script_name, *script_args]
+        with contextlib.redirect_stdout(buf2):
             spec.loader.exec_module(mod)   # 会执行到 main()（__main__ 保护在 exec_module 下不触发）
             rc = mod.main()
-        out = buf.getvalue()
+        out = buf2.getvalue()
     except SystemExit as e:
-        out = buf.getvalue()
+        out = buf2.getvalue()
         rc = e.code
     except Exception as e:
         logger.error(f"[Akasha补丁] {script_name} 执行异常: {e}")
         return None
+    finally:
+        sys.argv = old_argv
 
     if any(k in out for k in keywords_ok):
         return out.strip().splitlines()[-1][:60] if out.strip() else "done"
@@ -255,6 +266,22 @@ def _patch_aiocqhttp_primary():
         ("已打", "已注入", "已是新版", "跳过"))
     if out:
         return ("packages/aiocqhttp/api_impl.py", "主动发送路由", out)
+    return None
+
+
+def _patch_kb_scope():
+    """知识库 API key 的 kb scope 放开（源码文件补丁，import 执行仓库脚本）。
+
+    为什么必要：AstrBot 上游 ALL_OPEN_API_SCOPES 不含 "kb"，API key 调
+    知识库接口一律 403，知识库导入管道（import_generic_kb.py）整个瘫痪。
+    pip 升级即失效——由本插件每次启动自动重新放开。
+    """
+    out = _run_patch_script(
+        "kb_scope.py",
+        ("已放开", "无需操作", "已经是放开状态"),
+        script_args=("on",))
+    if out:
+        return ("dashboard/auth_service.py", "kb scope 白名单", out)
     return None
 
 
@@ -273,6 +300,7 @@ PATCHES = [
     ("kb_wording_mgr",    "kb_mgr.format_context 知识库措辞",                        _patch_kb_wording_mgr),
     ("kb_wording_tools",  "knowledge_base_tools 描述+空结果文案",                    _patch_kb_wording_tools),
     ("kb_wording_agent",  "astr_main_agent 注入头探测/兜底",                          _patch_kb_wording_agent),
+    ("kb_scope",          "kb scope 白名单（API key 调知识库接口）",                  _patch_kb_scope),
     ("aiocqhttp_primary", "aiocqhttp 主动发送路由兜底",                              _patch_aiocqhttp_primary),
     ("i18n_blacklist",    "面板 i18n 黑名单文案",                                    _patch_i18n_blacklist),
 ]
