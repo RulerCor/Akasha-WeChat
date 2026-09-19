@@ -175,12 +175,12 @@ _READ_API = {
 # ============ 出站昵称纠错 ============
 #
 # 现象：模型（尤其是中文语料为主的）会顺手把日语汉字"简体化"，
-# 于是群友「群友C」被叫成「群友C」。人设里已经下了死命令，
+# 于是群友「広中依緒璃」被叫成「广中依绪璃」。人设里已经下了死命令，
 # 但仍会漏，所以在出站前用工整的名册再兜一道。
 #
 # ⚠️ 踩过的坑（2026-09-17）：这张表是**手写**的，漏一个字整条纠错就静默失效。
-# 实测名册里是「群友C」，表里有「広→广」却**没有「緒→绪」**，
-# 于是生成的变体是「群友C」、而模型实际输出「群友C」，
+# 实测名册里是「広中依緒璃」，表里有「広→广」却**没有「緒→绪」**，
+# 于是生成的变体是「广中依緒璃」、而模型实际输出「广中依绪璃」，
 # 两者不相等 → 一次都没替换成功（日志里 11 次错名、纠错计数 0）。
 # 现在改成两层兜底（见 _build_fuzzy_name_map）：
 #   ① 精确变体表（下面这张，覆盖常见日文汉字）
@@ -200,7 +200,7 @@ _JA_TO_CN_VARIANT = {
     "様": "样", "総": "总", "繊": "纤", "継": "继", "締": "缔", "緩": "缓",
     "練": "练", "縁": "缘", "縦": "纵", "縮": "缩", "優": "优", "価": "价",
     "倹": "俭", "倫": "伦", "個": "个", "倣": "仿", "値": "值", "傷": "伤",
-    # —— 2026-09-17 补漏：这些之前缺了，导致「群友C」这条彻底匹配不上。
+    # —— 2026-09-17 补漏：这些之前缺了，导致「広中依緒璃」这条彻底匹配不上。
     #    （「緒→绪」就是本 bug 的直接元凶）
     "緒": "绪", "緖": "绪", "録": "录", "錄": "录", "來": "来", "會": "会",
     "體": "体", "國": "国", "學": "学", "實": "实", "與": "与", "張": "张",
@@ -239,8 +239,8 @@ def _build_fuzzy_name_map() -> dict:
     这是为了修「表里漏一个字 → 整条纠错静默失效」那类问题：
     之前只有"全字都转"的单一键，漏一个映射就永远匹配不上。
     现在把每位独立的转换结果也登记进去，匹配面从 1 个键扩到 n 个键。
-    实测：真名「群友C」→ 逐位表能同时认出
-    「群友C」「広中依绪璃」两种"只改了一部分"的写法。
+    实测：真名「広中依緒璃」→ 逐位表能同时认出
+    「广中依緒璃」「広中依绪璃」两种"只改了一部分"的写法。
     """
     out = {}
     for name in state.known_display_names():
@@ -435,17 +435,37 @@ async def _handle_ob_api(data: dict):
                             log.warning(f"[OB11] 图片文件未找到: {file_val}")
 
                 if img_path:
+                    sent_ok = False
                     try:
                         # 使用线程池执行同步的 UIA 发送，避免阻塞事件循环
-                        await asyncio.to_thread(state.sender_instance.send_image, contact, img_path)
+                        sent_ok = await asyncio.to_thread(
+                            state.sender_instance.send_image, contact, img_path)
+                    except Exception as e:
+                        log.error(f"[OB11] 图片发送异常 → {contact}: {e}")
+                        sent_ok = False
+
+                    # ⚠️ 不能假报成功：send_image 失败时降级为发文件。
+                    # （2026-09-19 实测：模型发来 SVG，UIA 发送失败，
+                    #   旧代码却照样打印「图片已发送」，用户以为收到了）
+                    if sent_ok:
                         log.info(f"[OB11] 图片已发送至 {contact}")
-                    finally:
-                        # 临时文件用完删除
-                        if img_path and "tmp" in img_path:
-                            try:
-                                os.unlink(img_path)
-                            except Exception:
-                                pass
+                        _rm = img_path
+                    else:
+                        log.warning(f"[OB11] 图片发送失败 → 降级为发文件给 {contact}")
+                        _rm = None
+                        try:
+                            await asyncio.to_thread(
+                                state.sender_instance.send_file, contact, img_path)
+                            log.info(f"[OB11] 已作为文件发送至 {contact}")
+                            _rm = img_path
+                        except Exception as e:
+                            log.error(f"[OB11] 文件降级发送也失败 → {contact}: {e}")
+                    # 只有真正送达（图或文件）才清理临时文件，失败保留供排查
+                    if _rm and "tmp" in _rm:
+                        try:
+                            os.unlink(_rm)
+                        except Exception:
+                            pass
 
             elif seg_type == "file":
                 # 文件段：AstrBot 发来的 File 组件，file 字段通常是 file:/// URI
@@ -592,10 +612,100 @@ def push_event(event: dict) -> bool:
 
 
 def _decode_base64_image(b64_data: str) -> str | None:
-    """在线程池中执行：解码 base64 图片并保存为临时文件。"""
+    """在线程池中执行：解码 base64 图片并保存为临时文件。
+
+    ⚠️ 模型"画画"时可能产出 **SVG**（文本格式）而非位图——
+    UIA 发送走 PIL 识别，SVG 会报 `cannot identify image file`（2026-09-19 实测）。
+    所以解码后探测魔数：
+      · PNG/JPEG/GIF/WebP 位图 → 原样落盘
+      · SVG（`<?xml`/`<svg`）→ 用本机 Chromium headless 渲染成 PNG；
+        渲染失败 → 返回 .svg 原文件，调用方降级为发文件（不静默丢弃）
+    """
     import tempfile
     img_data = base64.b64decode(b64_data)
-    tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+    head = img_data[:256].lstrip()
+    is_svg = (head.startswith(b"<?xml") or head.startswith(b"<svg")
+              or b"<svg" in img_data[:1024])
+
+    if not is_svg:
+        if head.startswith(b"\xff\xd8"):
+            suffix = ".jpg"
+        elif head.startswith(b"GIF8"):
+            suffix = ".gif"
+        elif head.startswith(b"RIFF") and img_data[8:12] == b"WEBP":
+            suffix = ".webp"
+        else:
+            suffix = ".png"
+        tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+        tmp.write(img_data)
+        tmp.close()
+        return tmp.name
+
+    # ---- SVG：先落 .svg，再尝试渲染成 PNG ----
+    tmp = tempfile.NamedTemporaryFile(suffix=".svg", delete=False)
     tmp.write(img_data)
     tmp.close()
-    return tmp.name
+    png_path = _render_svg_to_png(tmp.name)
+    if png_path:
+        try:
+            os.unlink(tmp.name)
+        except Exception:
+            pass
+        return png_path
+    return tmp.name        # 渲染失败：交回 .svg，调用方按"发文件"降级
+
+
+def _render_svg_to_png(svg_path: str) -> str | None:
+    """用本机 Chromium headless 把 SVG 渲染成 PNG。
+
+    为什么选浏览器渲染：机器上没有 cairosvg/inkscape/ffmpeg，
+    但 Playwright 的 Chromium 一定在（此前验证面板时已装），且对
+    SVG 的字体/渐变保真度最好。返回 PNG 路径；失败返回 None。
+    """
+    import subprocess
+    import glob as _glob
+    from PIL import Image   # 仅用于校验渲染产物确实是位图
+
+    cands = []
+    pw = sorted(_glob.glob(os.path.expanduser(
+        r"~\AppData\Local\ms-playwright\chromium-*\chrome-win64\chrome.exe")))
+    if pw:
+        cands.append(pw[-1])
+    cands += [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    ]
+
+    out_png = svg_path.rsplit(".", 1)[0] + "_render.png"
+    # 从 SVG 里解析宽高（如 width="320" height="420" 或 viewBox），按比例设窗口；
+    # 解析不出就用默认 800x1000
+    w, h = 800, 1000
+    try:
+        import re as _re
+        head = open(svg_path, "rb").read(4096).decode("utf-8", "ignore")
+        m = _re.search(r'<svg[^>]*?width="([\d.]+)"[^>]*?height="([\d.]+)"', head)
+        if m:
+            w, h = max(1, int(float(m.group(1)))), max(1, int(float(m.group(2))))
+        else:
+            mv = _re.search(r'viewBox="[\d.\-]+[ ,]+[\d.\-]+[ ,]+([\d.]+)[ ,]+([\d.]+)"', head)
+            if mv:
+                w, h = max(1, int(float(mv.group(1)))), max(1, int(float(mv.group(2))))
+    except Exception:
+        pass
+    for exe in cands:
+        if not os.path.exists(exe):
+            continue
+        try:
+            subprocess.run(
+                [exe, "--headless", "--disable-gpu", "--hide-scrollbars",
+                 f"--window-size={w},{h}",
+                 f"--screenshot={out_png}", svg_path],
+                capture_output=True, timeout=30,
+            )
+            if os.path.exists(out_png) and os.path.getsize(out_png) > 0:
+                with Image.open(out_png) as im:
+                    im.verify()   # 确认是可识别的位图
+                return out_png
+        except Exception:
+            continue
+    return None

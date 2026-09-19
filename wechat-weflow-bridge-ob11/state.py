@@ -89,7 +89,7 @@ def get_contact(ob_id, default=None):
     # ② 人：私聊的整数 ID → 常用名
     #    注意：微信聊天标题显示的是**备注名**（WeFlow contacts 的 displayName），
     #    昵称（nickname）只在搜索结果里出现。这里必须优先用聊天标题那个名字，
-    #    否则会出现"搜索切到了 测试用户，标题却是 RulerCordelius"的错位。
+    #    否则会出现"搜索切到了 Jay Z.，标题却是 RulerCordelius"的错位。
     for wxid, info in all_persons().items():
         try:
             if info.get("uid") != want:
@@ -104,7 +104,7 @@ def get_contact(ob_id, default=None):
             return nm
     # ③ 兜底：任何已知会话名（含「文件传输助手」这类**不是联系人**的会话）。
     #    这类会话不在名册里，以前会退化成裸 ID → 发送时去搜索一串数字
-    #    （实测 06:00 的早安任务就出现了 "会话列表未找到 '1000000012'"）。
+    #    （实测 06:00 的早安任务就出现了 "会话列表未找到 '1085276398'"）。
     for wxid, name in list(_chat_names.items()):
         if not name:
             continue
@@ -479,9 +479,9 @@ _group_rosters: dict[str, dict] = {}    # chatroom → {"names": {候选名: wxi
 #   同一个人有**昵称**和**备注**两个名字，而这两个名字会从两条不同通道
 #   进入模型的上下文 ——
 #     · 他自己的消息：桥接用备注名（如 RulerCordelius）标注 sender
-#     · 别人 @ 他：微信自动填的是**昵称**（如 测试用户），原样透传进上下文
+#     · 别人 @ 他：微信自动填的是**昵称**（如 Jay Z.），原样透传进上下文
 #   于是同一分钟、同一个群里，同一个人显示成两个名字，且没有任何标记
-#   说明是同一人 → 模型据此断言"测试用户 和 RulerCordelius 是两位不同的朋友"。
+#   说明是同一人 → 模型据此断言"Jay Z. 和 RulerCordelius 是两位不同的朋友"。
 #
 #   实测该群 68 名成员里有 6 人昵称≠备注（含「爸爸/An帝y哥」「妈妈/Purple」），
 #   所以这不是个例。WeFlow 的 /api/v1/group-members 同时给出

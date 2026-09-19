@@ -138,7 +138,7 @@ def read_friend_whitelist():
 # ============ UMO 别名（面板「自定义规则」里显示的名字） ============
 #
 # 背景：AstrBot 面板里列出会话时显示的是 UMO
-# （`wechat_bridge:FriendMessage:1000000010`），数字 ID 根本看不出是谁。
+# （`wechat_bridge:FriendMessage:769462633`），数字 ID 根本看不出是谁。
 # AstrBot 自己有一套 umo_aliases 表（auto_name / user_alias），
 # 但它只在**唤醒阶段**（waking_check）才会记录，于是有两类会话没有名字：
 #   ① WeFlow 把 `sourceName` 推成 wxid 时，记下来的 auto_name 就是 wxid；
@@ -192,7 +192,7 @@ def _display_name_for_session(umo: str) -> str:
     #
     # ⚠️ 取名优先级（实测踩过）：`persons.json` 的 names 是**历史累积**的别名，
     # 第一条不一定是最新昵称（例：wxid_wbsce3wcayn412 的 names 是
-    # ['测试用户', 'RulerCordelius']，而当前实际叫 RulerCordelius）。
+    # ['Jay Z.', 'RulerCordelius']，而当前实际叫 RulerCordelius）。
     # `chat_names.json` 才是"当前会话名"的权威来源，优先用它。
     #
     # 另外 persons.json **只装好友**，不含「文件传输助手 / 微信团队 / 公众号」
@@ -380,9 +380,9 @@ def normalize_whitelist_entries(entries) -> list:
                 and str(event.get_group_id()).strip() not in self.whitelist):
 
     也就是说它只认两种写法：
-      · 完整 UMO，如 `wechat_bridge:FriendMessage:1000000009`；
-      · 群 ID（走 `get_group_id()` 兜底），如 `2000000001`。
-    **私聊没有 group_id**，所以往名单里写裸的数字 UID（如 `1000000009`）
+      · 完整 UMO，如 `wechat_bridge:FriendMessage:719415740`；
+      · 群 ID（走 `get_group_id()` 兜底），如 `125237337`。
+    **私聊没有 group_id**，所以往名单里写裸的数字 UID（如 `719415740`）
     → 私聊**永远匹配不上**，表现就是"这个好友发了多少条机器人都当没看见"。
     实测：11 次拒绝全部是私聊、群 0 次；群里一直正常，所以很难联想到白名单。
 
@@ -393,7 +393,7 @@ def normalize_whitelist_entries(entries) -> list:
       · **同一个人只保留一条**：若该 UID 已有完整 UMO，就丢弃裸数字重复项。
 
     ⚠️ 最后这条是必需的（2026-09-18 发现）：否则面板每次保存都会把
-    `1000000001` 和 `wechat_bridge:FriendMessage:1000000001` 两条一起写进去 ——
+    `1351824880` 和 `wechat_bridge:FriendMessage:1351824880` 两条一起写进去 ——
     功能上无害（UMO 已能匹配），但名单会越滚越脏、难以排查。
     """
     group_ids = set()

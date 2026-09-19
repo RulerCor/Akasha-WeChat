@@ -530,7 +530,7 @@ class WeFlowBridge:
                 # 同人别名标记：这个发言人有昵称/备注两个名字时，
                 # 附一个轻量标记，由 AstrBot 侧的 group_alias_note 补丁
                 # 提取成「[同名说明]」，避免模型把同一个人当成两位好友
-                # （实测：模型曾断言「测试用户 和 RulerCordelius 是两位不同的朋友」）。
+                # （实测：模型曾断言「Jay Z. 和 RulerCordelius 是两位不同的朋友」）。
                 # 标记不占正文语义，且补丁会把它从正文里移除。
                 if formatted and not formatted.startswith("/"):
                     try:

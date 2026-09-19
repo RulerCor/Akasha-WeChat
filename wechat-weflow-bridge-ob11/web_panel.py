@@ -981,7 +981,7 @@ var currentWhitelist = [];
 
 // 白名单条目 → 私聊 UID（好友勾选状态用）。
 //
-// ⚠️ 存储层存的是**完整 UMO**（`wechat_bridge:FriendMessage:1000000009`），
+// ⚠️ 存储层存的是**完整 UMO**（`wechat_bridge:FriendMessage:719415740`），
 // 因为 AstrBot 私聊只认完整 UMO；裸数字在私聊里永远匹配不上。
 // 但 chip 的 data-uid 是纯数字，两者直接比会**永远不相等** →
 // 表现就是「设置好的白名单在面板上不见了、重进又得重勾」。

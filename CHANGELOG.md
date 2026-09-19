@@ -4,6 +4,41 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## bot 说「发给你了」但图片没到——SVG 假成功（2026-09-19）
+
+### 修复
+
+**现象**：让 bot 画画，它说「我画好啦」「文件发给你喵」，但群里什么都没收到。
+
+**真因（两层叠加）**：
+1. 模型的绘图产物是 **SVG**（文本格式，`<?xml...><svg`），不是位图。
+   UIA 发送靠 PIL 识别剪贴板图像，SVG 报
+   `cannot identify image file` → `send_image` 返回 False（它本身没错）。
+2. **`ob_protocol` 无视 `send_image` 的返回值**，失败后照样打印
+   「[OB11] 图片已发送至 …」—— 假成功。日志里
+   `[UIA✗] … cannot identify image file` 与
+   `[OB11] 图片已发送` **前后脚出现**，极具迷惑性。
+
+**修法**（`ob_protocol.py`）：
+- `_decode_base64_image()` 按魔数分流：位图原样落盘（顺带修正 JPEG/GIF/WebP
+  后缀）；**SVG 用本机 Chromium headless 渲染成 PNG**（机器上无
+  cairosvg/inkscape/ffmpeg，但 Playwright Chromium 已在；从 SVG 解析宽高
+  设置窗口尺寸避免白边；渲染产物用 PIL verify 确认可识别）。
+- 渲染失败 → 返回 `.svg` 原文件，调用方**降级为发文件**（收件人至少拿到文件）。
+- **发送返回值被尊重**：`send_image` 失败 → 降级 `send_file`；
+  两步都失败 → 明确报错并**保留临时文件**供排查（不再静默丢弃）。
+
+### 验证
+
+`scripts/test_svg_send.py`（3 用例全过）：位图原样通过 / SVG 渲染成 PNG /
+渲染产物 PIL 可识别 (320×420)。渲染质量已 `read_image` 人工复核
+（`release/verify/svg_render_quality.png`：椭圆脸、绿眼、渐变背景、M3 文字清晰）。
+
+### 教训
+
+「打印成功」≠「发送成功」。**凡是调用有返回值的发送函数，必须检查返回值**；
+失败路径要有可观测的降级（发文件），而不是一条假成功日志。
+
 ## [1.5.2]（2026-09-19）
 
 正式发行版（`build_dist.py`）。相对 v1.5.1 新增两项。
