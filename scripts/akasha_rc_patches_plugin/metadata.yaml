@@ -1,0 +1,5 @@
+name: akasha_rc_patches
+desc: Akasha RC 核心补丁集——把 6 个 site-packages 源码补丁转为运行时 monkey-patch，AstrBot 升级免疫。含 /akasha_patches 状态命令。
+version: v1.0.0
+author: RulerCor
+repo: https://github.com/RulerCor/Akasha-WeChat

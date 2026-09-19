@@ -1,0 +1,19 @@
+{
+  "patch_provider_getkeys": {
+    "description": "provider.get_keys() str key 归一化（修复 All chat models failed）",
+    "type": "bool",
+    "default": true,
+    "hint": "开启后由本插件在运行时打补丁；关闭则回退到 site-packages 源码补丁（check_patches.py 管理）"
+  },
+  "patch_kb_wording": {
+    "description": "知识库注入措辞（kb_mgr.format_context + tools 描述 + 空结果文案）",
+    "type": "bool",
+    "default": true
+  },
+  "patch_source_layer": {
+    "description": "子进程补丁脚本类（aiocqhttp 主动发送路由 + i18n 黑名单文案）",
+    "type": "bool",
+    "default": true,
+    "hint": "这两项补丁对象是源码文件而非运行时对象，插件以子进程调用 scripts/ 下的补丁脚本完成"
+  }
+}
