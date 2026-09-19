@@ -1538,7 +1538,15 @@ class UiaSender(BaseSender):
                     self._auto.SendKeys("{Ctrl}v")
 
                 time.sleep(0.1)
-                if not self._send_current(ctrl, verify=False):
+                # ⚠️ 这里必须 verify=True（2026-09-17 修）。
+                # 原来传的是 verify=False，它的含义是"输入框里没有文本、
+                # 清空判据不适用"—— 那是给**发图片/文件**用的（粘贴的是附件）。
+                # 引用发送的输入框里**是有正文的**，传 False 会让 _send_current
+                # 在点完发送按钮后直接 return True，**完全不校验有没有真发出去**。
+                # 实测后果：引用消息根本没发出去，日志却打 [UIA✓] 引用，
+                # 桥接据此认为成功、不做降级重发 —— 用户看到的就是"消息凭空消失"
+                # （用户报的「群友B博士早呀～海猫小故事…」那条正是此例）。
+                if not self._send_current(ctrl, verify=True):
                     log.error(f"[UIA✗] 引用 → {contact}: 已填入但未能发出，降级普通发送")
                     return self.send_text(contact, text)
 

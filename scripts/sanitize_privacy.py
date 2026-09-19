@@ -62,14 +62,15 @@ EXTRA_LITERALS = {
     "荒野🎮乱斗": "示例群·丙",
     # 真实昵称（文档/代码里出现的）
     "测试用户": "示例用户·甲",
-    "RulerCordelius": "示例用户·甲",
+    # ⚠️ RulerCordelius 曾在此名单（当隐私昵称脱敏）。2026-09-18 起它是
+    # 项目代号 Akasha_RulerCordelius-Wechatbot 的一部分（用户公开 ID），
+    # **不再是隐私**，替换反而会把发行版里的项目名弄坏，故移除。
     "洛辰": "示例用户·乙",
     "群友B": "示例用户·丙",
     "群友C": "広田示例",
     "群友C": "广田示例",
     "星宇": "示例用户·丁",
     # 仓库/账号地址
-    "RulerCordelius/Akasha-WeChat_RC": "YOURNAME/Akasha-WeChat_RC",
     "hicccc77/WeFlow": "upstream/WeFlow",
     # 本机路径（含 Windows 用户名 —— 一定不能外流）
     "C:\\Users\\Junqin Zhao": "C:\\AkashaPortable",

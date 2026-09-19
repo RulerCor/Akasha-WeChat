@@ -28,6 +28,56 @@ from ob_protocol import push_event, make_message_event
 log = logging.getLogger("ob11-bridge")
 
 
+def _looks_like_wxid(name: str) -> bool:
+    """判断一个"名字"其实是 wxid / 内部 ID，而不是真人昵称。"""
+    if not name:
+        return True
+    n = name.strip()
+    if n.startswith("wxid_"):
+        return True
+    # 纯数字（内部 uid / 群 ID）也算
+    if n.isdigit():
+        return True
+    return False
+
+
+def _resolve_display_name(raw: str, fallback_contact: str = "") -> str:
+    """把 WeFlow 给的"名字"规整成**人类可读的昵称**。
+
+    为什么需要它（2026-09-18 实测）：
+      WeFlow 对某些联系人推来的 `sourceName` 是 **wxid**（如
+      `wxid_dykw4m5ueyms12`）而不是昵称。桥接原样把它当 `nickname` 发给
+      AstrBot，AstrBot 的 UMO 自动命名（`umo_auto_name`）就把这个名字
+      记进了 `umo_aliases.auto_name` —— 结果面板「自定义规则」里那一行
+      显示成 wxid，根本看不出是谁（用户报障）。
+
+    策略：raw 看起来像 wxid/数字时，依次尝试
+      ① `state` 里按 wxid 查已知昵称（persons.json 的名册）
+      ② 调用方给的 contact（通常已经是解析过的显示名）
+      ③ 实在没有才退回 raw
+    """
+    if not _looks_like_wxid(raw):
+        return raw
+    # ① 名册反查：persons.json 里 wxid → 当前会话名 → names[0]
+    try:
+        p = state.all_persons().get(raw)
+        if isinstance(p, dict):
+            cur = state.get_chat_name(raw)
+            if cur and not _looks_like_wxid(cur):
+                return cur
+            names = p.get("names") or []
+            for nm in names:
+                if nm and not _looks_like_wxid(nm):
+                    return nm
+    except Exception:
+        pass
+    # ② contact 兜底
+    if fallback_contact and not _looks_like_wxid(fallback_contact):
+        return fallback_contact
+    # ③ 最后退回原名（至少不比以前差）
+    return raw or fallback_contact
+
+
 # ============ 桥接核心 ============
 
 
@@ -218,6 +268,13 @@ class WeFlowBridge:
         if rooms:
             total_names = sum(state.roster_stats().values())
             log.info(f"👥 群成员名册已刷新（{ok}/{len(rooms)} 个群，{total_names} 条昵称映射）")
+        # 名册刷新后顺手把 AstrBot 里"没名字/名字是 wxid"的会话补上可读名
+        # （面板「自定义规则」显示的就是这个；见 people.sync_umo_aliases）
+        try:
+            import people
+            people.sync_umo_aliases()
+        except Exception as e:
+            log.debug(f"UMO 别名同步跳过: {e}")
 
     def _roster_refresh_loop(self):
         """后台定时刷新群名册（守护线程，10 分钟一轮）。"""
@@ -470,6 +527,22 @@ class WeFlowBridge:
                     if sender_name:
                         formatted = f'{sender_name}在群{entry.get("group_name", contact)}中说：{clean_text}'
 
+                # 同人别名标记：这个发言人有昵称/备注两个名字时，
+                # 附一个轻量标记，由 AstrBot 侧的 group_alias_note 补丁
+                # 提取成「[同名说明]」，避免模型把同一个人当成两位好友
+                # （实测：模型曾断言「测试用户 和 RulerCordelius 是两位不同的朋友」）。
+                # 标记不占正文语义，且补丁会把它从正文里移除。
+                if formatted and not formatted.startswith("/"):
+                    try:
+                        _alts = [a for a in (state.aliases_of(sender_name) or [])
+                                 if a and a != sender_name]
+                        if _alts:
+                            formatted += ("<alias>" + ";".join(
+                                f"{a}={sender_name}" for a in sorted(set(_alts))
+                            ) + "</alias>")
+                    except Exception:
+                        pass
+
             # 消息段顺序：@机器人（仅真 @ 过时）→ 图片 → 文本。
             # 不能无条件加 @：all 模式下非 @ 消息若被硬塞 [At:]，
             # AstrBot 会视为唤醒逐条回复，active_reply 随机插话就形同虚设。
@@ -485,7 +558,7 @@ class WeFlowBridge:
                                        group_name=entry.get("group_name", contact),
                                        nickname=sender_name)
         else:
-            sender_name = entry.get("source_name", contact)
+            sender_name = _resolve_display_name(entry.get("source_name", contact), contact)
             msg_segments = list(image_segments)
             if combined:
                 msg_segments.append({"type": "text", "data": {"text": combined}})
@@ -538,7 +611,12 @@ class WeFlowBridge:
     def listen_sse(self):
         """连接 WeFlow SSE 推送。"""
         sse_url = f"{config.WE_FLOW_BASE_URL}/api/v1/push/messages?access_token={config.ACCESS_TOKEN}"
-        log.info(f"连接 WeFlow 推送服务: {sse_url}")
+        # ⚠️ 日志里绝不打完整 URL：里面有 access_token 明文（2026-09-18 修）。
+        # 之前 log.info 直接打 sse_url，token 落进 bridge.log —— 而本项目的
+        # 隐私提醒（README「隐私提醒」小节）明确要求"贴日志前删掉 token"，
+        # 工具自己却把 token 印出来了。面板的日志窗口也会显示这行，
+        # 局域网内他人可读。只打基址，token 用 *** 代替。
+        log.info(f"连接 WeFlow 推送服务: {config.WE_FLOW_BASE_URL}/api/v1/push/messages?access_token=***")
         headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
 
         try:

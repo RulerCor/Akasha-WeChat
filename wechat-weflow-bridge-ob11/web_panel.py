@@ -17,12 +17,65 @@ import config
 log = logging.getLogger("ob11-bridge")
 
 
+def _read_config() -> dict:
+    """读 config.json；万一文件已损坏，自动回退到最近的可用备份。
+
+    为什么要有回退：这个文件被面板与启动流程两边读写，历史上损坏过
+    （现场留下 config.json.bak_broken_201419）。损坏后若直接抛异常，
+    面板所有"保存"都会失败，用户只能手动修 JSON —— 所以这里尽量自愈。
+    """
+    try:
+        with open(config.CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        log.error(f"[Web] config.json 读取失败（{e}），尝试从备份恢复")
+        d = os.path.dirname(config.CONFIG_FILE) or "."
+        base = os.path.basename(config.CONFIG_FILE)
+        try:
+            cands = sorted(
+                (os.path.join(d, n) for n in os.listdir(d)
+                 if n.startswith(base + ".") and "broken" not in n
+                 and not n.endswith(".tmp")),
+                key=lambda p: os.path.getmtime(p), reverse=True)
+        except OSError:
+            raise
+        for p in cands:
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                log.warning(f"[Web] 已从备份恢复配置: {os.path.basename(p)}")
+                return data
+            except Exception:
+                continue
+        raise
+
+
+def _atomic_write_json(path: str, data: dict) -> None:
+    """原子写 JSON：先写临时文件、再 os.replace 顶替。
+
+    为什么必须原子：以前是 `open(path,'w')` 就地改写。面板被连点两下
+    （或开了两个标签页）时两次保存会并发，后一次的写入落在已写一半的文件上，
+    产生 `Extra data: line 35 column 2` 这种"拼接了两份 JSON"的损坏文件。
+    os.replace 在同一分区上是原子的 —— 读到的永远是完整的旧版或完整的新版。
+    """
+    tmp = f"{path}.tmp{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+        f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
 PAGE = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Akasha 奈奈山</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Akasha_RulerCordelius-Wechatbot</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>💎</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -52,8 +105,11 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:linear-gradient(
 /* ===== 头部 ===== */
 .header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .header h1{font-size:24px;font-weight:800;color:#c2185b;letter-spacing:.5px}
-.header h1 .en{font-family:'Quicksand','Segoe UI',sans-serif;margin-right:8px}
-.header h1 .cn{font-size:17px;color:#ad6478;font-weight:700}
+.header h1 .pname{font-family:'Quicksand','Segoe UI',sans-serif;font-size:20px;font-weight:800;
+  color:#c2185b;letter-spacing:.3px}
+/* 版本号：小字，紧跟在项目代号后面 */
+.header h1 .ver{font-size:11.5px;font-weight:600;color:#b98a99;margin-left:8px;
+  vertical-align:2px;letter-spacing:.3px}
 .header .sub{font-size:12.5px;color:#b08a92}
 .badge{background:#fce4ec;color:#ad6478;border-radius:999px;padding:4px 12px;font-size:11.5px;font-weight:600}
 .badge.ok{background:#e8f5e9;color:#2e7d32}
@@ -204,7 +260,8 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
   <!-- ===== 面板页 ===== -->
   <div class="tab-page active" id="page-dashboard">
     <div class="header">
-      <h1><span class="en">Akasha</span><span class="cn">奈奈山</span></h1>
+      <h1><span class="pname" id="pname">Akasha_RulerCordelius-Wechatbot</span>
+        <span class="ver" id="verTag">v-</span></h1>
       <div class="badge" id="statusText">加载中...</div>
     </div>
 
@@ -230,6 +287,37 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
     </div>
 
     <div class="log-box" id="log">等待连接...</div>
+
+    <!-- 退出归因：区分「自己崩了」和「被别人杀了」 -->
+    <div class="card" style="margin-top:12px">
+      <h3><span class="ic">🧭</span>上次是怎么退的</h3>
+      <div class="card-sub">
+        进程被 <b>taskkill /F</b> 或任务管理器强杀时，Python <b>不会执行任何清理</b>，
+        所以日志里不会留痕。这里用「有没有退出记录」来判定：
+        <b>有记录 = 自己退的</b>（异常 / 主动退出），<b>没记录 = 被强杀</b>。
+      </div>
+      <div class="settings-row">
+        <div class="settings-field" style="min-width:200px">
+          <label>上次退出</label>
+          <div id="erLast" class="field-hint" style="font-size:12.5px;color:#6d4c41">加载中…</div>
+        </div>
+        <div class="settings-field" style="min-width:170px;max-width:220px">
+          <label>本次已运行</label>
+          <div id="erUptime" class="field-hint" style="font-size:12.5px;color:#6d4c41">-</div>
+        </div>
+        <div class="settings-field" style="min-width:170px;max-width:220px">
+          <label>当前阶段</label>
+          <div id="erPhase" class="field-hint" style="font-size:12.5px;color:#6d4c41">-</div>
+        </div>
+        <div class="settings-field" style="max-width:150px;align-self:end">
+          <button class="btn btn-outline btn-sm" onclick="loadExitReason()">🔄 刷新</button>
+        </div>
+      </div>
+      <details style="margin-top:8px">
+        <summary style="cursor:pointer;font-size:12.5px;color:#ad6478">最近记录（点击展开）</summary>
+        <div class="log-box" id="erHistory" style="min-height:120px;max-height:260px;margin-top:8px;font-size:11px">-</div>
+      </details>
+    </div>
   </div>
 
   <!-- ===== 设置页 ===== -->
@@ -269,7 +357,43 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
       <div class="hint-text">
         这里管三件事：<b>👑 谁是管理员</b>（能指挥机器人做跨群操作）｜
         <b>💬 机器人在哪些群说话、会不会自己插嘴</b>（下面一张表全搞定）｜
-        <b>🔧 更细的白名单</b>（折叠在「高级」里，一般用不到）。
+        <b>🧑‍🤝‍🧑 私聊白名单</b>（新加好友不回复 → 去下面那张卡勾上）。
+      </div>
+
+      <!-- 🧑‍🤝‍🧑 私聊白名单（独立卡片，可视化点选） -->
+      <div class="card" id="fwCard">
+        <h3><span class="ic">🧑‍🤝‍🧑</span>私聊白名单<span class="new-badge">新加好友不回复 → 来这里勾</span></h3>
+        <div class="card-sub">
+          开着开关时，<b>只有勾选的好友私聊会被回复</b>；@ 机器人的群消息不受这份名单影响（群走上面的表）。<br>
+          新加好友后如果他不发条消息进来，这里还没他的名字 —— 让他先随便发一句，刷新本页就会出现。
+        </div>
+        <div class="settings-row" style="margin-bottom:8px">
+          <div class="settings-field" style="min-width:170px;max-width:200px">
+            <label>开关</label>
+            <select id="fw_enable"><option value="0">关闭（所有私聊都回）</option><option value="1">开启（只回勾选的好友）</option></select>
+          </div>
+          <div class="settings-field" style="flex:1;min-width:200px">
+            <label>搜索好友（名字 / wxid / UID）</label>
+            <input class="search-input" id="fwSearch" style="width:100%" placeholder="🔍 输入即筛选下面的好友" oninput="renderFriendList('fw_friends', currentWhitelist)">
+          </div>
+          <div class="settings-field" style="max-width:120px;align-self:end">
+            <label style="visibility:hidden">.</label>
+            <label class="chip" style="width:100%;justify-content:center"><input type="checkbox" id="fwOnlySel" onchange="renderFriendList('fw_friends', currentWhitelist)"><span class="dot"></span>只看已勾</label>
+          </div>
+          <div class="settings-field" style="max-width:220px;align-self:end">
+            <button class="btn btn-pink btn-sm" onclick="saveFriendWhitelist()">💾 保存私聊白名单</button>
+          </div>
+        </div>
+        <div class="chip-wrap" id="fw_friends" style="max-height:260px;overflow:auto;border:1px solid #f3d9e1;border-radius:10px;padding:8px"></div>
+        <div class="field-hint" style="margin-top:6px"><span id="fwCount">-</span>　（搜索框只筛选显示，不影响已勾选项）</div>
+        <div class="set-note" style="margin-top:6px">⚠️ 保存后需<b style="color:#e65100">重启 AstrBot</b> 才生效（AstrBot 只在启动时读一次名单）。</div>
+        <div class="settings-row" style="margin-top:8px;align-items:center;gap:10px">
+          <button class="btn btn-pink btn-sm" id="abRestartBtn" onclick="restartAstrbot()">🔄 重启 AstrBot</button>
+          <span id="abRestartState" class="field-hint" style="margin:0"></span>
+        </div>
+        <div class="set-note" id="wlRestartWarn" style="display:none;margin-top:6px;background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:8px">
+          🔴 <b>刚保存的名单还没生效！</b>点上面的「🔄 重启 AstrBot」即可（约 10-25 秒），不用再手动关窗口。
+        </div>
       </div>
 
       <!-- 👑 管理员 -->
@@ -334,11 +458,13 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
 
       <!-- 🔧 高级 -->
       <details class="tier" id="tierAdvanced">
-        <summary><span class="arrow">▶</span>🔧 高级：手动填 ID / 白名单<span class="count">一般用不到</span></summary>
+        <summary><span class="arrow">▶</span>🔧 高级：白名单（私聊好友 / 群）<span class="count">新加好友不回复 → 点开这里</span></summary>
         <div class="tier-body">
           <div class="hint-text amber">
-            <b>这三层过滤的关系</b>（从粗到细，命中即生效）：<br>
-            ① <b>平台 ID 白名单</b>——总闸。开了之后，不在名单里的会话<b>整条消息都不进 AstrBot</b>（连 @ 都不理）。<br>
+            <b>新加好友私聊不回复？</b>九成是下面的<b>私聊白名单</b>没勾他 —— 勾上 → 保存 → 重启 AstrBot 即可。<br>
+            <br>
+            <b>三层过滤的关系</b>（从粗到细，命中即生效）：<br>
+            ① <b>平台 ID 白名单</b>——总闸（私聊好友 + 群共用一份名单）。开了之后，不在名单里的会话<b>整条消息都不进 AstrBot</b>（连 @ 都不理）。<br>
             ② <b>群回复开关</b>——桥接侧开关，上面那张表的「回复」列，关了就是完全不理。<br>
             ③ <b>插话白/黑名单</b>——只影响「没人 @ 时要不要插嘴」；<b>黑名单优先于白名单</b>；白名单留空 = 所有群都可能插嘴。<br>
             想手写条目的话，填<b>群 ID</b> 或完整 <b>UMO</b> 都行（UMO 在上面那张表里点一下就能复制）。
@@ -349,7 +475,7 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
               <select id="ab_wl_enable"><option value="0">关闭（不过滤）</option><option value="1">开启</option></select>
             </div>
             <div class="settings-field wide">
-              <label>平台 ID 白名单（点选群）</label>
+              <label>平台 ID 白名单（点选群）—— 好友在上面「私聊白名单」卡里勾</label>
               <div id="ab_wl_groups" class="chip-wrap"></div>
             </div>
             <div class="settings-field wide">
@@ -420,6 +546,34 @@ function switchTab(name) {
 // ===== 面板刷新 =====
 var modeMap = {'mention':'标准模式','all':'标准模式','batch':'批处理'};
 
+// 退出归因：显示「上次是怎么退的」，并区分崩溃 / 主动 / 被强杀
+function loadExitReason() {
+  fetch('/api/exit-reason').then(function(r){return r.json()}).then(function(d){
+    if (!d.ok) {
+      document.getElementById('erLast').textContent = '读取失败: ' + (d.error || '?');
+      return;
+    }
+    var cur = d.current || {};
+    document.getElementById('erUptime').textContent = cur.uptime || '-';
+    document.getElementById('erPhase').textContent = cur.phase || '-';
+
+    var el = document.getElementById('erLast');
+    var txt = d.last_exit || '（无记录）';
+    el.textContent = txt;
+    el.style.color = d.forced ? '#c62828'
+                   : (/未捕获异常/.test(txt) ? '#e65100' : '#2e7d32');
+    if (d.forced) {
+      el.textContent = '⚠️ ' + txt + '（上次进程被强杀，未留下任何清理记录）';
+    }
+
+    var h = document.getElementById('erHistory');
+    h.textContent = (d.history && d.history.length)
+      ? d.history.join('\\n') : '（暂无记录）';
+  }).catch(function(e){
+    document.getElementById('erLast').textContent = '请求失败: ' + e;
+  });
+}
+
 function refreshDashboard() {
   fetch('/status').then(function(r){return r.json()}).then(function(s){
     var st = document.getElementById('bridgeStatus');
@@ -433,6 +587,12 @@ function refreshDashboard() {
     document.getElementById('weflowStatus').textContent = s.weflow_connected ? '已连接' : '未连接';
     document.getElementById('weflowStatus').style.color = s.weflow_connected ? '#4caf50' : '#bdbdbd';
     document.getElementById('sendMethod').textContent = s.send_method;
+
+    // 项目标识：标题与抬头由后端下发（改 config.PROJECT_NAME / VERSION 即可生效）
+    if (s.project_version) {
+      document.getElementById('verTag').textContent = 'v' + s.project_version;
+      document.title = s.project_name + ' v' + s.project_version;
+    }
 
     document.getElementById('btnStart').disabled = s.running;
     document.getElementById('btnStop').disabled = !s.running;
@@ -812,10 +972,235 @@ function collectNameList(groupsId, extraId) {
   return out;
 }
 
+// 私聊好友白名单：按「好友」渲染 chip（UID 为值、昵称为名），纯点选、无手动框。
+// 与群白名单是**同一份** id_whitelist —— 保存任一视图都会整表覆盖，
+// 所以两边保存时都把另一视图当前勾选合并进来（见 collectFriendWhitelist / saveAstrbotCfg）。
+// 当前白名单（uid 列表）缓存：搜索/只看已勾 触发局部重渲染时用它，
+// 避免把「面板拉到的旧值」当成「用户正在编辑的新值」丢掉勾选。
+var currentWhitelist = [];
+
+// 白名单条目 → 私聊 UID（好友勾选状态用）。
+//
+// ⚠️ 存储层存的是**完整 UMO**（`wechat_bridge:FriendMessage:1000000009`），
+// 因为 AstrBot 私聊只认完整 UMO；裸数字在私聊里永远匹配不上。
+// 但 chip 的 data-uid 是纯数字，两者直接比会**永远不相等** →
+// 表现就是「设置好的白名单在面板上不见了、重进又得重勾」。
+// 所以这里统一抽成 UID 再比。
+function wlEntryToUid(x) {
+  x = String(x == null ? '' : x).trim();
+  if (!x) return '';
+  var parts = x.split(':');
+  // 形如 platform:MessageType:id → 取最后一段（仅私聊；群 ID 也走这里但不会被好友列表用）
+  if (parts.length >= 3) {
+    if (parts[1] === 'GroupMessage') return '';   // 群条目不算好友勾选
+    return parts[parts.length - 1].trim();
+  }
+  return x;  // 裸 ID（历史数据 / 群 ID）
+}
+
+// 好友 UID 集合（由白名单算出），供勾选判断与保存使用
+function wlUidSet(list) {
+  var s = {};
+  (list || []).forEach(function(x){ var u = wlEntryToUid(x); if (u) s[u] = 1; });
+  return s;
+}
+
+function fwMatches(p) {
+  var kw = (document.getElementById('fwSearch').value || '').toLowerCase().trim();
+  if (!kw) return true;
+  return p.name.toLowerCase().indexOf(kw) >= 0
+      || String(p.wxid || '').toLowerCase().indexOf(kw) >= 0
+      || String(p.uid || '').toLowerCase().indexOf(kw) >= 0;
+}
+
+function renderFriendList(chipId, values) {
+  // 搜索 / 只看已勾 会触发**局部重渲染**，此时不能丢用户已勾的项 ——
+  // 所以进函数先把「当前实际勾选」并入 values 快照。
+  var live = [];
+  document.querySelectorAll('#' + chipId + ' input[type=checkbox]:checked').forEach(function(cb){
+    live.push(cb.getAttribute('data-uid'));
+  });
+  var merged = [];
+  (values || []).forEach(function(x){
+    x = String(x).trim();
+    if (x && merged.indexOf(x) < 0) merged.push(x);
+  });
+  live.forEach(function(x){ if (merged.indexOf(x) < 0) merged.push(x); });
+  currentWhitelist = merged;
+
+  var onlySel = document.getElementById('fwOnlySel') && document.getElementById('fwOnlySel').checked;
+  var host = document.getElementById(chipId);
+  var selSet = wlUidSet(merged);
+  var html = '', shown = 0, selCount = 0;
+  peopleData.persons.forEach(function(p){
+    if (!p.uid && p.uid !== 0) return;
+    var hit = !!selSet[String(p.uid)];
+    if (hit) selCount++;
+    if (onlySel && !hit) return;
+    if (!fwMatches(p)) return;
+    shown++;
+    html += '<label class="chip' + (hit ? ' on' : '') + '">'
+      + '<input type="checkbox" data-uid="' + esc(p.uid) + '"' + (hit ? ' checked' : '')
+      + ' onchange="this.parentNode.classList.toggle(\\'on\\', this.checked)"><span class="dot"></span>'
+      + esc(p.name) + '</label>';
+  });
+  if (!shown) {
+    var kw = kw0();
+    html = '<span style="color:#c0aab0;font-size:12px">'
+         + (kw ? '没有匹配「' + esc(kw) + '」的好友（换个关键词试试）'
+               : '暂无已知好友 —— 让对方先给你发一条消息，刷新本页就会出现')
+         + '</span>';
+  }
+  host.innerHTML = html;
+  var cnt = document.getElementById('fwCount');
+  if (cnt) cnt.textContent = '已勾 ' + selCount + ' / 共 ' + peopleData.persons.length + ' 人' + (onlySel ? '（只看已勾）' : '');
+}
+
+function kw0(){
+  var e = document.getElementById('fwSearch');
+  return e ? e.value.trim() : '';
+}
+
+// 收集私聊白名单：好友勾选 + （群视图里勾的、不是已知好友 UID 的条目也要保住）
+//
+// ⚠️ 关键：搜索框会把不匹配的好友**从 DOM 里移除**。若只看 DOM 里的 checked，
+// 被筛掉的那些已勾好友就会在保存时静默丢失。所以以 currentWhitelist（缓存）
+// 为基准，再用 DOM 里的勾选状态**同步**：当前可见的按可见的来，不可见的保留缓存。
+function collectFriendWhitelist() {
+  // 以缓存为基准，但**剔除**好友视图管辖的条目（裸 UID 与私聊 UMO），
+  // 好友勾选一律重新生成 —— 否则会同时留下旧 UMO 和新勾的裸 ID 两份重复项。
+  var base = (currentWhitelist || []).filter(function(x){
+    var s = String(x).trim();
+    if (!s) return false;
+    if (s.indexOf(':') >= 0) return s.split(':')[1] === 'GroupMessage';  // 只留群 UMO
+    // 裸 ID：已知群保留；其余视为好友旧条目，丢弃后重建
+    return peopleData.groups.some(function(g){ return String(g.gid) === s; });
+  });
+  var out = base.slice();
+  var seen = wlUidSet(out);
+  function push(v) { v = String(v == null ? '' : v).trim(); if (v && !seen[v]) { seen[v] = 1; out.push(v); } }
+
+  // 1) 当前可见 chip：以 DOM 勾选为准（含取消勾选）
+  document.querySelectorAll('#fw_friends input[type=checkbox]').forEach(function(cb){
+    var uid = String(cb.getAttribute('data-uid') || '').trim();
+    if (!uid) return;
+    if (cb.checked) push(uid);
+    else {  // 取消勾选：把该好友的旧条目（裸 ID 或 UMO）都移除
+      for (var i = out.length - 1; i >= 0; i--) {
+        if (wlEntryToUid(out[i]) === uid && String(out[i]).indexOf(':') >= 0) out.splice(i, 1);
+      }
+    }
+  });
+  // 2) 缓存里已勾但当前不可见（被搜索框筛掉）的好友：保留
+  (currentWhitelist || []).forEach(function(x){
+    var u = wlEntryToUid(x);
+    if (!u) return;
+    var isGroup = peopleData.groups.some(function(g){ return String(g.gid) === u; });
+    if (!isGroup) push(u);
+  });
+  // 3) 群视图已勾的群条目
+  document.querySelectorAll('#ab_wl_groups input[type=checkbox]:checked').forEach(function(cb){
+    var v = String(cb.getAttribute('data-gid') || '').trim();
+    if (v) push(v);
+  });
+  return out;
+}
+
+function saveFriendWhitelist() {
+  var body = {
+    id_whitelist_enable: document.getElementById('fw_enable').value === '1',
+    id_whitelist: collectFriendWhitelist(),
+  };
+  fetch('/api/astrbot', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body),
+  }).then(function(r){return r.json()}).then(function(res){
+    if (res.ok) {
+      toast('✅ 私聊白名单已保存。⚠️ 必须重启 AstrBot 才生效（它只在启动时读一次名单）', 'success');
+      showRestartNeeded();
+    } else {
+      toast('❌ 保存失败: ' + res.error, 'error');
+    }
+  });
+}
+
+// 重启 AstrBot：后端后台线程干活，这里轮询状态显示进度。
+// 重启期间桥接会自动断开再重连 AstrBot（ob_client.py 有重连循环），无需干预。
+var _restartTimer = null;
+
+function restartAstrbot() {
+  var btn = document.getElementById('abRestartBtn');
+  if (btn && btn.disabled) return;
+  if (!confirm('确定重启 AstrBot 吗？\\n\\n约需 10-25 秒，期间机器人暂时不回复消息。')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 重启中…'; }
+  pollRestartState();
+
+  fetch('/api/astrbot-restart', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: '{}',
+  }).then(function(r){return r.json()}).then(function(res){
+    if (!res.ok) {
+      toast('❌ 重启失败: ' + res.error, 'error');
+      endRestartPoller();
+    } else {
+      toast('🔄 已开始重启 AstrBot，约 10-25 秒', 'info');
+      if (!_restartTimer) _restartTimer = setInterval(pollRestartState, 1200);
+    }
+  }).catch(function(e){
+    toast('❌ 请求失败: ' + e, 'error');
+    endRestartPoller();
+  });
+}
+
+function pollRestartState() {
+  fetch('/api/astrbot-status').then(function(r){return r.json()}).then(function(s){
+    var el = document.getElementById('abRestartState');
+    var btn = document.getElementById('abRestartBtn');
+    var icon = {idle:'', stopping:'🛑', starting:'🚀', waiting:'⏳', done:'✅', failed:'❌'}[s.phase] || '';
+    if (el) {
+      el.textContent = (s.message || '') + (s.listening ? '（端口 ' + s.port + ' 在线）' : '');
+      el.style.color = s.phase === 'failed' ? '#c62828'
+                     : s.phase === 'done' ? '#2e7d32' : '#6d4c41';
+    }
+    if (s.phase === 'done' || s.phase === 'failed') {
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 重启 AstrBot'; }
+      if (s.phase === 'done') {
+        toast('✅ AstrBot 已重启完成', 'success');
+        var w = document.getElementById('wlRestartWarn');
+        if (w) w.style.display = 'none';
+      } else {
+        toast('❌ 重启失败：' + (s.message || '看 astrbot_run.log'), 'error');
+      }
+      endRestartPoller();
+    } else if (btn && s.running) {
+      btn.disabled = true;
+      btn.textContent = '⏳ 重启中…';
+    }
+  }).catch(function(){ /* 重启中面板自身不受影响，忽略瞬时错误 */ });
+}
+
+function endRestartPoller() {
+  if (_restartTimer) { clearInterval(_restartTimer); _restartTimer = null; }
+}
+
+function showRestartNeeded() {
+  var el = document.getElementById('wlRestartWarn');
+  if (el) el.style.display = '';
+}
+
+function restartAstrbotHint() {
+  // 保留旧名做兼容（老页面缓存里可能还引用它）；直接走新的一键重启
+  return restartAstrbot();
+}
+
 function fillAstrbotForm(d) {
   // 高级区
   document.getElementById('ab_wl_enable').value = d.id_whitelist_enable ? '1' : '0';
   renderNameList('ab_wl_groups', 'ab_wl_extra', d.id_whitelist);
+  // 私聊好友白名单卡片（同一份 id_whitelist，按「好友」视角展示）
+  document.getElementById('fw_enable').value = d.id_whitelist_enable ? '1' : '0';
+  // 用服务端值重置缓存（重新拉取时旧编辑作废），再渲染
+  currentWhitelist = (d.id_whitelist || []).map(function(x){ return String(x).trim(); });
+  renderFriendList('fw_friends', currentWhitelist);
   renderNameList('ab_ar_groups', 'ab_ar_extra', d.ar_whitelist);
   document.getElementById('ab_ar_black_extra').value = (d.ar_blacklist || []).filter(function(x){
     x = String(x).trim();
@@ -861,7 +1246,9 @@ function saveAstrbotCfg() {
   });
   var body = {
     id_whitelist_enable: document.getElementById('ab_wl_enable').value === '1',
-    id_whitelist: collectNameList('ab_wl_groups', 'ab_wl_extra'),
+    // 群视图保存时不能整表覆盖私聊勾选（同一份名单）。直接用统一收集器：
+    // 它已同时合并「好友勾选 + 群勾选」，并输出好友为完整 UMO。
+    id_whitelist: collectFriendWhitelist(),
     ar_enable: document.getElementById('ab_ar_enable').value === '1',
     ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
     ar_whitelist: collectNameList('ab_ar_groups', 'ab_ar_extra'),
@@ -925,6 +1312,9 @@ var startTab = (location.hash || '').replace('#', '');
 switchTab(['dashboard', 'settings', 'members'].indexOf(startTab) >= 0 ? startTab : 'dashboard');
 refreshDashboard();
 setInterval(refreshDashboard, 3000);
+loadExitReason();
+// 退出归因变化很慢（只有重启才会变），低频刷新即可
+setInterval(loadExitReason, 60000);
 </script>
 </body>
 </html>"""
@@ -949,6 +1339,10 @@ class WebHandler(BaseHTTPRequestHandler):
                 "ob_connected": ob_connected,
                 "weflow_connected": weflow_connected,
                 "group_reply_mode": state.group_reply_mode,
+                # 项目标识：面板标题上的 _RC 标记与版本号从后端下发，
+                # 这样以后改 VERSION 文件就够了，不用再回来改 HTML。
+                "project_name": getattr(config, "PROJECT_NAME", "Akasha_RulerCordelius-Wechatbot"),
+                "project_version": getattr(config, "PROJECT_VERSION", ""),
                 "log": "\n".join(log_lines),
             })
         elif self.path == "/api/config":
@@ -964,6 +1358,29 @@ class WebHandler(BaseHTTPRequestHandler):
             import people
             try:
                 self.send_json(people.read_overview())
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+        elif self.path == "/api/exit-reason":
+            # 退出归因：面板上直接看「上次是怎么退的、这次是否正常」
+            import exit_reason as _er
+            try:
+                self.send_json(_er.summary())
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+        elif self.path == "/api/sync-umo-names":
+            # 手动触发：给 AstrBot 里"没名字/名字是 wxid"的会话补可读名
+            # （面板「自定义规则」里那一列显示的就是它）
+            import people
+            try:
+                n, msg = people.sync_umo_aliases()
+                self.send_json({"ok": True, "fixed": n, "message": msg})
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+        elif self.path == "/api/astrbot-status":
+            # 供前端轮询重启进度（GET）
+            import astrbot_ctl
+            try:
+                self.send_json(astrbot_ctl.status())
             except Exception as e:
                 self.send_json({"ok": False, "error": str(e)}, 500)
         else:
@@ -996,12 +1413,14 @@ class WebHandler(BaseHTTPRequestHandler):
             new_mode = mode_order[(idx + 1) % len(mode_order)]
             state.group_reply_mode = new_mode
             try:
-                with open(config.CONFIG_FILE, "r", encoding="utf-8") as f:
-                    cfg = json.load(f)
+                # ⚠️ 以前是「读 → 就地改写 → 直接 dump 到原文件」。面板被连点
+                # （或两个标签页同时切）时两次保存并发，后一次写入落在已写一半的
+                # 文件上，就产生 `Extra data: line 35 column 2`。
+                # 实测发生过，现场留下 config.json.bak_broken_201419。
+                # 现在统一走原子写。
+                cfg = _read_config()
                 cfg["group_reply_mode"] = new_mode
-                with open(config.CONFIG_FILE, "w", encoding="utf-8") as f:
-                    json.dump(cfg, f, ensure_ascii=False, indent=4)
-                    f.write("\n")
+                _atomic_write_json(config.CONFIG_FILE, cfg)
                 log.info(f"[Web] 群聊模式已切换为: {new_mode}")
             except Exception as e:
                 log.error(f"[Web] 保存配置失败: {e}")
@@ -1013,16 +1432,13 @@ class WebHandler(BaseHTTPRequestHandler):
                 new_cfg = json.loads(body)
 
                 # 读取当前配置，仅覆盖前端传来的字段
-                with open(config.CONFIG_FILE, "r", encoding="utf-8") as f:
-                    current = json.load(f)
+                current = _read_config()
                 current.update(new_cfg)
                 # 保留 _comment 字段
                 if "_comment" not in current:
                     current["_comment"] = "微信 ↔ AstrBot 桥接 - OneBot v11 版配置"
 
-                with open(config.CONFIG_FILE, "w", encoding="utf-8") as f:
-                    json.dump(current, f, ensure_ascii=False, indent=4)
-                    f.write("\n")
+                _atomic_write_json(config.CONFIG_FILE, current)
 
                 log.info(f"[Web] 配置已保存")
                 # 运行时同步 group_reply_mode（旧值 mention 归一化为 all）
@@ -1066,6 +1482,30 @@ class WebHandler(BaseHTTPRequestHandler):
                 state.set_session_muted(session, muted)
                 log.info(f"[Web] 会话 {session} 回复已{'关闭' if muted else '开启'}")
                 self.send_json({"ok": True, "session": session, "muted": muted})
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+        elif self.path == "/api/astrbot-restart":
+            # 重启 AstrBot（白名单/人设等只在启动时读一次，改完必须重启）。
+            # 耗时约 10-25 秒 → 放后台线程跑，立刻返回，前端轮询 /api/astrbot-status。
+            import astrbot_ctl
+            try:
+                length = int(self.headers.get("Content-Length", 0) or 0)
+                body = {}
+                if length:
+                    try:
+                        body = json.loads(self.rfile.read(length).decode("utf-8"))
+                    except Exception:
+                        body = {}
+                if body.get("action") == "stop":
+                    ok, msg = astrbot_ctl.stop()
+                    self.send_json({"ok": ok, "message": msg})
+                    return
+                if astrbot_ctl.is_restarting():
+                    self.send_json({"ok": False, "error": "已有一个重启在进行中"})
+                    return
+                astrbot_ctl.restart_async()
+                log.info("[Web] 面板触发 AstrBot 重启")
+                self.send_json({"ok": True, "message": "已开始重启，约 10-25 秒"})
             except Exception as e:
                 self.send_json({"ok": False, "error": str(e)}, 500)
         else:

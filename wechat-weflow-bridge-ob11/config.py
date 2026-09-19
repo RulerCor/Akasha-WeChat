@@ -119,9 +119,12 @@ QUOTE_REPLY_NATIVE = config.get("quote_reply_native", False)
 MENTION_AS_TEXT = config.get("mention_as_text", True)
 
 # ============ 项目标识（长期可识别） ============
-# 上游 alingalingling/Akasha-WeChat 的 RC 分支。名字与版本号固定写在这里 +
-# 同目录 VERSION 文件，方便日志/面板/issue 一眼分辨版本，不依赖目录名。
-PROJECT_NAME = "Akasha-WeChat_RC"
+# 项目代号（2026-09-18 起固定）：Akasha_RulerCordelius-Wechatbot
+# 名字与版本号固定写在这里 + 同目录 VERSION 文件，方便日志/面板/issue
+# 一眼分辨版本，不依赖目录名。面板标题（浏览器 tab + 页面抬头）也读这里。
+# 说明：RulerCordelius 是用户公开 ID、属项目代号的一部分，**不是隐私**；
+# 真实姓名等仍在 sanitize_privacy.py 的脱敏名单里。
+PROJECT_NAME = "Akasha_RulerCordelius-Wechatbot"
 _VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
 try:
     with open(_VERSION_FILE, encoding="utf-8") as _f:

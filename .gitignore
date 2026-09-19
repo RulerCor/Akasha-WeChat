@@ -38,5 +38,10 @@ runtime/
 # 两个 venv 的 pyvenv.cfg 都指向 vendor/python，不再依赖 WorkBuddy 自带环境。
 vendor/
 
-# ===== 发布产物（用 scripts/build_release.py 生成，不入库）=====
+# ===== 发布产物（用 scripts/build_release.py / build_dist.py 生成，不入库）=====
 release/
+
+# ===== 安装包源码目录（WeFlow / 微信 的 exe，体积大且非本仓库代码，不入库）=====
+# 构建时由 build_dist.py 收录进发行版；放这里是为了让出包流程有个固定入口。
+installers_src/
+scripts/installers_src/

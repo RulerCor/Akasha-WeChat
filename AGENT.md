@@ -4,10 +4,26 @@
 
 ## 0. 这是什么
 
-- 项目：`Akasha-WeChat_RC`，上游 [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 的 RC 分支
+- 项目代号（2026-09-18 起固定）：**`Akasha_RulerCordelius-Wechatbot`**，上游 [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 的 RC 分支
 - 作用：把微信个人号接进 AstrBot。WeFlow 负责读消息（SSE），本桥接负责协议转换，AstrBot 负责 AI，发送靠 Windows UIA 操作微信窗口
 - 代码目录：`wechat-weflow-bridge-ob11/`（**沿用上游路径，不要挪动**，否则与上游的 diff 会变成"全量移动"）
-- 身份常量：`config.PROJECT_NAME` / `config.PROJECT_VERSION`（读同目录 `VERSION` 文件）
+- 身份常量：`config.PROJECT_NAME` / `config.PROJECT_VERSION`（读同目录 `VERSION` 文件）；面板标题、启动 banner、发行版 zip 名全部由它们派生
+- ⚠️ **`RulerCordelius` 是代号的一部分（作者公开 ID），不是隐私** —— 已从
+  `sanitize_privacy.py` 与 `build_dist.HARD_LITERALS` 放行；真实姓名
+  `Junqin Zhao` 与本机路径仍是隐私，继续拦截。别再把代号加回脱敏名单。
+- ⚠️ **平时开发只改源码，不要随手重建发行版**（用户约定，2026-09-18）：
+  `scripts/build_dist.py` 只在用户明确要求出包时跑（约 7 分钟大 IO）。
+  日常改动：改 `runtime/bridge/` → `sync_to_rc.py` → 重启桥接即可。
+- ⚠️ **发行版历史版本绝不删除**（用户约定，2026-09-18）：
+  `release/dist/*.zip` 只增不删 —— 出新版**不要**清掉旧版 zip，哪怕同盘同目录。
+  历史纯净版 zip（`release/Akasha_RulerCordelius-Wechatbot_纯净版-*.zip`）同理。
+  空间不够就问用户，别自作主张。
+- ⚠️ **新加好友/新会话机器人不理**，九成是 AstrBot 的 **平台 ID 白名单**
+  （`platform_settings.id_whitelist`）没包含对方：AstrBot 的
+  `WhitelistCheckStage` 只在**启动时**读一次名单，不在名单里的会话在
+  pipeline 第一阶段就被丢弃（日志搜 `not in the session allowlist`）。
+  面板「成员与权限 → 高级 → 私聊白名单」可视化增删（好友 chip 点选），
+  保存后**需重启 AstrBot**。桥接侧的群静音（muted_sessions.json）是另一层，别混淆。
 
 ## 1. 模块职责
 
@@ -110,6 +126,31 @@
   **空的引用气泡**；② `_send_current` 用"输入框是否为空"判成败会永远失败，媒体发送被迫
   改成 `verify=False`（点一下按钮就算成功），**"发了没发"完全不可知**（就是"消息卡在
   输入框里"那个现象）。必须 Ctrl+A + Delete 真删。
+- **`_send_current(verify=...)` 的 `verify` 语义是「要不要校验」，别乱传 `False`**
+  （2026-09-18 修）：`verify=False` 只该给**发图片/文件**用——那时输入框里没有文本，
+  「已清空」判据不成立。传 `False` 时它点完发送按钮**直接 `return True`**，等于放弃校验。
+  ⚠️ **原生引用发送（`send_quote`）的输入框里是有正文的**，早期却沿用了 `verify=False`
+  （当年为空引用块 bug 打的补丁，后来 bug 修好了这行忘了改回来），结果
+  **引用消息没发出去、日志却打 `[UIA✓] 引用`**，桥接不会重试 —— 用户看到的就是
+  "消息凭空消失"。现已改回 `verify=True` + 失败降级 `send_text`。
+  改这一带代码时：**凡是"发文字"的路径都必须 `verify=True`**。
+- **出站纠错表是手写的，漏一个字就整条静默失效**（2026-09-18 修）：
+  名册真名「群友C」，`_JA_TO_CN_VARIANT` 有「広→广」却没有「緒→绪」，
+  于是生成的变体「群友C」跟模型实际输出「群友C」对不上，
+  **一次都没替换成功**（错名 11 次、纠错 0 次）。现在除了补表，还加了
+  `_build_fuzzy_name_map()` 逐位兜底。**新增/修改这张表后，务必拿名册里的真名
+  实测一遍**，别只看代码"应该有覆盖"。
+- **AstrBot 分条回复会在正文前塞 `" "` + `"\n"`**：日志里能看到
+  `chain=[{reply},{at},{text:" "},{text:"\n正文"}]`。纯空白段桥接会跳过，
+  但**前导换行必须自己 `strip()`**，否则微信气泡顶上多一个空行。
+- **配置读写必须原子**：`/mode` 与 `/api/config` 曾是「读→就地改写→`json.dump`」，
+  面板连点两下就并发写坏文件（`Extra data: line 35 column 2`，残骸见
+  `config.json.bak_broken_201419`）。一律走 `_atomic_write_json()`
+  （临时文件 + fsync + `os.replace`），读用 `_read_config()`（损坏时回退备份）。
+- ⚠️ **改代码改 `runtime/bridge/`（运行副本才是源），再 `sync_to_rc.py` 同步到
+  `wechat-weflow-bridge-ob11/`**。反过来跑 `sync_to_rc.py` 会把源码副本的改动
+  **直接覆盖掉**（2026-09-18 踩过：三个修复全丢，只能重做）。
+  同步后确认 `PROJECT_NAME` 还在（脚本会自动补，但值得看一眼）。
 - **剪贴板绝不用 PowerShell 子进程**：原实现 `subprocess.run(["powershell", ...])` 调
   WinForms 写剪贴板，在受限环境（自动化工具/沙箱启动的进程）里**会被拦截**，稳定卡
   30 秒后失败 → **图片/文件永远发不出去**。已改成 ctypes 直写 Win32 剪贴板
@@ -153,47 +194,87 @@
 
 ## 5. 发布流程（版号制，v1.0.0 起）
 
+**两套产物，用途完全不同，别混：**
+
+| 产物 | 命令 | 给谁 | 内容 |
+|---|---|---|---|
+| **源码归档** | `python scripts/build_release.py` | 自己 / 版本管理 | 只有源码 + 安装包 |
+| **正式发行版** | `python scripts/build_dist.py` | **收件人**（可外发） | astrbot 完整目录 + akasha 完整目录 + 安装包 + 免安装 Python |
+
 1. 改代码 → 本地验证
 2. `CHANGELOG.md` 追加一条（说明改了什么、为什么）
-3. `VERSION` 递增：**格式固定 `X.Y.Z`**（不再用 rc 后缀）；改动版本只改 `wechat-weflow-bridge-ob11/VERSION` 这一个文件
-4. 出包：`python scripts/build_release.py`（加 `--zip` 生成可外发纯净包）——
-   自动产生 `release/versions/vX.Y.Z/` 归档、刷新 `release/newestbuild/`、
-   把上一次镜像挪进 `release/backups/pre-vX.Y.Z-*`
+3. `VERSION` 递增：**格式固定 `X.Y.Z`**；改动版本只改 `wechat-weflow-bridge-ob11/VERSION` 这一个文件
+4. 出包：先 `build_release.py` 归档源码，再 `build_dist.py` 出发行版
 5. 提交推送；如需同步上游更新，先在上游仓库 fetch 后再合入，保留原目录结构
 
 约定：`release/` 整体不入库；`runtime/`（本地运行环境，含 venv 与业务数据）不入库；
 代码与配置里**不写死绝对路径**——相对路径以「项目根（桥接目录的上一级）」为基准，
 AstrBot 相关配置留空时会自动按常见布局搜索。
 
-## 6. 便携版（免安装打包）
+## 6. 正式发行版（`build_dist.py`）
 
-`python scripts/build_portable.py` → `release/portable/Akasha-WeChat_便携版-vX.Y.Z.zip`。
-目标是"换台电脑解压即用"，免装 Python / AstrBot / 任何 pip 依赖。
+`python scripts/build_dist.py` → `release/dist/Akasha-WeChat-vX.Y.Z.zip`。
+目标：收件人**解压即用**，免装 Python / AstrBot / 任何 pip 依赖。
+
+> ⚠️ **不要再用 `build_portable.py`** —— 便携版体系已废弃（2026-09 移除）。
+> 它的毛病：把项目文档、模拟器、维护脚本一股脑塞给收件人，包又大又杂；
+> 而且归档里还带着运行数据。正式发行版只放「跑起来必需的东西」+「安装包」。
+
+**包内结构**
+
+```
+Akasha-WeChat-vX.Y.Z/
+├── 启动 Akasha.bat      %~dp0 相对定位，解压到哪都能跑
+├── 停止 Akasha.bat
+├── 使用说明.md
+├── akasha/             桥接完整运行副本（含 .venv）
+├── astrbot/            AstrBot 完整副本（含 .venv / 三个人格 / 普通知识库文档）
+│   └── 启动 AstrBot.bat 目录内相对路径启动脚本（单独调试用）
+├── python/             免安装 Python 基座
+└── installers/         WeFlow / 微信 的**安装包**
+```
 
 **venv 怎么做到可移植**：Windows 的 venv 靠 `pyvenv.cfg` 的 `home` 找基座解释器。
 启动器每次启动都把「包内 `python\` 的当前绝对路径」写回该文件。
 —— **所以包可以被解压到任意目录**，但**别把 `python\` 目录单独挪走或改名**。
 
-**打包时的三条铁律**
+**打包时的四条铁律**
 
 1. **绝不拷 `%APPDATA%\WeFlow`**：那里存的是微信数据库解密密钥（`decryptKey` /
-   `imageXorKey` / `imageAesKey`）和 `httpApiToken`。只拷程序本体
-   （`%LOCALAPPDATA%\Programs\WeFlow`）。这是整件事里最容易出事的一步。
+   `imageXorKey` / `imageAesKey`）和 `httpApiToken`。发行版只放**安装包**，
+   程序本体由收件人自己装。这是整件事里最容易出事的一步。
 2. **配置与数据库必须剥干净**：`cmd_config.json` 里的 `provider_sources[*].key`、
    `dashboard.password/pbkdf2_password/jwt_secret`、`admins_id`、`id_whitelist`、
    `active_reply` 白黑名单；`data_v4.db` 只留 `personas`，其余表全清。
-3. **出包前必须跑脱敏审计**：`build_portable.py` 最后一步会调
-   `sanitize_privacy.py` 的审计，**有残留就中止**。新增文档/脚本后如果审计报错，
-   先看是不是又写进了真实的 wxid / 群名 / 人名。
+3. **该留的留、该删的删**：
+   - ✅ **保留三个人格**（`personas` 表）—— 属于软件资产，可以开源出去
+   - ✅ **保留普通知识库文档**（`astrbot/kb_docs/*.md`）—— 收件人不一定会用，但留着
+   - ❌ **删除向量知识库**（`data/knowledge_base/*/{doc.db,index.faiss}`）——
+     体积大且含本机特征
+   - ❌ **不带桥接 `data/`** —— 里面有真实 wxid / 群名 / 人名
+4. **出包前必须跑脱敏审计**：`build_dist.py` 最后会调 `sanitize_privacy.py` 的审计，
+   外加一道「本机用户名 / 绝对路径」硬检查，**任一有残留就中止出包**。
+   新增文档/脚本后如果审计报错，先看是不是又写进了真实的 wxid / 群名 / 人名。
 
-**构建目录必须用短路径**（默认 `C:\_akasha_build`）：venv 近 5 万个小文件，
+**安装包怎么给**
+
+把安装包放进项目根的 `installers_src/`（或 `scripts/installers_src/`），
+`build_dist.py` 按文件名关键字自动归类到 `installers/WeFlow/` 与 `installers/微信/`，
+并同步收录进 `build_release.py` 的源码归档。
+**找不到只告警、不中止**——微信旧版安装包腾讯已下架，收件人可能得自行安装。
+
+**构建目录必须用短路径**（默认 `C:\_akasha_dist`）：venv 近 5 万个小文件，
 放在深目录会撞 Windows 的 260 字符路径上限。
 
-**版本号约定**：便携版不单独编号，直接用它所打包的代码版本
-（`便携版-vX.Y.Z` 里的 X.Y.Z = `wechat-weflow-bridge-ob11/VERSION`）。
+**版本号约定**：发行版不单独编号，直接用它所打包的代码版本
+（`vX.Y.Z` 里的 X.Y.Z = `wechat-weflow-bridge-ob11/VERSION`）。
 
-**收件人仍需自备**：微信桌面版（安装 + 登录，无法打包）、一个模型 API Key
-（个人凭据，首次配置向导里填）。
+**收件人需自备**：微信桌面版（安装 + 登录）、WeFlow（用包内安装包装）、
+一个模型 API Key（个人凭据，不随包）。
+
+**发行版里绝不出现的东西**：API Key、面板口令、真实 wxid / 群名 / 人名、
+本机绝对路径、Windows 用户名。`_runtime-data-snapshot/` 这类运行数据
+**永远不要放进任何归档**。
 
 ## 7. 开发环境是自包含的（vendor/）
 
@@ -210,8 +291,8 @@ AstrBot 相关配置留空时会自动按常见布局搜索。
 
 **仍然在外部、拿不走的**：微信（腾讯的软件，必须安装+登录）、Ollama（可选，不装也能跑）。
 
-**开发环境 ≠ 便携版**：开发环境是你自己调试用的（含真实数据与密钥）；
-便携版是给别人用的（脱敏、不含密钥）。两者共用同一批源码，
+**开发环境 ≠ 发行版**：开发环境是你自己调试用的（含真实数据与密钥）；
+发行版是给别人用的（脱敏、不含密钥、含 astrbot 完整目录）。两者共用同一批源码，
 改代码只改 `wechat-weflow-bridge-ob11/`，再 `sync_to_rc.py` 同步到运行副本。
 
 完整清单见 `docs/依赖与目录说明.md`。

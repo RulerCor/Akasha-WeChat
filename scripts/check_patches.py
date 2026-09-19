@@ -43,6 +43,12 @@ PATCHES = [
     ("patch_persona_name_rule.py",
      "人设：「名字照抄」规则（禁简体化群友昵称）",
      "python scripts/patch_persona_name_rule.py"),
+    ("patch_persona_doctor_drift.py",
+     "人设：「称呼漂移防护」（禁跟着用对方的错称呼；mon3tr + mostima）",
+     "python scripts/patch_persona_doctor_drift.py"),
+    ("patch_group_alias_note.py",
+     "群上下文：「同名说明」（昵称=备注，防模型把同一人当两位好友）",
+     "python scripts/patch_group_alias_note.py"),
 ]
 
 

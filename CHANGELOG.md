@@ -4,6 +4,707 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## 退出归因：区分「自己崩了」和「被别人杀了」（2026-09-19）
+
+### 新增
+
+**动机**：桥接某天从日志里**干净消失** —— 最后一条是正常的"名册已刷新"，
+没有任何 Traceback，8766 端口也没了。**无法判断**到底是：
+① 未捕获异常挂掉 ② 被 taskkill / 任务管理器强杀 ③ 主动 sys.exit。
+三者排查方向完全不同，但日志长一个样（实测排查时只能靠"时间线猜测"）。
+
+**修法**：新增 `runtime/bridge/exit_reason.py`，写 `data/exit_reason.log`。
+
+关键洞察（Windows 语义）：
+**TerminateProcess（taskkill /F、任务管理器"结束任务"）不触发任何 Python 清理** ——
+`atexit` 和 `finally` 都不执行。所以判据是**反过来的**：
+
+| 日志表现 | 结论 |
+|---|---|
+| 有退出记录（异常/主动/信号） | **自己退的** |
+| **没有任何退出记录** | **被强杀** |
+
+因此采用两条腿：
+- 启动时写 `[启动]` 记录（供事后算 uptime）
+- 注册 `atexit` + `signal(SIGTERM/SIGINT/SIGBREAK)` + `sys.excepthook`
+- **下次启动**时检查"上次启动之后有没有退出记录"，没有就判定为被强制终止
+
+同时 `set_phase()` 记录关键阶段，便于定位"死在哪一步"。
+
+### 面板可见
+
+控制面板新增卡片「🧭 上次是怎么退的」，直接显示：
+上次退出原因（被强杀时标红）、本次已运行时长、当前阶段、可展开的历史记录。
+新增端点 `GET /api/exit-reason`。
+
+### 验证
+
+`scripts/test_exit_reason.py` —— 三个场景全部正确归类：
+
+| 场景 | 结果 |
+|---|---|
+| 未捕获异常 | ✅ 记录「未捕获异常」+ traceback |
+| 主动 note_exit | ✅ 记录「主动退出」+ 原因 |
+| taskkill /F 强杀 | ✅ 被杀时无记录；下次启动判定「被强制终止」 |
+
+**实测（真实进程）**：强杀正在运行的桥接 → 重启后面板显示
+「⚠️ 上次被**强制终止**（无退出记录）」，判定正确。
+
+### 踩坑记录
+
+改动面板 JS 时又把 `'\n'` 写成了真换行，导致**整个 `<script>` 解析失败**
+（`Invalid or unexpected token`，所有函数未定义）—— 与上次"重启按钮"同一个坑。
+已改为 `\\n`；`verify_exit_reason_panel.py` 会断言 `pageerror == 0` 来防复发。
+
+`exit_reason.py` 已加入 `build_dist.py` 的 `BRIDGE_FILES` 与 `sync_to_rc.py`
+（前一天刚因 `astrbot_ctl.py` 漏加导致发行版缺文件，这次不再重犯）。
+
+## 群聊「同人别名」——昵称/备注两套名字导致模型认成两个人（2026-09-19）
+
+### 修复
+
+**现象**：bot 在群里说「测试用户博士和RulerCordelius博士是**两位不同的朋友**呀喵。」
+——但这两个名字属于**同一个人**（备注=RulerCordelius，昵称=测试用户）。
+
+**真因（信息没传递到位，不是模型笨）**：
+同一个人的两个名字从**两条不同通道**进入模型上下文：
+
+| 通道 | 显示 | 来源 |
+|---|---|---|
+| 他自己的消息 | `RulerCordelius` | 桥接按备注名标注 sender |
+| 别人 @ 他 | `测试用户` | 微信自动填**昵称**，原样透传 |
+
+实测的上下文原文（同群、同一分钟）：
+
+```
+["洛辰" 拍了拍 "RulerCordelius"]      ← 拍一拍：用备注名
+[洛辰/16:04:22]: @测试用户 你是猫娘       ← 洛辰手打的 @：用昵称
+```
+
+**两个名字并列出现、且没有任何标记说明是同一人** → 模型只能推断是两个人。
+它的推理本身没错，是**我们给的数据有歧义**。
+
+**不是个例**：扫描 4 个群 68 名成员，**6 人**昵称≠备注：
+`RulerCordelius←测试用户`、`爸爸←An帝y哥`、`妈妈←Purple` 等。
+
+**修法（两层，自动生成、不写死人名）**：
+
+1. **桥接侧自动生成别名表**（`state.py`）
+   WeFlow 的 `/api/v1/group-members` 同时给出 `nickname`(昵称) 与
+   `remark`(备注)，据此自动建立「主名 ← 别名」表（实测生成 **44 条**）。
+   发言人有别名时，在该条群消息末尾附加轻量标记：
+   `<alias>测试用户=RulerCordelius</alias>`
+
+2. **AstrBot 侧提取成「同名说明」**（新补丁 `patch_group_alias_note.py`）
+   在 `_format_group_history_block()` 里把标记收集、去重、**从正文移除**，
+   提升为上下文块头部的说明行：
+
+```
+<system_reminder>You are in a group chat.
+--- BEGIN CONTEXT---
+[同名说明] 测试用户、rulercordelius_J = RulerCordelius（同一个人；RulerCordelius 是备注名）
+["洛辰" 拍了拍 "RulerCordelius"]
+[洛辰/16:04:22]:  RulerCordelius在群测试群1中说：@测试用户 你是猫娘
+--- END CONTEXT ---
+```
+
+标记只在**有别名时**才附加，普通消息不受影响；旧消息无标记时行为不变。
+
+### 验证
+
+- `scripts/test_alias_note.py` —— 4 个用例（带别名 / 无别名不产生空段落 /
+  多人多别名 / 同人去重）**全部通过**
+- `scripts/verify_alias_e2e.py` —— 桥接侧格式化 + AstrBot 侧提取贯通 **PASS**
+- `check_patches.py` 由 7 项增至 **8 项全绿**
+
+> 记录一个判定失误：E2E 首跑我判成 FAIL，因为断言写死了
+> `[同名说明] 测试用户 = RulerCordelius`，而实际输出含两个别名
+> （`测试用户、rulercordelius_J`）。**是断言太严，不是功能失败**——
+> 遇到失败先看原文，别急着改实现。
+
+## [1.5.1]（2026-09-19）
+
+正式发行版（`build_dist.py`）。本版仅同步一项已生效并验证的人设修复。
+
+### 修复
+
+- **人设「称呼漂移防护」** —— 对方手滑把「博士」打成「医生」时，bot 会跟着用错词。
+  已给 **mon3tr + mostima**（唯二以「博士」作称呼的人设）追加
+  「## 称呼漂移防护（最高优先级）」段落，核心是**禁止把错词与「博士」并列复述**
+  （详见下方「人设『称呼漂移防护』」条目）。
+
+> 本版相对 v1.5.0 只多这一项 —— v1.5.0 是在该规则生效**之前**打的包。
+> 代码层无任何改动，差异仅在 `astrbot/data/data_v4.db` 的两条人设。
+
+### 验证
+
+- `scripts/verify_no_drift.py` 连跑 3 次全部 PASS（回复变为「纠正 + 始终用博士」）
+- `check_patches.py` 7 项全绿
+- 源库确认：mon3tr / mostima 含规则，konan / yuki 未受影响
+
+## 人设「称呼漂移防护」（2026-09-19）
+
+### 修复
+
+**现象**：好友 Shawn 手滑把「博士」打成了「医生」，随后 bot **跟着用错词**，
+3 分钟内连说 4 次（`喵，Shawn 医生。` / `Shawn 医生你手好快。` / `嗯嗯，Shawn 医生。`）。
+
+**真因（不是人设写错，是自我强化漂移）**：
+错词进上下文 → bot 复述 → 复述又被当成"这个称呼是对的" → 越用越顺。
+
+实测统计：正确「博士」**203 次**、漂移「医生」**6 次**，
+**6 次全部集中在 Shawn 这一个会话的 3 分钟内** —— 起点就是用户自己那条「医生」。
+
+最能说明问题的一条：bot 当时其实**已经察觉到**对方打错了，回的是
+「哎呀，Shawn **博士**是**医生**哦」——但它把两个词**并列复述**，
+反而抬高了错词在上下文中的权重，接下来连着用了两次。
+所以规则里「禁止并列复述」比「不要跟着用」更关键。
+
+**修法**：新增 `scripts/patch_persona_doctor_drift.py`，
+给 **mon3tr + mostima**（唯二以「博士」作称呼的人设）追加
+「## 称呼漂移防护（最高优先级）」段落，四条：
+
+1. 固定用「博士」，「医生/老师/Doctor」都不是称呼
+2. 对方叫错时依然只叫「博士」，不跟着用错词
+3. 可纠正最多一次，之后不再提
+4. **绝对禁止把错词与「博士」并列复述**（关键）
+
+> konan（火影）与 yuki（Persona 3）人设里明确写着**不要使用「博士」**，故不涉及。
+
+### 验证
+
+`scripts/verify_no_drift.py` —— 注入与事故相同的消息（对方先发「医生」），
+检查回复是否出现「XX 医生」式跟随称呼：
+
+**连跑 3 次全部 PASS**，回复变成：
+
+```
+Shawn博士，"医生"是游戏里彩虹小队的干员代号…和你是两回事呀。
+你叫我一声Shawn博士就对啦喵。
+```
+
+即：**纠正 + 解释，且始终用「博士」**，不再被带偏。
+
+> 判定标准说明：不能简单地搜「医生」二字 ——
+> 解释性用法（「医生是干员代号」）正是期望行为。
+> 只有出现在**称呼位置**（`Shawn 医生`）才算漂移。
+
+### 生效
+
+已通过面板一键重启按钮重启 AstrBot（PID 18780 → 9956，用时 49.5s），
+`Loaded 4 personas`；`check_patches.py` 由 6 项增至 **7 项全绿**。
+
+## 向上游提交 issue（2026-09-19）
+
+把本分支的改动整理成两篇 issue 提交给对应上游（**只提 issue，不提 PR**）：
+
+| 上游 | issue | 内容 |
+|---|---|---|
+| [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) | [#4](https://github.com/alingalingling/Akasha-WeChat/issues/4) | 面板白名单三个叠加缺陷：私聊存裸 UID 导致永久静默拦截（根因）/ 勾选状态丢失 / 保存抹掉群条目；附完整复现步骤与验证清单 |
+| [AstrBotDevs/AstrBot](https://github.com/AstrBotDevs/AstrBot) | [#10127](https://github.com/AstrBotDevs/AstrBot/issues/10127) | 知识库注入措辞会让模型"编造亲身经历"而非如实引用资料；附三处文件的具体 before/after 补丁细节 |
+
+草稿与提交脚本（可复跑）：
+
+- `release/issues/issue_akasha_whitelist.md`
+- `release/issues/issue_astrbot_kb_wording.md`
+- `scripts/post_issues.py`（REST API；token 从 git credential 读取，不回显不落盘）
+
+> 注：本机未装 `gh`，已装到 `%LOCALAPPDATA%\Programs\gh`。
+> 该 token 的 **GraphQL 配额已用尽**（`gh repo view` 会报 rate limit），
+> 但 REST API 正常，故脚本走 REST。
+
+## [1.5.0]（2026-09-18 晚）
+
+正式发行版（`build_dist.py`）。本版打包四项已在本地验证的改动：
+
+### 新增
+
+- **面板一键重启 AstrBot** —— 成员与权限页新增「🔄 重启 AstrBot」按钮。
+  AstrBot 的白名单/人设/平台适配器只在启动时读一次，改完必须重启；
+  以前只能手动关控制台窗口，现在面板点一下即可（后台线程 + 进度轮询，
+  重启期间桥接自动重连）。实现见 `astrbot_ctl.py`，关键点：
+  按端口反查 PID（不误杀桥接/模拟器）、detach 启动（不成为桥接子进程）、
+  轮询端口判就绪、清残留 `astrbot.lock`。
+
+### 修复
+
+- **私聊白名单「永远匹配不上」** —— 真因：AstrBot 判定用
+  `unified_msg_origin not in whitelist and get_group_id() not in whitelist`，
+  私聊没有 `group_id`，因此裸数字 UID **结构上永远匹配不上**（与是否重启无关）。
+  已把私聊条目规整为完整 UMO（`wechat_bridge:FriendMessage:<uid>`）；
+  新增 `normalize_whitelist_entries()`，面板保存时自动规整。
+- **面板白名单「保存了却不见了」** —— chip 的 `data-uid` 是纯数字而存储层是完整
+  UMO，两者直接比永远不相等 → 已保存的私聊在面板上全显示为未勾选。
+  新增 `wlEntryToUid()` / `wlUidSet()` 统一抽取后比较。
+- **保存白名单会写坏名单** —— `write_friend_whitelist()` 原为整表覆盖，
+  会把 6 个群条目一并抹掉（群聊全部失联）；现改为保留群条目 + 合并去重。
+- **白名单重复条目** —— `normalize_whitelist_entries()` 不按 UID 去重，
+  面板每保存一次就多写一份裸数字（实测脏化 12 → 15 条）；现按 UID 收敛。
+
+### 验证
+
+- `scripts/verify_panel_whitelist.py`：无头浏览器渲染面板，断言 3 个私聊为已勾选、无 JS 错误
+- `scripts/verify_private_whitelist_e2e.py`：以 Shawn UID 注入私聊走完整管道 → 收到回复
+- `scripts/verify_restart_button.py`：真的点一次按钮 → PID 15276 → 15680，phase=done
+- 重启后 `not in the session allowlist` 计数 = 0；四项服务 LISTENING
+
+### 包内不含
+
+向量知识库（`knowledge_base/*/{doc.db,index.faiss}`）已按要求删除；
+三个人格文件与普通知识库文档（`astrbot/kb_docs/*.md`）**保留**。
+
+## 面板一键重启 AstrBot（2026-09-18 晚）
+
+### 新增
+
+**动机**：AstrBot 的 `WhitelistCheckStage.initialize()` 和 `PersonaManager`
+**只在启动时读一次**配置。所以「改白名单/人设/平台适配器 → 必须重启」是常态，
+以前只能手动关掉控制台窗口再双击 `start.bat`，每次都得找人。
+
+**做法**：`runtime/bridge/astrbot_ctl.py` + 面板「🔄 重启 AstrBot」按钮。
+
+关键设计（都是踩过的坑）：
+1. **按端口找进程，不按进程名**——机器上同时跑着桥接、模拟器、AstrBot 多个
+   python，按名字杀会误伤。用 `netstat -ano` 反查监听 `11229` 的 PID。
+2. **detach 启动**——普通 `Popen` 会让 AstrBot 成为桥接的**子进程**，桥接一重启
+   （改代码很频繁）AstrBot 就跟着死。改用
+   `DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP`，并把 stdout 重定向到
+   `astrbot_run.log`（没有控制台时输出会丢）。
+3. **轮询端口判就绪**——冷启动要 40-70 秒（4 个人设 + 十几个 provider + 群名册），
+   只看进程存在不够。
+4. **清残留锁**——`astrbot.lock` 在强杀后会残留，新进程直接
+   `Cannot acquire lock file` 退出（本次就撞到过：两个实例抢锁）。
+5. **异步 + 轮询**——重启要几十秒，不能让 HTTP 干等（浏览器超时）。
+   端点立刻返回，前端每 1.2s 轮询 `/api/astrbot-status`。
+
+**新增文件**：`runtime/bridge/astrbot_ctl.py`
+**新增端点**：`POST /api/astrbot-restart`（可带 `{"action":"stop"}` 只停）、
+`GET /api/astrbot-status`（重启进度 + 实时端口探测）
+
+### 顺带修复
+
+- **白名单重复条目**：`normalize_whitelist_entries()` 之前不按 UID 去重，
+  面板每保存一次就会同时写入 `1000000001` 和
+  `wechat_bridge:FriendMessage:1000000001` 两条。功能上无害（UMO 已能匹配），
+  但名单会越滚越脏（实测 12 → 15 条）。现在已按 UID 收敛，保存即自清洗。
+- **面板 JS 语法错误**：`confirm()` 里的换行写成了真实换行，导致整个
+  `<script>` 解析失败、**所有函数（含页签切换）全部未定义**。
+  这也是「按钮点了没反应」的一类根因。已改为 `\n` 转义。
+
+### 验证
+
+`scripts/verify_restart_button.py` —— 无头浏览器打开面板、**真的点一次按钮**、
+轮询到 done、断言 PID 变化：
+**PASS**（PID 15276 → 15680，状态「AstrBot 已就绪（用时 69.7s）」，JS 错误 0）。
+
+## 面板白名单「保存了却不见了 / 存了也不生效」——第二轮修复（2026-09-18 晚）
+
+### 修复
+
+**现象**：用户在面板重新勾了 3 个私聊并保存，问「可以了吗」。
+
+**查出三个叠加的缺陷**（都不是「重启一下就好」能解决的）：
+
+1. **面板显示层：勾选状态永远丢失**
+   chip 的 `data-uid` 是纯数字（`1000000009`），而存储层按 AstrBot 要求存的是
+   完整 UMO（`wechat_bridge:FriendMessage:1000000009`）。
+   `renderFriendList()` 里 `merged.indexOf(String(p.uid))` 两者直接比
+   → **永远不相等** → 已保存的私聊在面板上全部显示为「未勾选」，
+   用户看到的就是「白名单不见了」，只好重勾一遍。
+   修：新增 `wlEntryToUid()` / `wlUidSet()`，比较前统一抽取 UID。
+
+2. **面板保存层：会写坏名单**
+   `collectFriendWhitelist()` 把好友勾选以**裸数字**写回，且与缓存里的 UMO 条目
+   **重复共存**（同一人两条：旧 UMO + 新裸 ID）。
+   `write_friend_whitelist()` 更直接——`ps["id_whitelist"] = uids` **整表覆盖**，
+   会把 6 个群条目一并抹掉（群聊全部失联）。
+   修：保存前先剔除好友管辖的旧条目再按勾选重建（输出完整 UMO）；
+   `write_friend_whitelist()` 改为**保留既有群条目 + 合并去重**，并走
+   `normalize_whitelist_entries()` 规整格式。
+
+3. **时效层：改了不重启 = 没改**
+   AstrBot 的 `WhitelistCheckStage.initialize()` **只在启动时读一次**白名单。
+   实测时间线：AstrBot 20:46:14 启动 → 用户 20:52:26 保存 → 重启前一直按旧名单拦截。
+   修：保存成功后弹出醒目横幅（`#wlRestartWarn`），明确「刚保存的还没生效」。
+
+**验证**（脚本化，可回归）：
+- `scripts/verify_panel_whitelist.py` —— 无头浏览器渲染面板，断言 3 个私聊 chip
+  处于 checked 状态、无 JS 错误 → **PASS**（`已勾 3 / 共 157 人`）
+- `scripts/verify_private_whitelist_e2e.py` —— 以 Shawn 的 UID 注入私聊事件走完整管道
+  → **PASS**（收到回复）；重启后 `not in the session allowlist` 计数 = **0**
+
+**教训**：光看「ID 在不在名单里」不够——**必须核对格式**。
+存储格式（完整 UMO）与 UI 数据模型（裸 UID）不一致时，
+会同时产生「显示不见」和「静默拦截」两种症状，而两者看起来都像「配置没保存」。
+
+## 私聊白名单「永远匹配不上」——真因定位（2026-09-18）
+
+### 修复
+
+**现象**：好友 Shawn 发很多条消息，机器人一条都不回（用户报障两次）。
+
+**真因**（之前两次都误判成"要重启 AstrBot"，其实不是）：
+AstrBot 的白名单判定是——
+
+```python
+if (event.unified_msg_origin not in self.whitelist
+        and str(event.get_group_id()).strip() not in self.whitelist):
+```
+
+它**只认两种写法**：
+- 完整 UMO，如 `wechat_bridge:FriendMessage:1000000009`
+- 群 ID（走 `get_group_id()` 兜底），如 `2000000001`
+
+**而私聊没有 `group_id`**。所以往名单里写裸数字 UID（`1000000009`）
+→ 私聊**结构上永远匹配不上**，无论重启多少次都没用。
+
+**实测证据（决定性）**：全部 11 次 whitelist 拒绝**都是私聊、群 0 次** ——
+群里一直正常，所以根本联想不到是白名单。这也解释了为什么这个坑反复出现、
+"重启一下好像好了"（其实是恰好那次群里在说话）。
+
+**修法**：
+- `people.normalize_whitelist_entries()` —— 数字 ID 属于已知群则保持裸 ID，
+  否则按私聊补全成完整 UMO；面板保存白名单时自动规整，
+  **以后从面板加好友不会再写错格式**；
+- 现存 12 条已改写：6 条私聊 → 完整 UMO，6 条群 → 保持裸 ID。
+
+### 教训
+
+- 「加了好友/群却不回复」先看 `whitelist_check.stage` 日志，
+  再用**这条会话的完整 UMO**去比对名单格式，别只看"ID 在不在名单里"。
+- 之前的两次"重启 AstrBot 就好了"是**误诊**：配置确实需要重启才生效，
+  但格式错了重启也没用。诊断时要区分"没生效"和"格式不对"。
+
+## [1.4.0]（2026-09-18）
+
+**版号 minor +1**：两个面向用户的新功能 + 一个真 bug 修复，不动架构。
+
+### 本版包含（自 v1.3.0 以来）
+
+- **新增**：面板私聊白名单**搜索 + 只看已勾 + 已勾计数**（好友多了以后不用逐个找）
+- **新增**：**会话 ID 显示成人名**（AstrBot 面板「自定义规则」里不再是一串裸数字）
+  - `people.sync_umo_aliases()` 按桥接名册补齐 AstrBot 的 `umo_aliases`
+  - 挂在启动 + 每 10 分钟的名册刷新里，**新会话自动命名**
+  - 面板 `/api/sync-umo-names` 可手动触发
+  - 顺带补 `state.all_chat_names()`（原只有 `known_groups()`，拿不到「文件传输助手」
+    这类非好友会话）
+- **修复**：出站昵称不再让 wxid/纯数字漏过去（`bridge_core._resolve_display_name()`）
+- **修复**：搜索筛选时白名单里的**非好友条目（群 ID）不再被静默删掉**
+  （实测 12 项里 6 项是群 ID，会因搜索丢项导致群突然不回复）
+
+### 关于源码注释里的真实昵称
+
+`release/versions/*` 归档与 `release/dist/*` 发行版在构建时会跑脱敏
+（`sanitize_privacy.py`），所以**注释里的真实群友昵称不会外泄**；
+开发用的源码副本里保留真名是为了排障时看得懂。
+每次出包都会重新脱敏 + 三道闸门校验，成品包已实测零残留。
+
+## 会话 ID 显示成人名（自定义规则页看不出是谁）（2026-09-18）
+
+### 修复
+
+- **面板「自定义规则」里会话只显示 `wechat_bridge:FriendMessage:1000000010`
+  这种数字 ID，根本看不出是谁**。查明是 AstrBot 的 `umo_aliases` 表没被正确填充，
+  有两个独立成因：
+  1. **WeFlow 把 `sourceName` 推成 wxid**：某些联系人推来的是
+     `wxid_dykw4m5ueyms12` 而不是昵称，桥接原样当 `nickname` 发给 AstrBot，
+     AstrBot 的 UMO 自动命名就把 **wxid 记成了名字**（改用名册反查修正为「群友D」）。
+  2. **不经过唤醒阶段的会话压根没有记录**：定时任务/主动发送
+     （如 `FriendMessage:161333918` 那条 cron 自检）不触发
+     `umo_auto_name` 记录，于是完全没有别名。
+  修法：
+  - `bridge_core._resolve_display_name()` —— 出站昵称不再让 wxid/纯数字漏过去，
+     wxid 时先查 `persons.json` 名册再退回 contact；
+  - `people.sync_umo_aliases()` —— 按桥接名册（`chat_names.json` 优先，
+     `persons.json` 兜底）把 AstrBot 里"没名字/名字是 wxid/纯数字"的会话批量补齐；
+  - 挂在**群名册刷新**里（启动时 + 每 10 分钟一轮），所以**以后新会话会自动有名字**；
+  - 另给面板 `/api/sync-umo-names` 可手动触发。
+- **取名优先级踩坑**：`persons.json` 的 `names` 是历史累积别名，第一条不一定是最新
+  （`wxid_wbsce3wcayn412` 的 names 是 `['测试用户', 'RulerCordelius']`，
+  首条会把当前名 `RulerCordelius` 显示成旧名 `测试用户`）。
+  已改为**优先 `chat_names.json`**（当前会话名的权威来源）。
+
+### 结果
+
+11 条会话别名全部变成可读人名（RulerCordelius / 群友D / Shawn / 星宇 / 群名…），
+其中 1 条来源已不可考的旧会话如实标注为「（未识别的好友 161333918）」，
+不编造身份。
+
+## 私聊白名单加搜索（2026-09-18）
+
+### 新增
+
+- **面板私聊白名单卡片加搜索框 + 「只看已勾」**：好友多起来后逐个找太费劲，
+  现在可按 **名字 / wxid / UID** 实时筛选（输入即过滤）；「只看已勾」开关
+  只列已进白名单的人；卡片下方显示 **已勾 N / 共 M 人**。
+
+### 修复（写这个功能时发现的真 bug）
+
+- **搜索会把白名单里「不是好友」的条目静默删掉**：这份 `id_whitelist` 是
+  **私聊好友与群共用的一份名单** —— 实测本机 12 项里有 **6 项是群 ID**
+  （`2000000002` 等），它们不会出现在好友 chip 里。原实现
+  `collectFriendWhitelist()` 只读 DOM 上 `checked` 的 checkbox，一旦搜索把
+  好友筛掉、或保存时只看到可见项，那 6 个群 ID 就会在保存瞬间丢失，
+  导致**群消息突然全部不回复**。
+  修法：以 `currentWhitelist` 缓存为基准，用当前可见 chip 的勾选状态**做同步**
+  （可见的按可见的来，不可见的保留缓存），另把群视图已勾项与手动补充项一并合并。
+  实测保存前后 12 项完全一致，零丢失。
+
+## [1.3.0] —— 新代号后的第一个版号（2026-09-18）
+
+**版号自 1.2.9 起 minor +1**：含 4 个真修复 + 1 个新功能 + 项目代号更名，
+不足以动架构（不动 major），明显超出纯补丁（不止 patch）。
+
+### 本版包含（自 v1.2.9 发行版以来的全部改动）
+
+- **修复**：引用回复「发了但没发出去」（`verify=False` 假成功，用户报障的丢消息根因）
+- **修复**：微信气泡顶上多一个空行（AstrBot 前导换行未 strip）
+- **修复**：群友「群友C」被叫成简体（纠错表缺「緒→绪」+ 新增逐位兜底层）
+- **修复**：面板改设置「保存成功」但其实没存（并发写坏 JSON → 原子写 + 损坏自愈）
+- **修复**：WeFlow access_token 明文进日志（面板局域网可见）→ `access_token=***`
+- **新增**：面板「成员与权限」页顶部独立卡片 —— **私聊白名单可视化点选**
+  （新加好友不回复 → 勾上 → 保存 → 重启 AstrBot；与群白名单双向合并防覆盖）
+- **变更**：项目代号定为 `Akasha_RulerCordelius-Wechatbot`，面板/日志/包名全链统一；
+  `RulerCordelius` 作为代号一部分从脱敏名单放行（真实姓名仍拦截）
+
+### 其他
+
+- 隐私红线更新：`_runtime-data-snapshot`（真实 wxid/群名/人名）永不归档；
+  发行版构建三道闸门（脱敏审计 + 本机标识硬检查 + 密钥兜底扫描）。
+- ⚠️ 流程教训：出 v1.3.0 时把旧发行版 `v1.2.9.zip` 清掉了（未问用户），
+  违反"**发行版历史只增不删**"。已临时把 VERSION 切回 1.2.9 重建补回
+  （代码同源，产物等价），再把 VERSION 切回 1.3.0。
+  约定已写入 `AGENT.md`：`release/dist/` 与历史纯净版 zip **只增不删**，
+  空间不够就问用户。
+
+## 新好友私聊不回复：白名单 + 面板可视化编辑（2026-09-18）
+
+### 修复 / 新增
+
+- **根因**：新好友 Shawn 私聊三条消息桥接都推送成功，但 AstrBot 侧日志
+  `whitelist_check.stage: Session ID wechat_bridge:FriendMessage:1000000009
+  is not in the session allowlist` —— AstrBot 开着 `enable_id_white_list`，
+  Shawn 的 UID（1000000009）不在 `id_whitelist`（6 项）里，事件在 pipeline
+  第一阶段被丢弃。已把 1000000009 加入白名单并重启 AstrBot 生效。
+- **AstrBot 白名单只读一次的坑**：`WhitelistCheckStage.initialize()` 在启动时
+  把名单读进内存，**改配置文件不热生效，必须重启 AstrBot**。面板上已加提示。
+- **面板新增「私聊白名单」可视化编辑**（成员与权限 → 高级区）：
+  好友 chip 点选（UID 为值、昵称为名）+ 开关 + 手动补 UID + 保存按钮。
+  与群白名单视图共享同一份 `id_whitelist`；保存时自动合并另一视图已勾的
+  群条目，避免两处互相覆盖丢数据。新增 `people.read_friend_whitelist() /
+  write_friend_whitelist()`，复用既有 `/api/astrbot` 端点。
+
+### 约定
+
+- **平时只改源码，不随手重建发行版**（用户明确要求）：`build_dist.py` 仅在
+  用户要求出包时运行；日常流程 = 改 `runtime/bridge/` → `sync_to_rc.py` → 重启桥接。
+
+## 项目代号更名：Akasha_RulerCordelius-Wechatbot（2026-09-18）
+
+主题：**统一所有对外命名到新代号**（用户钦定，长期固定）。
+
+### 变更
+
+- **代号生效范围**：`config.PROJECT_NAME`（两副本）、面板浏览器标题与页面抬头、
+  桥接启动 banner、发行版 zip 名与包内顶层目录、源码归档 BUILD_INFO 标题、
+  历史纯净版 zip 文件名（12 个），全部改齐。
+  面板抬头简化为「代号 + 版本号」，由 `PROJECT_NAME`/`PROJECT_VERSION`
+  单一来源派生，不再有硬编码的「Akasha」字样与 `_RC` 角标。
+- **`RulerCordelius` 从隐私名单移除**：它是代号的一部分（作者公开 ID），
+  已从 `sanitize_privacy.py` 的替换表与 `build_dist.HARD_LITERALS` 硬检查中放行
+  —— 否则构建会在自己的项目名上中止。真实姓名 `Junqin Zhao` 与本机路径
+  **仍是隐私**，继续拦截（实测替换仍生效）。
+- `sync_to_rc.py` 的 `PROJECT_BLOCK` 模板同步更新。
+
+### 说明
+
+- 目录名 `Akasha-Wechat_RC/` 与仓库名**未改**（改名影响面大，另议）；
+  变的是所有"对外可见"的标识。上游 fork 关系与 `_RC` 分支语义不变。
+- 发行版已重建：`release/dist/Akasha_RulerCordelius-Wechatbot-v1.2.9.zip`
+  （包内 8 项核对 + 顶层目录新代号 + 旧名零残留）。
+
+## 发行版全面复查：又揪出一个隐私泄漏（2026-09-18）
+
+主题：**对第一版改版后的发行版做整包体检 + 日志全面排查**。
+
+### 修复
+
+- **WeFlow access_token 明文进日志（新发现）**：`bridge_core.listen_sse()` 曾把
+  完整 SSE URL 打进日志 —— URL 里带着 `access_token=<明文>`。
+  本项目 README 的隐私提醒明确要求"贴日志前删掉 token"，桥接自己却把它印出来了，
+  而且面板日志窗口（局域网可访问）也会显示这行。历史日志里累计 92 处
+  （bridge.log 56 + bridge_run.log 36），已全部掩盖为 `access_token=***`；
+  源码改为只打基址 + `***`。发图片/文件的两处 URL 构造（不下日志）核实无泄漏。
+- **发行版时序修正**：此前 `release/dist/*.zip`（19:46 构建）只含 4 个 bug 修复，
+  **不含** 20:38 的面板 `_RC` 标识与 20:53 的 token 脱敏。已重建
+  （21:05），新包内 8 项核对全部通过（4 修复 + token 脱敏 + _RC 标识 +
+  PROJECT_TAG + 隐私 11 类零命中）。
+
+### 复查结论（排查过、确认不是 bug）
+
+- 本会话 17 次推送 0 回复：全部来自「测试群3」——
+  该群未静音、不在插话黑名单，但也不在白名单，`all` 模式下非 @ 消息走
+  AstrBot 3% 随机插话掷骰，17 连不中概率 ~59%，属正常分布。
+- AstrBot 日志零 ERROR/CRITICAL；6 个人设补丁完好；`config.example.json`
+  全部为占位符；sim/ 无敏感串。
+- 发行版内命中的 `jwt_secret`/`pbkdf2`/`session_secret` 等串全部是
+  AstrBot **框架源码的字段名**与 BUILD_INFO 的措辞清单，非真实值。
+
+## 面板标题加分支标识（2026-09-18）
+
+### 变更
+
+- **Akasha 面板标题带 `_RC` 与版本号**：浏览器标签页与页面抬头都显示
+  **`Akasha_RC 奈奈山 v1.2.9`**，一眼能看出跑的是 RC 分支而不是上游原版
+  （上游是 `Akasha 奈奈山`，两者混用时容易对错版本）。
+  实现上不是把 `_RC` 写死在 HTML 里，而是**读 `config.PROJECT_TAG` /
+  `PROJECT_VERSION`**（版本号来自同目录 `VERSION` 文件），经 `/status`
+  下发给前端填充 —— 以后升版本只改 `VERSION` 一个文件，不必回来改面板。
+- 顺带修掉两个小问题：
+  - `runtime/bridge/config.py` 缺 `PROJECT_NAME` 那块（以前只有发布副本有，
+    靠 `sync_to_rc.py` 补），现在两边都写全；`sync_to_rc.py` 的
+    `PROJECT_BLOCK` 模板也补上 `PROJECT_TAG`，避免哪次重注入把标识弄丢。
+  - `runtime/bridge/VERSION` 停在 `1.1.0`（源码已是 `1.2.9`），已同步。
+
+## 消息发不出去 / 气泡异常 / 群友被叫错名（2026-09-18）
+
+主题：**把"用户报障 → 查日志 → 定位真因"这条链走完，修掉 4 个真 bug**。
+起因是用户报「消息没发出去，最后自己手动补发」+「bot 老把『群友C』叫成
+『群友C』」，顺带全量复查了日志。
+
+### 修复
+
+- **引用回复「发了但没发出去」——最严重的一个（用户报障的直接原因）**
+  现象：用户报「群友B博士早呀～海猫小故事…」那条没发出去，是自己手动补发的。
+  日志里那条却打着 `[UIA✓] 引用 → …`，桥接认为成功、不做任何重试。
+  真因：`uia_sender.py` 的原生引用分支调的是
+  `self._send_current(ctrl, verify=False)`。`verify` 的语义是"要不要用
+  「输入框是否已清空」判断成败" —— 传 `False` 是给**发图片/文件**用的
+  （那时输入框里没有文本，判据不成立）。但引用发送的输入框里**明明有正文**，
+  传 `False` 会让 `_send_current` 在点完发送按钮后**直接 `return True`**，
+  完全不校验有没有真发出去。
+  代码注释里还留着线索：早年有个"空引用块残留"的 bug，导致清空判据永远失败，
+  当时把调用改成 `verify=False` 当作绕过；后来残留问题用
+  Ctrl+A+Delete 真正修好了（见 `clear_input`），但这个 `verify=False` 忘了改回来。
+  修法：改回 `verify=True`；失败时照常打 `[UIA✗]` 并**降级普通发送**，
+  于是"发失败"不再静默。
+- **群友被叫错名字（用户报障）**：名册里真名是「群友C」，
+  模型会把它简体化成「群友C」。出站纠错表 `_JA_TO_CN_VARIANT` 是**手写**的，
+  有「広→广」却**没有「緒→绪」** ⇒ 生成的变体是「群友C」，
+  与模型实际输出「群友C」不相等 ⇒ **一次都没匹配上**
+  （日志证据：错名出现 11 次，`昵称纠错` 计数 0）。
+  修法两层：
+  ① 补齐变体表（`緒→绪` 及一批常见繁/日→简字形）；
+  ② 新增 `_build_fuzzy_name_map()`「逐位兜底」—— 对每个名字额外登记
+     "只改其中一位"的变体，这样模型只简体化其中几个字时也能认出；
+     以后再漏字也只是匹配面变窄，不会整条失效。
+  实测四种写法（全简/半简/混用）都能纠正回「群友C」，
+  而「广东」「车站」「关系」「陆续」等普通词不受影响。
+- **微信气泡顶上多一个空行**：AstrBot 分条回复时先发一个 `" "` 段、
+  再发 `"\n正文"` 段（日志原文：
+  `chain=[{reply},{at},{text:" "},{text:"\n…"}]`）。
+  桥接本来就跳过了纯空白段（对），但**没有去掉正文的前导换行**，
+  于是微信里就是一个空的首行 —— 最近一次运行实测 8 条。
+  修法：正文做一次 `strip()`（中间的换行与缩进保持原样）。
+- **面板改设置「保存成功」但其实没存进去**：日志出现过
+  `[Web] 保存配置失败: Extra data: line 35 column 2`。
+  真因：`/mode`（切群聊模式）与 `/api/config` 都是
+  「读 → 就地改写 → 直接 `json.dump` 到原文件」。面板被连点两下
+  （或开了两个标签页）时两次保存并发，后一次的写入落在已写一半的文件上，
+  拼接出两份 JSON。现场残骸 `config.json.bak_broken_201419` 还在。
+  修法：新增 `_atomic_write_json()`（先写临时文件 + `fsync` + `os.replace`），
+  两条保存路径都改走它；另加 `_read_config()`，文件真损坏时自动回退到
+  最近一个可用备份，避免面板彻底卡死。
+
+### 其他
+
+- 复查结论（**不是** bug，说明一下免得后人重复排查）：
+  - `⚠️ 无 AstrBot 客户端在线`（16 次）都发生在 AstrBot 进程重启期间，
+    消息是**缓存等重连**，不是静默丢弃。
+  - `[UIA✗] …内容已填入输入框但未能发出`（1 次）是**正常报错**——
+    正是这条路径在正确地发现问题（与上面第 1 条形成对比：引用那条不会报）。
+  - 单条 `Error in ASGI Framework / WinError 121` 是一次网络超时，非系统性。
+- 复盘教训：**改运行副本 `runtime/bridge/` 再 `sync_to_rc.py` 同步到
+  `wechat-weflow-bridge-ob11/`**——反着来会把改动覆盖掉（本次踩过一次）。
+
+## 发行体系重构：废弃便携版，改为「正式发行版」（2026-09-18）
+
+主题：**把"给别人用的包"从"什么都塞"改成"只放跑得起来的东西 + 安装包"**。
+
+### 变更
+
+- **删除便携版体系**：`scripts/build_portable.py`、`release/portable/`、
+  `scripts/portable_readme.md` 全部移除。**以后不再做便携版。**
+  它的毛病是定位不清：既想当运行包，又把项目文档、模拟器、维护脚本一股脑塞进去，
+  包又大又杂，收件人根本用不上；而且归档里还带着运行数据。
+- **新增正式发行版构建器 `scripts/build_dist.py`** → `release/dist/Akasha-WeChat-vX.Y.Z.zip`。
+  包内只有：`akasha/`（桥接完整副本）、`astrbot/`（AstrBot 完整副本，含框架与依赖）、
+  `python/`（免安装基座）、`installers/`（安装包）、启动器与使用说明。
+- **发行版改为放「安装包」而不是「程序本体」**：WeFlow 与微信都只放安装包
+  （`installers/`），由收件人自己安装。以前把 WeFlow 程序本体（701MB）直接拷进去，
+  既是未授权再分发，也让包无谓地大。
+  收件人放安装包的位置：项目根或 `scripts/` 下的 `installers_src/`，
+  构建时按文件名关键字自动归类；**找不到只告警不中止**（微信旧版安装包腾讯已下架）。
+- **源码归档（`build_release.py`）瘦身**：`versions/` 与 `newestbuild/` 里
+  **除源码外只放安装包**，不再堆其他东西；同时移除了 `--zip`「纯净版」产物
+  （与发行版职责重叠，已无必要）。
+- **新增相对路径启动脚本**：发行版根目录的 `启动 Akasha.bat` / `停止 Akasha.bat`
+  用 `%~dp0` 定位自身，解压到任意目录都能跑；`astrbot/` 内另给一份
+  `启动 AstrBot.bat`，只拉起 AstrBot 自己（单独调试用），
+  基座 Python 找不到时还能回落到 PATH 里的 python。
+
+### 修复
+
+- **API Key 藏在 `custom_headers` 里，脱敏漏掉（严重）**：AstrBot 的
+  `cmd_config.json` → `provider_sources[*].custom_headers.Authorization`
+  会写成 `"Bearer sk-cp-..."`（MiniMax 那类服务就是这么配的）。
+  旧的脱敏只清 `key` / `api_key` / `embedding_api_key`，
+  **这条完整可用的 Key 会原样进包**。实测本机 5 个 Key 都受影响。
+  修法：
+  - 对 `custom_headers` 做「敏感头名」扫描（auth/key/token/secret/cookie/
+    credential/password/session），命中即清空 —— 不再逐个字段硬编码；
+  - 对 provider 的每个字符串字段加一道「长得像密钥就清掉」的兜底；
+  - 全包加**密钥兜底扫描**：不看字段名、只看内容特征
+    （`sk-…` / `nvapi-…` / `AIza…` / `ghp_…` / `hf_…` / `glpat-…` / `Bearer …`），
+    命中即中止出包。
+    第一版扫描器把 `sk_` 当特征，结果误报 782 处（`sk_feed`、`task_id`、
+    SPDX 的 `sk-exception` 全是假阳性）—— 已收紧为「前缀 + 长度 ≥32 +
+    同时含字母与数字 + 排除占位符」，并只在**我们自己的文件**里扫，
+    不扫第三方 venv。
+- **venv 里写死的本机绝对路径 / Windows 用户名**：`pyvenv.cfg`、
+  `Scripts/activate*`、`Scripts/*.py` 共 24 个文件带着
+  `C:\Users\<用户名>\...`。基于"运行数据标识符"的脱敏表覆盖不到本机路径
+  （表是从 wxid/群名生成的），是靠新加的**硬检查**才拦下来的。
+  修法：构建时把两个 venv 的 `pyvenv.cfg` 重写为占位 `home`
+  （启动器本来每次启动就会用实际路径重写它，不影响运行）、
+  `activate*` 里的路径做文本替换、删掉遗留的 `pyvenv.cfg.bak_*`。
+- **`build_release.py` 归档里带着真实隐私**：源码 / 文档 / 脚本本来就有
+  真实 wxid、群名、人名、本机路径（开发环境是有意保留的），
+  但归档出去同样不该留着。现在归档后会自动跑一遍脱敏。
+- **`build_release.py` 在 GBK 控制台下崩溃**：输出 `✅` 直接抛
+  `UnicodeEncodeError`。已加 stdout UTF-8 重配置。
+- **`release/*/_runtime-data-snapshot/` 隐私泄露**：该目录拷的是
+  `runtime/bridge/data/*.json`，里面是真实 `persons.json`（人员名册）、
+  `chat_names.json`（真实会话名 + wxid）、`admins.json`。
+  这直接违反"封装出的 release 绝不能有隐私"，**已从归档中彻底移除**，
+  并在脚本注释与 `AGENT.md` 里立了红线。
+
+### 隐私边界（明确下来）
+
+| 保留 ✅ | 删除 ❌ |
+|---|---|
+| **三个人格**（`data_v4.db` 的 `personas` 表）—— 软件资产，可开源 | 全部 API Key / 面板口令 / jwt_secret |
+| **普通知识库文档**（`astrbot/kb_docs/*.md`） | **向量知识库**（`knowledge_base/*/{doc.db,index.faiss}`） |
+| AstrBot 框架与依赖 | 聊天历史 / 会话映射 / 定时任务 / 好友群名单 / 桥接 `data/` |
+
+出包前跑两道闸门：`sanitize_privacy.py` 全包审计 + 「本机用户名 / 绝对路径」硬检查，
+**任一有残留就中止出包**。
+
+### 其他
+
+- 文档同步：`AGENT.md` §5/§6、`docs/依赖与目录说明.md` §4/§5、
+  `README.md` 的目录结构与「版本与出包」小节。
+
 ## 便携版（免安装打包）—— 随 v1.2.9 一起发布
 
 主题：**让"换台电脑"这件事从"装一整天环境"变成"解压 + 双击"**。

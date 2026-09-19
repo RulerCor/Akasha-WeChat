@@ -177,6 +177,17 @@ def known_groups() -> dict:
     return {k: v for k, v in names.items() if "@chatroom" in k}
 
 
+def all_chat_names() -> dict:
+    """取联系人缓存里的**全部**会话 {微信 username: 显示名}。
+
+    与 known_groups 的区别：这个包含私聊好友、以及「文件传输助手 / 微信团队 /
+    公众号 / 微信支付」这类**非好友的特殊会话** —— 它们不在 persons.json（那里
+    只装好友），只有这张表才有名字。UMO 别名解析要靠它兜底。
+    """
+    with _api_lock:
+        return dict(_chat_names)
+
+
 def member_count_of_group(username: str) -> int:
     """从缓存的群名里抠出成员数（微信群名常带 "(13)" 后缀）；没有则 0。"""
     if not username:
@@ -462,16 +473,34 @@ def known_display_names() -> set:
 
 _group_rosters: dict[str, dict] = {}    # chatroom → {"names": {候选名: wxid}, "ts": 更新时刻}
 
+# 别名表：主名 → 该人的其它叫法（昵称/群昵称/微信号…）
+#
+# 为什么需要它（2026-09-19 实测）：
+#   同一个人有**昵称**和**备注**两个名字，而这两个名字会从两条不同通道
+#   进入模型的上下文 ——
+#     · 他自己的消息：桥接用备注名（如 RulerCordelius）标注 sender
+#     · 别人 @ 他：微信自动填的是**昵称**（如 测试用户），原样透传进上下文
+#   于是同一分钟、同一个群里，同一个人显示成两个名字，且没有任何标记
+#   说明是同一人 → 模型据此断言"测试用户 和 RulerCordelius 是两位不同的朋友"。
+#
+#   实测该群 68 名成员里有 6 人昵称≠备注（含「爸爸/An帝y哥」「妈妈/Purple」），
+#   所以这不是个例。WeFlow 的 /api/v1/group-members 同时给出
+#   `nickname`（昵称）与 `remark`（备注），可据此**自动**生成别名表。
+_aliases: dict[str, set] = {}           # 主名 → {其它叫法}
+_alias_display: dict[str, str] = {}     # 其它叫法 → 主名（反查用）
+
 
 def set_group_roster(chatroom: str, members: list) -> None:
     """写入某个群的成员名册（WeFlow /api/v1/group-members 的 members）。
 
     为每个成员登记多个候选名（群昵称/展示名/昵称/备注/微信号），
     群消息的 sourceName 命中任意一个都能解析出 wxid。
+    同时登记「主名 ↔ 别名」，供上下文注入别名表（见 _aliases 说明）。
     """
     if not chatroom or not isinstance(members, list):
         return
     names: dict[str, str] = {}
+    alias_pairs: list = []
     for m in members:
         if not isinstance(m, dict):
             continue
@@ -482,8 +511,48 @@ def set_group_roster(chatroom: str, members: list) -> None:
             nm = (m.get(key) or "").strip()
             if nm:
                 names.setdefault(nm, wxid)
+        # 主名优先取备注（remark），与 displayName 一致；否则退群昵称/昵称
+        primary = ((m.get("remark") or m.get("groupNickname")
+                    or m.get("displayName") or m.get("nickname")) or "").strip()
+        others = []
+        for key in ("nickname", "groupNickname", "displayName", "alias"):
+            nm = (m.get(key) or "").strip()
+            if nm and nm != primary:
+                others.append(nm)
+        if primary and others:
+            alias_pairs.append((primary, others))
     with _api_lock:
         _group_rosters[chatroom] = {"names": names, "ts": time.time()}
+        for primary, others in alias_pairs:
+            bucket = _aliases.setdefault(primary, set())
+            for o in others:
+                bucket.add(o)
+                _alias_display.setdefault(o, primary)
+
+
+def alias_table() -> dict:
+    """{主名: [别名…]} —— 供群上下文注入，让模型知道"这俩是同一个人"。
+
+    只返回真正存在歧义的条目（至少一个别名，且别名≠主名）。
+    """
+    with _api_lock:
+        return {k: sorted(v) for k, v in _aliases.items() if v}
+
+
+def primary_name(name: str) -> str:
+    """把一个可能的名字解析成主名；不是别名则原样返回。"""
+    if not name:
+        return name
+    with _api_lock:
+        return _alias_display.get(name.strip(), name)
+
+
+def aliases_of(name: str) -> list:
+    """返回某主名的所有别名（不含主名自身）。没有则返回空列表。"""
+    if not name:
+        return []
+    with _api_lock:
+        return sorted(_aliases.get(name.strip(), set()))
 
 
 def resolve_wxid_in_group(chatroom: str, display_name: str) -> Optional[str]:

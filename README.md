@@ -1,14 +1,14 @@
-# Akasha-WeChat_RC
+# Akasha_RulerCordelius-Wechatbot
 
 微信个人号 ↔ AstrBot 的桥接器（WeFlow + OneBot v11 / 反向 WebSocket）。
 本仓库是 **[alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 的 RC（Release Candidate）分支**，在同一套架构上做稳定性与可维护性改进，目录结构沿用上游，方便对照 diff 与合并上游更新。
 
 - **上游**：<https://github.com/alingalingling/Akasha-WeChat>
-- **本分支仓库名**：`Akasha-WeChat_RC`
-- **项目标识**：`PROJECT_NAME = "Akasha-WeChat_RC"`，版本号见 `wechat-weflow-bridge-ob11/VERSION`
+- **项目代号**（2026-09-18 起固定）：`Akasha_RulerCordelius-Wechatbot`
+- **项目标识**：`PROJECT_NAME = "Akasha_RulerCordelius-Wechatbot"`，版本号见 `wechat-weflow-bridge-ob11/VERSION`
 - **许可证**：MIT（沿用上游，见 `wechat-weflow-bridge-ob11/LICENSE`）
 
-> 名称中的 `_RC` 是长期固定的标识，改名目录或 fork 都不会影响它——日志首行会打印 `Akasha-WeChat_RC v<版本号>`，便于任何时候分辨运行的是哪一支。
+> 代号中的 `RulerCordelius` 是作者公开 ID、属代号的一部分（不是隐私）；改名目录或 fork 都不会影响它——日志首行会打印 `Akasha_RulerCordelius-Wechatbot v<版本号>`，便于任何时候分辨运行的是哪一支。
 
 ---
 
@@ -100,7 +100,7 @@ python main.py          # 或双击 start.bat（会开一个可见的控制台�
 | 文档 | 看什么 |
 |---|---|
 | **[`docs/开发文档.md`](docs/开发文档.md)** | **开发前读这份**：架构、核心机制、配置参考、AstrBot 补丁清单、排障 |
-| **[`docs/依赖与目录说明.md`](docs/依赖与目录说明.md)** | **搬家/换电脑前读这份**：每个目录是什么、哪些依赖在文件夹内、哪些在外部、开发环境与便携版的区别 |
+| **[`docs/依赖与目录说明.md`](docs/依赖与目录说明.md)** | **搬家/换电脑前读这份**：每个目录是什么、哪些依赖在文件夹内、哪些在外部、开发环境与正式发行版的区别 |
 | `AGENT.md` | 红线与已知坑（改代码前的必读警告） |
 | `CHANGELOG.md` | 每个版本改了什么、为什么 |
 | `docs/architecture.html` | 可交互架构图（浏览器打开） |
@@ -126,8 +126,9 @@ Akasha-WeChat_RC/
 │   ├── bridge/               桥接运行副本 + venv + 配置 + 数据
 │   └── astrbot/              AstrBot 运行副本 + venv（框架代码在其 site-packages 内）
 ├── release/                  发布产物（不入库）
-│   ├── versions/vX.Y.Z/      各版本源码快照
-│   └── portable/*.zip        便携版（免安装，给别人用）
+│   ├── versions/vX.Y.Z/      各版本**源码**快照（除源码外只放安装包）
+│   └── dist/*.zip            ★ 正式发行版（给别人用的解压即用包）
+├── installers_src/           放安装包的地方（WeFlow / 微信，构建时自动收录）
 ├── scripts/                  工具脚本（打包/补丁/脱敏/诊断/自检）
 └── wechat-weflow-bridge-ob11/    ← 代码目录（沿用上游路径）
     ├── main.py bridge_core.py ob_protocol.py ob_client.py
@@ -147,22 +148,48 @@ sim/                        附属工具：微信对话模拟器（见 sim/READM
 从 **v1.0.0** 起，本项目按 `vX.Y.Z` 走版号（此前 `1.0.1-rc.1~rc.7` 为预发布，已归档在 `CHANGELOG.md`）。
 版本号始终写在 `wechat-weflow-bridge-ob11/VERSION` 单行文件里，改版本只改这一个文件。
 
-出包统一用脚本（路径全相对，任何电脑任何位置都能跑）：
+**两套产物，用途不同：**
 
 ```bat
-python scripts/build_release.py            :: 归档当前版本 + 刷新 newestbuild
-python scripts/build_release.py --zip      :: 另外生成「纯净版」zip（可外发）
+python scripts/build_release.py   :: ① 源码归档（自己用）：versions/vX.Y.Z + newestbuild
+python scripts/build_dist.py      :: ② 正式发行版（给别人用）：release/dist/*.zip
 ```
 
-产物结构（对齐 `C:\WechatBotShare` 的约定，`release/` 不入库）：
+产物结构（`release/` 不入库）：
 
 ```
 release/
-├── versions/vX.Y.Z/     该版本完整快照（归档，不再改动）
-├── newestbuild/         始终是最新的完整镜像（代码 + 文档 + 运行时数据快照）
-├── backups/pre-vX.Y.Z-* 构建前的上一次 newestbuild（回滚用）
-└── Akasha-WeChat_纯净版-vX.Y.Z.zip   已清除密钥/venv/日志，可外发
+├── versions/vX.Y.Z/      该版本源码快照（归档，不再改动；除源码外只放安装包）
+├── newestbuild/          始终是最新的源码归档
+├── backups/pre-vX.Y.Z-*  构建前的上一次 newestbuild（回滚用）
+└── dist/
+    └── Akasha-WeChat-vX.Y.Z.zip    ★ 正式发行版（解压即用，可外发）
 ```
+
+**正式发行版里放什么**（收件人解压即用，免装 Python / AstrBot）：
+
+```
+Akasha-WeChat-vX.Y.Z/
+├── 启动 Akasha.bat      %~dp0 相对定位，解压到哪都能跑
+├── 停止 Akasha.bat
+├── 使用说明.md
+├── akasha/             桥接完整运行副本（含 .venv）
+├── astrbot/            AstrBot 完整副本（含 .venv / 三个人格 / 普通知识库文档）
+│   └── 启动 AstrBot.bat 目录内相对路径启动脚本
+├── python/             免安装 Python 基座
+└── installers/         WeFlow / 微信 的**安装包**
+```
+
+**隐私边界**（出包前跑脱敏审计 + 本机标识硬检查，零残留才出包）：
+
+| 保留 ✅ | 删除 ❌ |
+|---|---|
+| 三个人格（软件资产，可开源） | 全部 API Key / 面板口令 / jwt_secret |
+| 普通知识库文档（`kb_docs/*.md`） | 向量知识库（`doc.db` / `index.faiss`） |
+| AstrBot 框架与依赖 | 聊天历史 / 会话映射 / 定时任务 / 好友群名单 |
+
+> ⚠️ **便携版体系已废弃**（2026-09）：`build_portable.py`、`release/portable/`
+> 均已移除。以后只做正式发行版。
 
 其余维护约定：
 

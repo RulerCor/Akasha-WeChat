@@ -15,6 +15,7 @@ import requests
 
 import state
 import config
+import exit_reason
 from senders import create_sender
 from ob_client import _run_ob_client
 from bridge_core import WeFlowBridge
@@ -163,6 +164,11 @@ def start_web():
 # ============ 入口 ============
 
 if __name__ == "__main__":
+    # 退出归因：尽早装钩子，这样连"启动阶段就挂"也能记录下来。
+    # 会写 data/exit_reason.log（含上次是否被强杀的判定）。
+    exit_reason.install()
+    exit_reason.set_phase("初始化")
+
     # 从 config 初始化 state 中需要计算的值
     state._self_id_int = state._wxid_to_int(config.BOT_WXID or "wechat_bot")
     state.group_reply_mode = config.GROUP_REPLY_MODE
@@ -187,6 +193,7 @@ if __name__ == "__main__":
                 old_pid = int(f.read().strip())
             if pid_exists(old_pid):
                 log.error("⚠️ bridge.pid 已存在")
+                exit_reason.note_exit(f"bridge.pid 已存在（PID {old_pid} 仍在运行）", 1)
                 sys.exit(1)
             else:
                 os.remove(PID_FILE)
@@ -216,6 +223,7 @@ if __name__ == "__main__":
     if port_in_use(config.WEB_PORT):
         log.error(f"⚠️ Web 面板端口 {config.WEB_PORT} 已被占用 —— 极可能已有一个桥接在运行")
         log.error("   拒绝启动第二个实例（否则每条消息会被回复两次）。请先停掉旧实例。")
+        exit_reason.note_exit(f"Web 端口 {config.WEB_PORT} 已被占用（疑似重复实例）", 1)
         sys.exit(1)
 
     with open(PID_FILE, "w") as f:
@@ -223,12 +231,15 @@ if __name__ == "__main__":
 
     try:
         log.info("=" * 50)
-        log.info(" WeFlow 微信桥接 (OneBot v11)")
+        log.info(f" {getattr(config, 'PROJECT_NAME', 'Akasha_RulerCordelius-Wechatbot')} (OneBot v11)")
         log.info("=" * 50)
-        log.info("Bridge 版本: 2026-06-03 OB11")
+        log.info(f"Bridge 版本: {getattr(config, 'PROJECT_VERSION', '?')}（核心: 2026-06-03 OB11）")
+        exit_reason.set_phase("启动桥接")
         _start_bridge()
+        exit_reason.set_phase("启动 Web 面板")
         start_web()
     finally:
+        exit_reason.set_phase("主循环结束（收尾）")
         try:
             os.remove(PID_FILE)
         except Exception:
