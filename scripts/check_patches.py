@@ -49,6 +49,9 @@ PATCHES = [
     ("patch_group_alias_note.py",
      "群上下文：「同名说明」（昵称=备注，防模型把同一人当两位好友）",
      "python scripts/patch_group_alias_note.py"),
+    ("patch_provider_get_keys.py",
+     "provider get_keys() str 归一化（修复 All chat models failed）",
+     "python scripts/patch_provider_get_keys.py"),
 ]
 
 
