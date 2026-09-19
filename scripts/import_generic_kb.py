@@ -1,93 +1,89 @@
 # -*- coding: utf-8 -*-
-"""把网络用语/现代常识文档导入 AstrBot 的 generic 知识库。
+"""把 kb_docs 下的通用知识文档导入 AstrBot generic 知识库。
 
-为什么用脚本而不是手动 WebUI 上传：
-  · 可复跑（幂等：同名文档先删再传，改了 md 重新导一次即可）
-  · 走 AstrBot 官方 API（KBHelper.upload_document），分块/向量化与
-    WebUI 完全一致，不碰内部数据格式
+走 Dashboard 的 /api/v1 REST API（ApiKey 认证），与 WebUI 上传完全同源。
+幂等：同名文档先查后删再传。
 
-用法:
-    python scripts/import_generic_kb.py            # 导入全部
-    python scripts/import_generic_kb.py --list     # 只看库内现状
+用法：python scripts/import_generic_kb.py
 """
-import argparse
-import asyncio
 import io
 import os
 import sys
 
+import requests
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+KEY_FILE = os.path.join(ROOT, "runtime", "astrbot", "data", "kb_api_key.txt")
 KB_DOCS = os.path.join(ROOT, "runtime", "astrbot", "kb_docs")
-GENERIC_DOCS = ["internet_slang.md", "modern_commons.md"]
+BASE = "http://127.0.0.1:6185/api/v1"
+TARGET_KB = "generic"
+DOCS = ["internet_slang.md", "modern_commons.md"]
 
 
-async def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--list", action="store_true", help="只列出 generic 库现状")
-    args = ap.parse_args()
+def H():
+    return {"Authorization": "ApiKey " + io.open(KEY_FILE, encoding="utf-8").read().strip()}
 
-    # AstrBot 的 venv 里跑才能拿到完整依赖；脚本自身不 import astrbot 之外的东西
-    sys.path.insert(0, os.path.join(ROOT, "runtime", "astrbot", ".venv",
-                                    "Lib", "site-packages"))
-    os.chdir(os.path.join(ROOT, "runtime", "astrbot"))
 
-    from astrbot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
-    from astrbot.core.config.astrbot_config import AstrBotConfig
-    from astrbot.core.provider.manager import ProviderManager
-    from astrbot.core.db.pool import get_db_pool  # noqa: F401
-
-    conf = AstrBotConfig()
-    pm = ProviderManager(conf, None)
-    kb = KnowledgeBaseManager(conf, pm)
-    await kb.initialize()
-
-    target = await kb.get_kb_by_name("generic")
+def main() -> int:
+    # 1) 找 generic 库
+    r = requests.get(f"{BASE}/knowledge-bases", headers=H(), timeout=20)
+    r.raise_for_status()
+    kbs = r.json().get("data") or []
+    if isinstance(kbs, dict):
+        kbs = kbs.get("list") or kbs.get("items") or []
+    target = None
+    for kb in kbs:
+        name = kb.get("kb_name") or kb.get("name")
+        if name == TARGET_KB:
+            target = kb
+            break
     if not target:
-        print("❌ 找不到名为 generic 的知识库")
+        print(f"❌ 找不到知识库 {TARGET_KB}，现有:",
+              [kb.get('kb_name') or kb.get('name') for kb in kbs])
         return 1
-    kb_id = target.kb_id if hasattr(target, "kb_id") else target["kb_id"]
-    helper = await kb.get_kb(kb_id)
+    kb_id = target.get("kb_id") or target.get("id")
+    print(f"✅ 目标库: {TARGET_KB} ({kb_id[:8]}…)")
 
-    docs = await helper.list_documents()
-    print(f"generic 库现状: {len(docs)} 篇文档")
-    for d in docs:
-        name = d.get("doc_name") if isinstance(d, dict) else getattr(d, "doc_name", "?")
-        print("   -", name)
-    if args.list:
-        return 0
+    # 2) 现有文档
+    r = requests.get(f"{BASE}/knowledge-bases/{kb_id}/documents",
+                     headers=H(), timeout=20)
+    existing = {}
+    if r.status_code == 200:
+        docs = r.json().get("data") or []
+        if isinstance(docs, dict):
+            docs = docs.get("list") or docs.get("items") or []
+        for d in docs:
+            existing[d.get("doc_name") or d.get("filename") or ""] = \
+                d.get("doc_id") or d.get("id")
+    print("现有文档:", list(existing) or "无")
 
-    # 幂等：同名先删
-    existing = {d.get("doc_name") if isinstance(d, dict) else getattr(d, "doc_name", "")
-                for d in docs}
-    for fname in GENERIC_DOCS:
+    # 3) 逐篇：删除旧版 → 上传
+    for fname in DOCS:
         path = os.path.join(KB_DOCS, fname)
         if not os.path.exists(path):
-            print(f"⚠️ 缺文件，跳过: {fname}")
+            print(f"⚠️ 缺文件: {fname}")
             continue
         if fname in existing:
-            # 找到 doc_id 删除
-            for d in docs:
-                name = d.get("doc_name") if isinstance(d, dict) else getattr(d, "doc_name", "")
-                if name == fname:
-                    did = d.get("doc_id") if isinstance(d, dict) else getattr(d, "doc_id", "")
-                    try:
-                        await helper.delete_document(did)
-                        print(f"   已删除旧版: {fname}")
-                    except Exception as e:
-                        print(f"   ⚠️ 删除旧版失败 {fname}: {e}")
-                    break
+            did = existing[fname]
+            rd = requests.delete(
+                f"{BASE}/knowledge-bases/{kb_id}/documents/{did}",
+                headers=H(), timeout=30)
+            print(f"  删除旧版 {fname}: {rd.status_code}")
         size = os.path.getsize(path)
-        print(f"导入 {fname} ({size}B) …")
-        try:
-            await helper.upload_document(path)
-            print(f"   ✅ 完成")
-        except Exception as e:
-            print(f"   ❌ 失败: {e}")
-            return 1
+        with open(path, "rb") as f:
+            files = {"files": (fname, f, "text/markdown")}
+            ru = requests.post(
+                f"{BASE}/knowledge-bases/{kb_id}/documents",
+                headers=H(), files=files,
+                data={"kb_id": kb_id}, timeout=300)
+        print(f"  上传 {fname} ({size}B): {ru.status_code} {ru.text[:120]}")
+
+    print()
+    print("⚠️ 上传成功后分块/向量化是后台任务，稍等 1-3 分钟再用 /iris_mem 或面板确认文档状态")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(asyncio.run(main()))
+    raise SystemExit(main())
