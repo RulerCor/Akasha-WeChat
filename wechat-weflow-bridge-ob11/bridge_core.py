@@ -304,6 +304,16 @@ class WeFlowBridge:
             return "语音消息（type=34）"
         if content and ("[语音]" in content or "[表情]" in content):
             return "语音/表情占位内容"
+        # 微信系统协议消息：「拍了拍」等不是人类发言，不该进模型上下文。
+        # 事故（2026-09-20 16:49）：bot 把「"耳东亭氵川" 拍了拍 "辞星" 的ass」
+        # 当成一条待回应的发言，还认真"解读"了一遍发到群里。
+        # 形态：`"A" 拍了拍 "B"`（可能带后缀，如「的ass，下次别拍了[害羞]」）。
+        if content and "拍了拍" in content:
+            return "系统协议消息（拍了拍）"
+        # 撤回/入群/退群等系统提示，同理
+        if content and any(k in content for k in
+                           ("撤回了一条消息", "邀请", "加入了群聊", "移出了群聊")):
+            return "系统协议消息（群提示）"
         if not content or content.strip() == "":
             return "空内容"
         return None

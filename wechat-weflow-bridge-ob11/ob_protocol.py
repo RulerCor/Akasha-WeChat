@@ -256,6 +256,92 @@ def _build_fuzzy_name_map() -> dict:
     return out
 
 
+# ── 引号配对保护（patch_quote_split）──
+# AstrBot 的 segmented_reply 只按句末标点（。？！~…）切分，不认配对符号。
+# 当句末标点出现在引号/括号**内部**时（如「看到你发的“喵喵？”我就知道」），
+# 切点会落在配对符号中间，收尾的 ” 被甩到下一条消息。
+# 这里在进入发送循环前，把配对不平衡的相邻 text 段合并回一条。
+_PAIRED_CHARS = (("“", "”"), ("‘", "’"), ("「", "」"), ("『", "』"),
+                 ("（", "）"), ("《", "》"), ("【", "】"),
+                 ("(", ")"), ("[", "]"), ("{", "}"))
+
+
+def _pair_balance_ok(text):
+    """成对符号是否都闭合。返回 (ok, 未闭合的符号对)。"""
+    for open_ch, close_ch in _PAIRED_CHARS:
+        if text.count(open_ch) != text.count(close_ch):
+            return False, f"{open_ch}{close_ch}"
+    return True, ""
+
+
+def _normalize_text_segments(message):
+    """合并配对不平衡的相邻 text 段，返回新的消息链。
+
+    只动 text 段；reply/at/image 等段原样保留在各自位置。
+    遇到非 text 段会中断当前合并（避免跨图片、跨 @ 强行拼接）。
+    """
+    if not isinstance(message, list):
+        return message
+    out = []
+    pending = None          # 累积中的文本（配对尚不平衡）
+    for seg in message:
+        if not isinstance(seg, dict) or seg.get("type") != "text":
+            # 非 text 段：先把 pending 落地，再原样保留该段
+            if pending is not None:
+                out.append({"type": "text", "data": {"text": pending}})
+                pending = None
+            out.append(seg)
+            continue
+        raw = (seg.get("data") or {}).get("text", "")
+        if pending is None:
+            pending = raw
+        else:
+            pending += raw
+        ok, _ = _pair_balance_ok(pending)
+        if ok:
+            out.append({"type": "text", "data": {"text": pending}})
+            pending = None
+    if pending is not None:
+        out.append({"type": "text", "data": {"text": pending}})
+    return out
+# ── end patch_quote_split ──
+
+
+# ── 占位符拦截（patch_placeholder_guard）──
+# 明确是"占位符"而非人设发言的短文本。命中即整条丢弃。
+_PLACEHOLDER_TEXTS = {
+    "角色回复", "角色回复：", "角色回复:",
+    "（角色回复）", "(角色回复)",
+    "[角色回复]",
+    "assistant", "Assistant",
+    "<reply>", "</reply>",
+}
+
+
+def _is_placeholder_reply(message) -> bool:
+    """整条消息是否只是占位符（没有任何真实文本）。
+
+    只在「所有文本段拼起来恰好是占位符、且没有图片」时才算命中——
+    正常的回复里带一句「角色回复」不会误伤。
+    """
+    if not isinstance(message, list):
+        return False
+    texts = []
+    for seg in message:
+        if not isinstance(seg, dict):
+            continue
+        t = seg.get("type")
+        if t == "image":
+            return False          # 有图片就不是空占位
+        if t == "text":
+            texts.append((seg.get("data") or {}).get("text", "") or "")
+    joined = "".join(texts).strip()
+    if not joined:
+        return False
+    return joined in _PLACEHOLDER_TEXTS
+# ── end patch_placeholder_guard ──
+
+
 def fix_display_names(text: str) -> str:
     """把出站文本里被模型简体化的群友名/群名改回来。"""
     if not text:
@@ -329,6 +415,18 @@ async def _handle_ob_api(data: dict):
                      f"{json.dumps(message, ensure_ascii=False)[:500]}")
         except Exception:
             pass
+
+        # 引号配对保护：先合并配对不平衡的相邻文本段（见 patch_quote_split）
+        message = _normalize_text_segments(message)
+
+        # 占位文案拦截：模型/降级链路偶尔会吐出裸的占位符（不是真正的回复）。
+        # 事故（2026-09-20 15:49）：openrouter 主力 404 → 切 agnes fallback 后，
+        # 回复正文只有两个字「角色回复」，被原样发到群里。这类显然是占位符，
+        # 不可能是人设想说的话，直接丢弃整条（宁可不回，也不要发垃圾）。
+        if _is_placeholder_reply(message):
+            log.warning(f"[OB11] 拦截占位符回复，已丢弃: "
+                        f"{json.dumps(message, ensure_ascii=False)[:120]}")
+            return
 
         # 逐段处理：文字和图片分别发送
         # 引用回复（可选）：AstrBot 开启 reply_with_quote 后，回复链开头是

@@ -55,6 +55,12 @@ PATCHES = [
     ("patch_provider_get_keys.py",
      "provider get_keys() str 归一化（修复 All chat models failed）",
      "python scripts/patch_provider_get_keys.py"),
+    ("patch_persona_speaker_attribution.py",
+     "人设：「发言归属与身份守则」（防误认发言者/防自曝模型名；全部人格）",
+     "python scripts/patch_persona_speaker_attribution.py"),
+    ("patch_quote_split.py",
+     "桥接：引号配对保护（防「后半个引号跑到第二条消息」）",
+     "python scripts/patch_quote_split.py"),
 ]
 
 

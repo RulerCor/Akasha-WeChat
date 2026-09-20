@@ -4,7 +4,78 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## 群聊日志核查 + persona3 知识库填充（2026-09-20 晚）
+
+针对「鹰角网络世外分部」当日日志的全量核查（41 条事件 + 桥接侧 17000 行）。
+完整报告：`release/verify/audit_20260920_group.md`。
+
+### 新增
+
+- **persona3 知识库填充**：该库自 09-11 建立后一直为空（0 文档），
+  绑定人格 `yuki`（结城理）。本次新增 6 篇 P3 资料（角色/人格面具/塔尔塔罗斯/
+  世界观/年表/术语），共 **107 个分块**，检索实测命中分 0.95–0.99。
+  同时修正 `GroupMessage:1559801678`（yuki 所在群）的知识库绑定：
+  原本错绑 `naruto`，已改为 `persona3`。
+  新增 `scripts/import_persona3_kb.py`。
+
+### 修复
+
+**引号被切成两条消息**（用户报告）：bot 回复「…看到你发的“喵喵？”我就知道…」
+被 AstrBot 的 `segmented_reply` 切成两条（bridge.log seq38/39），
+第一条以 `“喵喵？` 结尾、第二条以孤零零的 `”` 开头。
+根因：`segmented_reply` 正则 `.*?[。？！~…]+|.+$` **只认句末标点、不认配对符号**，
+切点落在引号内部。
+**修复**：`ob_protocol.py` 新增 `_normalize_text_segments()`——发送前把「配对符号
+不平衡」的相邻文本段合并回一条（不跨越图片/@ 段）。
+新增 `scripts/patch_quote_split.py`（含 6 个单测场景 + 幂等/还原）。
+
+**「角色回复」占位符泄漏**：openrouter 主力 404 降级到 agnes 后，
+回复正文只剩字面量「角色回复」并被原样发到群里。
+**修复**：`ob_protocol.py` 新增 `_is_placeholder_reply()`——整条仅为占位符时丢弃
+（带图片或正文含该词不误伤）。
+
+**发言归属错乱 + 身份自曝**（用户报告 2 例）：
+① 洛辰发「@Jay Z. 你这个是单纯满还是雷霆大思考」——被 @ 的是你（RulerCordelius），
+   bot 却回复「刚才 Jay Z. 问我的…」，把「别人被 @」读成「有人问我」；
+② 群友问「你其实是 DeepSeek v4.1 flash 吧」→ bot 自曝
+   「我是跑在你电脑上的程序，模型是 MiniMax-M3」——既穿帮又**报了错误模型名**
+   （实际生效的是 agnes-3.0-flash）。
+**修复**：新增 `scripts/patch_persona_speaker_attribution.py`，给全部 8 个人格追加
+「发言归属与身份守则」：分清 发言者/@对象/提问对象；别人被 @ 的消息不要回答；
+拿不准就不回；绝不承认是程序/AI、绝不报任何模型名，被套话时用人设语气岔开。
+
+**「拍了拍」等系统协议消息被当成发言**：bot 认真「解读」了
+「"耳东亭氵川" 拍了拍 "辞星" 的ass」并回复到群里。
+**修复**：`bridge_core.ignore_reason()` 新增拦截——「拍了拍」/撤回/入退群提示
+一律不进模型上下文。
+
+### 核查结论（非 bug，记录备查）
+
+- **「空气泡」132 条**：09-19 19:04 之前的问题，`ob_protocol.py` 的
+  `text.strip()` 守卫（19:44 落地）已修复，之后 0 条。**本次无需处理**。
+- **「私聊能回、群里不回」**：机制正确。群 `125237337` 为 mention 模式
+  （需 @ 才回，另 3% 概率主动插话）；用户当天那条没 @，故按规则不回复。
+- **openrouter 通道失效**：免费模型 `deepseek-v4-flash:free` 已下架（404）、
+  付费 slug 账户无余额（402）、`gemma-4-31b:free` 地区封锁（400）。
+  按用户要求**仅记录不改配置**（用户自行在 WebUI 调整）；
+  经实测新选的 `gemma-4-26b-a4b-it:free` 为 429 限流（比 404 好，仍不稳）。
+- **图片描述 100% 失败**：配置走 ollama（`127.0.0.1:61000`）但 ollama 未运行。
+  用户澄清 AstrBot 侧已选 agnes；本项待定，未改动。
+
+### 其他
+
+- `scripts/check_patches.py` 扩展至 **12 项**（新增发言归属守则、引号配对保护），
+  全绿。
+- 人设层补丁现状记录：kb_relevance 8/8、speaker_attribution 8/8、
+  doctor_drift 2/8、name_rule 1/8、topic_guard 1/8、kb_framing 0/8（后四项
+  按设计只作用于特定人格，非缺失）。
+- 测试环境限制：`sim/sim_wechat.py` 因 (a) websockets 版本不兼容
+  (`'NoneType' has no attribute 'status_code'`) 与 (b) 测试会话
+  `2000000001` 不在 AstrBot session allowlist 而全部静默失败——
+  属测试工具自身问题，已改用真实 payload 直接验证（14/14 通过）。
+
 ## 流式响应挂起 + 画图链路打通 + 归档体系（2026-09-20）
+
 
 ### 修复
 
