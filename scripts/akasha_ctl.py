@@ -77,6 +77,47 @@ def status() -> dict:
     return result
 
 
+def _ws_clients(port=11229):
+    """列出连到 AstrBot WS 端口的所有客户端进程（去重）。
+
+    为什么需要：AstrBot 反连 WS 会从「已连接客户端」里挑一个发回复。
+    若同时存在多个 OneBot 客户端（典型是残留的 sim_wechat.py），
+    AstrBot 可能把回复发给**错误的那个**——真桥接收不到，
+    用户表现为「发消息 bot 没反应」，而日志里只看到
+    `aiocqhttp.exceptions.NetworkError: WebSocket API call timeout`。
+    事故 2026-09-20 20:02：残留 simulator 抢走发送路由，全部回复丢失。
+    """
+    out = []
+    try:
+        r = subprocess.run(["netstat", "-ano"], capture_output=True, timeout=20)
+        text = (r.stdout or b"").decode("utf-8", "replace")
+    except Exception:
+        return out
+    pids = set()
+    for line in text.splitlines():
+        if f":{port}" not in line or "ESTABLISHED" not in line:
+            continue
+        parts = line.split()
+        if parts and parts[-1].isdigit():
+            pids.add(int(parts[-1]))
+    for pid in sorted(pids):
+        cmd = ""
+        try:
+            rr = subprocess.run(
+                ["wmic", "process", "where", f"ProcessId={pid}",
+                 "get", "CommandLine", "/format:list"],
+                capture_output=True, timeout=20)
+            for ln in (rr.stdout or b"").decode("utf-8", "replace").splitlines():
+                ln = ln.strip()
+                if ln.startswith("CommandLine="):
+                    cmd = ln[len("CommandLine="):]
+                    break
+        except Exception:
+            pass
+        out.append({"pid": pid, "cmd": cmd})
+    return out
+
+
 def cmd_status():
     st = status()
     print("=" * 56)
@@ -85,6 +126,19 @@ def cmd_status():
         pid = ",".join(map(str, info["pids"])) or "-"
         print(f"  {mark} {name:16s} :{info['port']:<6d} pid={pid}")
     print("=" * 56)
+
+    # 重复 OneBot 客户端告警：会抢走 AstrBot 的发送路由
+    clients = _ws_clients()
+    bots = [c for c in clients if "run_astrbot.py" in c["cmd"]]
+    others = [c for c in clients if c["cmd"] and "run_astrbot.py" not in c["cmd"]]
+    if len(others) > 1:
+        print("\n⚠️  检测到多个 OneBot 客户端连接 AstrBot —— 回复可能被发到错误的那个！")
+        for c in others:
+            tag = "  <-- 桥接" if "main.py" in c["cmd"] else "  <-- ⚠️ 多余的客户端"
+            name = c["cmd"].split("python.exe")[-1].strip().strip('"') or "?"
+            print(f"    pid={c['pid']:<8} {name}{tag}")
+        print("    处理：taskkill /PID <多余的pid> /F")
+        print("=" * 56)
     return st
 
 

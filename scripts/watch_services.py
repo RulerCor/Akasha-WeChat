@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
-"""watch_services.py — Akasha 三服务守护（探活 + 自动拉起）。
+"""watch_services.py — Akasha 双服务守护（探活 + 自动拉起）。
+
+## 管什么、不管什么
+
+* **管**：AstrBot（6185+11229）、桥接（8766）—— 这两个是生产服务，挂了必须拉起。
+* **不管**：模拟器（sim_wechat.py, :8767）。它会在 OneBot WS 上与真桥接
+  **抢 AstrBot 的回复路由**，导致微信侧"发消息没反应"（事故 2026-09-20）。
+  要用模拟器请手动 `sim/start_sim.bat`，用完即关。
 
 ## 为什么需要它
 
-桥接 / AstrBot / 模拟器会**不定时被杀**：实测存活 7 分钟 ~ 59 小时不等，
+桥接 / AstrBot 会**不定时被杀**：实测存活 7 分钟 ~ 59 小时不等，
 退出码 0、stderr 空、日志无 traceback，从日志里查不出原因。
 对照实验：WeFlow（用户双击 .bat 起的，父进程 explorer.exe）连续跑了 9 天没死，
 而凡是从 AI 会话/命令行起的（父进程链 `bash.exe → python`）都会被回收。
@@ -64,17 +71,19 @@ SERVICES = [
         grace=90,
         probe_host="127.0.0.1",
     ),
-    dict(
-        name="模拟器",
-        ports=(8767,),
-        cwd=os.path.join(ROOT, "sim"),
-        python=BRIDGE_VENV_PY,
-        args=["-u", "sim_wechat.py"],
-        log=os.path.join(ROOT, "sim", "sim_run.log"),
-        grace=60,
-        probe_host="127.0.0.1",
-    ),
 ]
+# ⚠️ 模拟器（sim_wechat.py）**不**纳入守护 —— 见下。
+#
+# 事故（2026-09-20 20:02）：守护把模拟器当常驻服务自动拉起，而模拟器
+# 与真桥接一样会以 OneBot 客户端身份连上 AstrBot 的 WS。AstrBot 的
+# aiocqhttp 适配器从「已连接客户端」里挑一个发回复——选中了模拟器，
+# 回复全部渲染在模拟器网页(:8767)里，微信侧表现为"发消息 bot 没反应"，
+# AstrBot 侧日志报 `aiocqhttp.exceptions.NetworkError: WebSocket API
+# call timeout`（真桥接永远收不到 send 请求）。
+#
+# 模拟器的正确用法：手动 `sim/start_sim.bat` 启动，测完即关。
+# `akasha_ctl.py status` 已带多客户端检测，出现"⚠️ 多个 OneBot 客户端"
+# 即为此类冲突。
 
 
 def log(msg):
