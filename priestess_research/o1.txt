@@ -1,0 +1,9573 @@
+
+
+
+
+
+
+
+
+
+预言家 - 萌娘百科 万物皆可萌的百科全书
+
+
+document.documentElement.className="client-js";RLCONF={"wgBreakFrames":true,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"zh","wgMonthNames":["","1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],"wgRequestId":"c89cf7934d8a45da121d712e","wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"预言家","wgTitle":"预言家","wgCurRevisionId":7930598,"wgRevisionId":7930598,"wgArticleId":389096,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["身份职业"],"wgPageViewLanguage":"zh-cn","wgPageContentLanguage":"zh-cn","wgPageContentModel":"wikitext","wgRelevantPageName":"预言家","wgRelevantArticleId":389096,"wgUserVariant":"zh-cn","wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgCiteReferencePreviewsActive":false,"wgMediaViewerOnClick":true,"wgMediaViewerEnabledByDefault":true,"wgVisualEditor":{"pageLanguageCode":"zh","pageLanguageDir":"ltr","pageVariantFallbacks":["zh-hans","zh-sg","zh-my"]},"wgMoeDisplayName":"","wgRelatedArticlesCompat":[],"ext.avatar.current_user.url":"https://storage.moegirl.org.cn/moegirl/avatars/0/latest.png","ext.avatar.current_user.thumb_url":"https://storage.moegirl.org.cn/moegirl/avatars/0/latest.png!avatar.thumb","wgCheckUserClientHintsHeadersJsApi":["architecture","bitness","brands","fullVersionList","mobile","model","platform","platformVersion"],"wgEditSubmitButtonLabelPublish":false,"wgMoeAuthConfig":{"endpoint":"https://app.moegirl.org.cn/moe-auth/","specialHijackMap":{"ChangeCredentials":["更改凭据","變更憑證","ChangeCredentials"],"ChangePassword":["修改密码","重置密码","找回密码","修改密码","修改密碼","變更密碼","修改密碼","密碼重設","ChangePassword","ResetPass","ResetPassword"],"CreateAccount":["创建账户","创建账户","創建賬戶","建立帳戶","建立帳號","建立帐号","建立帳號","建立帳戶","CreateAccount"],"Userlogin":["用户登录","登录","用户登录","用戶登入","使用者登入","使用者登入","UserLogin","Login"]}}};
+RLSTATE={"ext.gadget.GothicMoe":"ready","ext.gadget.site-styles":"ready","ext.gadget.moeskin-styles":"ready","site.styles":"ready","user.styles":"ready","user":"ready","user.options":"loading","jquery.makeCollapsible.styles":"ready","ext.relatedArticles.styles":"ready","ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.moderation.commons":"ready","ext.moegirl.achievements.badge":"ready","skins.moeskin.base":"ready"};RLPAGEMODULES=["site","mediawiki.page.ready","jquery.makeCollapsible","ext.checkUser.clientHints","ext.gadget.Purgecache","ext.gadget.code-prettify","ext.gadget.noteTA","ext.gadget.ReferenceTooltips","ext.gadget.report","ext.gadget.pageInfo","ext.gadget.wikidiff2","ext.gadget.SideBarPic","ext.gadget.ShowAvatar","ext.gadget.UserLinkAvatar","ext.gadget.displayname-default","ext.gadget.Logout-confirm","ext.gadget.site-js","mmv.bootstrap","ext.relatedArticles.readMore.bootstrap","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader","ext.moeauth.hijack"];
+
+
+(RLQ=window.RLQ||[]).push(function(){mw.loader.impl(function(){return["user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});mw.user.options.set({"language":"zh-cn","variant":"zh-cn"});
+}];});});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+window.dataLayer = window.dataLayer || [];
+function gtag() { dataLayer.push(arguments); }
+gtag('js', new Date());
+gtag('config', 'UA-173135727-1');
+
+
+    
+
+
+
+(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();
+
+
+(function(){/*
+Copyright The Closure Library Authors.
+SPDX-License-Identifier: Apache-2.0
+*/
+"use strict";var aa=function(a){var b=0;return function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}},ba="function"==typeof Object.create?Object.create:function(a){var b=function(){};b.prototype=a;return new b},k;if("function"==typeof Object.setPrototypeOf)k=Object.setPrototypeOf;else{var m;a:{var ca={a:!0},n={};try{n.__proto__=ca;m=n.a;break a}catch(a){}m=!1}k=m?function(a,b){a.__proto__=b;if(a.__proto__!==b)throw new TypeError(a+" is not extensible");return a}:null}
+var p=k,q=function(a,b){a.prototype=ba(b.prototype);a.prototype.constructor=a;if(p)p(a,b);else for(var c in b)if("prototype"!=c)if(Object.defineProperties){var d=Object.getOwnPropertyDescriptor(b,c);d&&Object.defineProperty(a,c,d)}else a[c]=b[c];a.v=b.prototype},r=this||self,da=function(){},t=function(a){return a};var u;var w=function(a,b){this.g=b===v?a:""};w.prototype.toString=function(){return this.g+""};var v={},x=function(a){if(void 0===u){var b=null;var c=r.trustedTypes;if(c&&c.createPolicy){try{b=c.createPolicy("goog#html",{createHTML:t,createScript:t,createScriptURL:t})}catch(d){r.console&&r.console.error(d.message)}u=b}else u=b}a=(b=u)?b.createScriptURL(a):a;return new w(a,v)};var A=function(){return Math.floor(2147483648*Math.random()).toString(36)+Math.abs(Math.floor(2147483648*Math.random())^Date.now()).toString(36)};var B={},C=null;var D="function"===typeof Uint8Array;function E(a,b,c){return"object"===typeof a?D&&!Array.isArray(a)&&a instanceof Uint8Array?c(a):F(a,b,c):b(a)}function F(a,b,c){if(Array.isArray(a)){for(var d=Array(a.length),e=0;e<a.length;e++){var f=a[e];null!=f&&(d[e]=E(f,b,c))}Array.isArray(a)&&a.s&&G(d);return d}d={};for(e in a)Object.prototype.hasOwnProperty.call(a,e)&&(f=a[e],null!=f&&(d[e]=E(f,b,c)));return d}
+function ea(a){return F(a,function(b){return"number"===typeof b?isFinite(b)?b:String(b):b},function(b){var c;void 0===c&&(c=0);if(!C){C={};for(var d="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split(""),e=["+/=","+/","-_=","-_.","-_"],f=0;5>f;f++){var h=d.concat(e[f].split(""));B[f]=h;for(var g=0;g
+>2];y=c[(y&3)<<
+4|z>>4];z=c[(z&15)
+>6];l=c[l&63];d[f++]=""+g+y+z+l}g=0;l=e;switch(b.length-h){case 2:g=b[h+1],l=c[(g&15)
+>2]+c[(b&3)
+>4]+l+e}return d.join("")})}var fa={s:{value:!0,configurable:!0}},G=function(a){Array.isArray(a)&&!Object.isFrozen(a)&&Object.defineProperties(a,fa);return a};var H;var J=function(a,b,c){var d=H;H=null;a||(a=d);d=this.constructor.u;a||(a=d?[d]:[]);this.j=d?0:-1;this.h=null;this.g=a;a:{d=this.g.length;a=d-1;if(d&&(d=this.g[a],!(null===d||"object"!=typeof d||Array.isArray(d)||D&&d instanceof Uint8Array))){this.l=a-this.j;this.i=d;break a}void 0!==b&&-1<b?(this.l=Math.max(b,a+1-this.j),this.i=null):this.l=Number.MAX_VALUE}if(c)for(b=0;b<c.length;b++)a=c[b],a<this.l?(a+=this.j,(d=this.g[a])?G(d):this.g[a]=I):(d=this.l+this.j,this.g[d]||(this.i=this.g[d]={}),(d=this.i[a])?
+G(d):this.i[a]=I)},I=Object.freeze(G([])),K=function(a,b){if(-1===b)return null;if(b<a.l){b+=a.j;var c=a.g[b];return c!==I?c:a.g[b]=G([])}if(a.i)return c=a.i[b],c!==I?c:a.i[b]=G([])},M=function(a,b){var c=L;if(-1===b)return null;a.h||(a.h={});if(!a.h[b]){var d=K(a,b);d&&(a.h[b]=new c(d))}return a.h[b]};J.prototype.toJSON=function(){var a=N(this,!1);return ea(a)};
+var N=function(a,b){if(a.h)for(var c in a.h)if(Object.prototype.hasOwnProperty.call(a.h,c)){var d=a.h[c];if(Array.isArray(d))for(var e=0;e<d.length;e++)d[e]&&N(d[e],b);else d&&N(d,b)}return a.g},O=function(a,b){H=b=b?JSON.parse(b):null;a=new a(b);H=null;return a};J.prototype.toString=function(){return N(this,!1).toString()};var P=function(a){J.call(this,a)};q(P,J);function ha(a){var b,c=(a.ownerDocument&&a.ownerDocument.defaultView||window).document,d=null===(b=c.querySelector)||void 0===b?void 0:b.call(c,"script[nonce]");(b=d?d.nonce||d.getAttribute("nonce")||"":"")&&a.setAttribute("nonce",b)};var Q=function(a,b){b=String(b);"application/xhtml+xml"===a.contentType&&(b=b.toLowerCase());return a.createElement(b)},R=function(a){this.g=a||r.document||document};R.prototype.appendChild=function(a,b){a.appendChild(b)};var S=function(a,b,c,d,e,f){try{var h=a.g,g=Q(a.g,"SCRIPT");g.async=!0;g.src=b instanceof w&&b.constructor===w?b.g:"type_error:TrustedResourceUrl";ha(g);h.head.appendChild(g);g.addEventListener("load",function(){e();d&&h.head.removeChild(g)});g.addEventListener("error",function(){0<c?S(a,b,c-1,d,e,f):(d&&h.head.removeChild(g),f())})}catch(l){f()}};var ia=r.atob("aHR0cHM6Ly93d3cuZ3N0YXRpYy5jb20vaW1hZ2VzL2ljb25zL21hdGVyaWFsL3N5c3RlbS8xeC93YXJuaW5nX2FtYmVyXzI0ZHAucG5n"),ja=r.atob("WW91IGFyZSBzZWVpbmcgdGhpcyBtZXNzYWdlIGJlY2F1c2UgYWQgb3Igc2NyaXB0IGJsb2NraW5nIHNvZnR3YXJlIGlzIGludGVyZmVyaW5nIHdpdGggdGhpcyBwYWdlLg=="),ka=r.atob("RGlzYWJsZSBhbnkgYWQgb3Igc2NyaXB0IGJsb2NraW5nIHNvZnR3YXJlLCB0aGVuIHJlbG9hZCB0aGlzIHBhZ2Uu"),la=function(a,b,c){this.h=a;this.j=new R(this.h);this.g=null;this.i=[];this.l=!1;this.o=b;this.m=c},V=function(a){if(a.h.body&&!a.l){var b=
+function(){T(a);r.setTimeout(function(){return U(a,3)},50)};S(a.j,a.o,2,!0,function(){r[a.m]||b()},b);a.l=!0}},T=function(a){for(var b=W(1,5),c=0;c<b;c++){var d=X(a);a.h.body.appendChild(d);a.i.push(d)}b=X(a);b.style.bottom="0";b.style.left="0";b.style.position="fixed";b.style.width=W(100,110).toString()+"%";b.style.zIndex=W(2147483544,2147483644).toString();b.style["background-color"]=ma(249,259,242,252,219,229);b.style["box-shadow"]="0 0 12px #888";b.style.color=ma(0,10,0,10,0,10);b.style.display=
+"flex";b.style["justify-content"]="center";b.style["font-family"]="Roboto, Arial";c=X(a);c.style.width=W(80,85).toString()+"%";c.style.maxWidth=W(750,775).toString()+"px";c.style.margin="24px";c.style.display="flex";c.style["align-items"]="flex-start";c.style["justify-content"]="center";d=Q(a.j.g,"IMG");d.className=A();d.src=ia;d.style.height="24px";d.style.width="24px";d.style["padding-right"]="16px";var e=X(a),f=X(a);f.style["font-weight"]="bold";f.textContent=ja;var h=X(a);h.textContent=ka;Y(a,
+e,f);Y(a,e,h);Y(a,c,d);Y(a,c,e);Y(a,b,c);a.g=b;a.h.body.appendChild(a.g);b=W(1,5);for(c=0;c<b;c++)d=X(a),a.h.body.appendChild(d),a.i.push(d)},Y=function(a,b,c){for(var d=W(1,5),e=0;e<d;e++){var f=X(a);b.appendChild(f)}b.appendChild(c);c=W(1,5);for(d=0;d<c;d++)e=X(a),b.appendChild(e)},W=function(a,b){return Math.floor(a+Math.random()*(b-a))},ma=function(a,b,c,d,e,f){return"rgb("+W(Math.max(a,0),Math.min(b,255)).toString()+","+W(Math.max(c,0),Math.min(d,255)).toString()+","+W(Math.max(e,0),Math.min(f,
+255)).toString()+")"},X=function(a){a=Q(a.j.g,"DIV");a.className=A();return a},U=function(a,b){0>=b||null!=a.g&&0!=a.g.offsetHeight&&0!=a.g.offsetWidth||(na(a),T(a),r.setTimeout(function(){return U(a,b-1)},50))},na=function(a){var b=a.i;var c="undefined"!=typeof Symbol&&Symbol.iterator&&b[Symbol.iterator];b=c?c.call(b):{next:aa(b)};for(c=b.next();!c.done;c=b.next())(c=c.value)&&c.parentNode&&c.parentNode.removeChild(c);a.i=[];(b=a.g)&&b.parentNode&&b.parentNode.removeChild(b);a.g=null};var pa=function(a,b,c,d,e){var f=oa(c),h=function(l){l.appendChild(f);r.setTimeout(function(){f?(0!==f.offsetHeight&&0!==f.offsetWidth?b():a(),f.parentNode&&f.parentNode.removeChild(f)):a()},d)},g=function(l){document.body?h(document.body):0<l?r.setTimeout(function(){g(l-1)},e):b()};g(3)},oa=function(a){var b=document.createElement("div");b.className=a;b.style.width="1px";b.style.height="1px";b.style.position="absolute";b.style.left="-10000px";b.style.top="-10000px";b.style.zIndex="-10000";return b};var L=function(a){J.call(this,a)};q(L,J);var qa=function(a){J.call(this,a)};q(qa,J);var ra=function(a,b){this.l=a;this.m=new R(a.document);this.g=b;this.i=K(this.g,1);b=M(this.g,2);this.o=x(K(b,4)||"");this.h=!1;b=M(this.g,13);b=x(K(b,4)||"");this.j=new la(a.document,b,K(this.g,12))};ra.prototype.start=function(){sa(this)};
+var sa=function(a){ta(a);S(a.m,a.o,3,!1,function(){a:{var b=a.i;var c=r.btoa(b);if(c=r[c]){try{var d=O(P,r.atob(c))}catch(e){b=!1;break a}b=b===K(d,1)}else b=!1}b?Z(a,K(a.g,14)):(Z(a,K(a.g,8)),V(a.j))},function(){pa(function(){Z(a,K(a.g,7));V(a.j)},function(){return Z(a,K(a.g,6))},K(a.g,9),K(a.g,10),K(a.g,11))})},Z=function(a,b){a.h||(a.h=!0,a=new a.l.XMLHttpRequest,a.open("GET",b,!0),a.send())},ta=function(a){var b=r.btoa(a.i);a.l[b]&&Z(a,K(a.g,5))};(function(a,b){r[a]=function(c){for(var d=[],e=0;e<arguments.length;++e)d[e-0]=arguments[e];r[a]=da;b.apply(null,d)}})("__h82AlnkH6D91__",function(a){"function"===typeof window.atob&&(new ra(window,O(qa,window.atob(a)))).start()});}).call(this);
+window.__h82AlnkH6D91__("WyJwdWItMTU0ODI3Mjg2MzU0NTc3NyIsW251bGwsbnVsbCxudWxsLCJodHRwczovL2Z1bmRpbmdjaG9pY2VzbWVzc2FnZXMuZ29vZ2xlLmNvbS9iL3B1Yi0xNTQ4MjcyODYzNTQ1Nzc3Il0sbnVsbCxudWxsLCJodHRwczovL2Z1bmRpbmdjaG9pY2VzbWVzc2FnZXMuZ29vZ2xlLmNvbS9lbC9BR1NLV3hXNkp2cHlNRlF0X0hfMkhjY2h0bUpISzBnZVRnajhMczk2Y3ZaWmNPLXczVURMcWxHZGp2T0lzRmo4VFRTRW1XREFoMG1rbDVjVFlFWXVsekF2ZGVGYXJRXHUwMDNkXHUwMDNkP3RlXHUwMDNkVE9LRU5fRVhQT1NFRCIsImh0dHBzOi8vZnVuZGluZ2Nob2ljZXNtZXNzYWdlcy5nb29nbGUuY29tL2VsL0FHU0tXeFhDTm1LWS1iSjJ1YjZ3NHBFV0l5VHF1ZC1PbWZMczBZTHZWUDJveURuUGRlOExoUGxQRTFWSWtMalFGVXhOci1mMVg5ZWI0NFBmWVA0VS1pZ0puQll6SEFcdTAwM2RcdTAwM2Q/YWJcdTAwM2QxXHUwMDI2c2JmXHUwMDNkMSIsImh0dHBzOi8vZnVuZGluZ2Nob2ljZXNtZXNzYWdlcy5nb29nbGUuY29tL2VsL0FHU0tXeFhFRkNMUFcwNGFTVHl2WDJhUzNnUUtKUUg5cmVlVjZOaUhYUlR0c0hBbG9GZEFVVEdKajlYY3pIRzhnOVVwTmlOX2FPeXpaQVpJMnRqemdHZlV1MVpSN0FcdTAwM2RcdTAwM2Q/YWJcdTAwM2QyXHUwMDI2c2JmXHUwMDNkMSIsImh0dHBzOi8vZnVuZGluZ2Nob2ljZXNtZXNzYWdlcy5nb29nbGUuY29tL2VsL0FHU0tXeFZSQkJPVXphejZsUTdnQ0xpRFY3bGNGMDZYUTgwaXFUeE9JQ1pFT1JhLXBteElNbV8zOE9fdUxiSlpqbVdEVUx2eVNJb29COHRobk9ZTEFEeXFiT25uX0FcdTAwM2RcdTAwM2Q/c2JmXHUwMDNkMiIsImRpdi1ncHQtYWQiLDIwLDEwMCwiY0hWaUxURTFORGd5TnpJNE5qTTFORFUzTnpjXHUwMDNkIixbbnVsbCxudWxsLG51bGwsImh0dHBzOi8vd3d3LmdzdGF0aWMuY29tLzBlbW4vZi9wL3B1Yi0xNTQ4MjcyODYzNTQ1Nzc3LmpzP3VzcXBcdTAwM2RDQUkiXSwiaHR0cHM6Ly9mdW5kaW5nY2hvaWNlc21lc3NhZ2VzLmdvb2dsZS5jb20vZWwvQUdTS1d4WFZCT1FwSlQ2eS1WV2RkR2FzcHBSZVZMRUFKNjk5VXQ0VWJPYTJzcEdfMTZ2eF9hc2ZCRDdYNUJ5dkc4RzB3SlZTdGlCT3RQc3ctbDBPTUM5bENBWUh1d1x1MDAzZFx1MDAzZCJd");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{"@context":"https://schema.org","@type":"Article","headline":"
+预言家
+","url":"https://mzh.moegirl.org.cn/%E9%A2%84%E8%A8%80%E5%AE%B6","inLanguage":"zh-Hans-CN","isPartOf":{"@type":"WebSite","name":"萌娘百科","url":"https://mzh.moegirl.org.cn/"},"publisher":{"@type":"Organization","name":"萌娘百科","url":"https://mzh.moegirl.org.cn","logo":{"@type":"ImageObject","url":"https://storage.moegirl.org.cn/moegirl/logo/zhMoegirl15.2.png"}},"author":{"@type":"Organization","name":"萌娘百科 contributors"},"description":"本文介绍的是：一种身份属性关于：近义用语参见条目：「预知未来」 萌娘百科欢迎您参与完善萌属性相关条目☆Kira~ .mw-parser-output .colorededit ....","image":"https://storage.moegirl.org.cn/moegirl/commons/8/89/%E8%A7%82%E6%9C%88%E6%AD%8C%E5%B8%86.jpeg","dateModified":"2025-03-25T01:44:36Z","datePublished":"2020-04-18T07:16:50Z"}
+
+
+
+
+
+
+
+This site requires JavaScript enabled. Please check your browser settings.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+本文介绍的是：一种身份属性
+
+关于：
+近义用语
+
+参见条目：「
+
+预知未来
+
+」
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+萌娘百科欢迎您参与完善
+萌属性
+相关条目☆Kira~
+
+
+
+.mw-parser-output .colorededit .Wikiplus-Edit-EveryWhereBtn,.mw-parser-output .colorededit .in-page-edit-article-link-group,.mw-parser-output .colorededit .in-page-edit-article-link{color:inherit}
+
+
+
+编辑本条目
+
+
+前，请先阅读
+萌百编辑简明指南
+及
+条目编辑规范
+，并查找相关资料。
+同时
+萌百萌属性编辑组
+也欢迎您的加入。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+观月歌帆
+
+
+
+
+
+
+
+
+
+基本资料
+
+
+
+
+
+
+
+萌属性名称
+
+
+
+预言家
+
+
+
+
+
+
+萌属性别称
+
+
+
+预言师、先知
+
+
+
+
+
+
+萌属性类别
+
+
+
+身份职业
+
+
+
+
+
+
+典型角色
+
+
+
+
+波因哥
+、
+尤尼
+
+
+
+
+
+
+
+相关萌属性
+
+
+
+
+占卜师
+、
+水晶球
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+拥有此特征的角色
+
+
+
+
+
+
+
+
+预言家
+（英语：
+
+prophet
+
+；日语：
+
+
+
+預言者
+（
+
+
+よげんしゃ
+
+）
+
+
+
+）是一种身份，是
+ACG
+
+次文化
+中的
+
+萌属性
+
+。
+
+
+
+
+
+
+简介
+
+
+
+
+预言家
+指能够作出预言的人。
+
+
+预言家可以是具有
+预知未来
+能力的主动预言者，也可以是有
+乌鸦嘴
+/
+毒奶
+属性的被动预言者。预言家与单纯的
+预知未来
+能力者和
+乌鸦嘴
+人士不同的是，这些人中一部分的预知只为自己所用，预言家更注重传递给他人关于未来的预测。
+
+
+有一部分预言家同时也是
+占卜师
+，借助占卜道具来预测未来，一部分预言家有可视性的
+预知能力
+，可以直接观测到未来。
+
+
+在现实中，一些人在无意间说的一句话或通过全面的分析总结出的观点如果在未来被应验，某些人就会跑回去将其称为“大预言家”。
+
+
+
+
+
+
+狼人杀中的角色
+
+
+
+预言家是桌游
+狼人杀
+中的一个角色，属于好人和神职阵营，能力是每天晚上可以查验一个角色是好人还是狼人。因为其的查验身份功能，预言家在多数情况下是好人阵营打开视野的主要身份，也最常成为坏人/狼人阵营的优先击杀（夜晚刀掉）对象。“刀预言家”这一说法也已走出狼人杀游戏圈广泛流传，前文提及的在现实及网络中一些人的话或观点在未来被应验被应验时也会有人开玩笑地留言“刀了吧”。
+
+
+
+
+
+
+具有此属性的典型角色
+
+
+
+此处仅列举几位具有本萌属性的
+典型人物
+作为示例。更多请查阅
+分类:预言家
+。
+
+
+
+
+
+
+
+
+
+
+
+
+
+此处列表只是列举具有本萌属性的
+几名
+
+典型人物
+
+
+(注)
+
+作为示例。
+如果你想查找更多具有本萌属性的人物，请查阅
+
+分类:预言家
+
+。
+
+请不要向本列表大量添加、罗列人物。当列表中人物过多时，请不要继续添加新角色，而是仅在对应角色条目底部添加分类即可。
+
+
+
+
+
+
+
+
+观月歌帆
+
+————《
+魔卡少女樱
+》
+
+
+
+
+壹原侑子
+
+————《
+四月一日灵异事件簿
+》
+
+
+
+
+尤尼
+
+————《
+家庭教师HITMAN REBORN!
+》
+
+
+
+
+波因哥
+
+————《
+JOJO的奇妙冒险
+》
+
+
+
+
+英雄战姬:诺斯特拉达姆士
+
+————《
+英雄战姬
+》
+
+
+
+
+楚南公
+
+————《
+秦时明月
+》
+
+
+
+
+御船千早
+
+————《
+女神异闻录5
+》
+
+
+
+
+吟游诗人艾丽丝
+
+————《
+地下城与勇士
+》
+
+
+
+
+
+局座
+
+——《
+地球Online
+》
+
+
+
+
+默克多
+————《诺亚之蝶》
+
+
+
+
+大蛤蟆仙人
+
+、
+
+紫苑
+
+————《
+火影忍者
+》
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+查
+
+ · 
+
+论
+
+ · 
+
+编
+
+
+
+
+
+萌
+与
+萌属性
+
+
+"use strict";
+window.RLQ = window.RLQ || [];
+window.RLQ.push(["jquery", () => {
+    $(() => {
+        $(".navbox.largeNavbox:not(.largeNavboxExeced)").each((_, ele) => {
+            const self = $(ele);
+            self.addClass("largeNavboxExeced").find(".navbox-title").first().prepend(`
+
+`);
+            const button = self.find(".largeNavbox-toggle");
+            button.append(`[
+全隐/全显
+]`);
+            button.find("a").on("click", () => {
+                const buttons = self.find(".navbox-list .mw-collapsible-toggle");
+                if (buttons.filter(".mw-collapsible-toggle-collapsed").length * 2 > buttons.length) {
+                    buttons.filter(".mw-collapsible-toggle-collapsed").click();
+                } else {
+                    buttons.filter(":not(.mw-collapsible-toggle-collapsed)").click();
+                }
+            });
+        });
+        $(".largeNavbox-toggle").css({
+            position: "absolute",
+            "user-select": "none",
+        }).find("a").css("cursor", "pointer");
+    });
+}]);
+
+
+
+.largeNavbox-toggle {
+    right: 6em
+}
+.skin-moeskin .largeNavbox-toggle {
+    right: 4.5em
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+外表年龄段及性别特征类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【性别总论】
+
+
+
+伪娘
+ • 
+伪郎（假小子）
+ • 
+伪伪娘
+ • 
+伪伪郎
+ • 
+萝太
+ • 
+正莉
+ • 
+有胸的帅哥
+ • 
+男大姐
+ • 
+女汉子
+ • 
+秀吉
+ • 
+八美肉
+ • 
+双性 / 扶她
+ • 
+猫箱性别
+ • 
+中性 / 无性别
+ • 
+跨性别者
+
+
+
+
+
+
+
+
+
+【成长阶段】
+
+
+
+
+
+
+
+通用
+
+
+
+宝宝
+ • 
+儿童
+ • 
+长者
+ • 
+
+永远的十七岁
+
+ • 
+成长阶段的反差
+
+
+
+
+
+
+
+
+
+女性
+
+
+
+幼女
+ • 
+萝莉
+ / 
+万年萝莉
+ / 
+合法萝莉
+ / 
+萝莉老太婆
+ / 
+古董萝莉
+ • 
+乙女
+ • 
+美少女
+ • 
+御姐
+ / 
+非法御姐
+ • 
+可萝可御
+ • 
+软妹
+ • 
+熟女
+ • BBA（女性
+长者
+）
+
+
+
+
+
+
+
+
+男性
+
+
+
+正太
+ / 
+万年正太
+ / 
+合法正太
+ • 
+美少年
+ • 
+美男子
+ • 
+池面
+ • 
+御兄
+ • 
+兄贵
+ • 
+大叔
+ / 
+非法大叔
+ • 
+涩面
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+性格类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【浅层性格】
+
+
+
+傲娇（蹭得累）
+ • 
+傲沉
+ • 
+病娇（养得累）
+ • 
+病切
+ • 
+弱娇
+ • 
+冰美人（高冷）
+（
+冷娇 / 酷娇
+ • 
+率直冷
+） • 
+凛娇
+ • 
+暴娇
+ • 
+郁娇
+ • 
+慵懒（慢性子）
+ / 
+急性子
+ • 
+三无
+ • 
+无口
+ • 
+文静
+ • 
+直率
+ • 
+诚实
+ • 
+刺头
+ • 
+KY
+ / 
+读空气
+ • 
+无铁炮
+ • 
+凶暴
+（
+暴力女
+） • 
+高飞车 / 高傲
+ • 
+笨蛋
+（
+蠢萌
+） • 
+天然呆（呆萌）
+ • 
+天然疯
+ • 
+天然黑
+ • 
+天然萌
+ • 
+天真无邪
+（天衣无缝） • 
+认真（正经）
+ • 
+电波
+ • 
+中二病
+ • 
+冒失（迷糊）
+ • 
+调皮
+ • 
+工口（糟糕）
+ • 
+毒舌
+ • 
+元气
+ • 
+强气
+ • 
+狂气
+ • 
+弱气
+ • 
+怕羞
+ • 
+爱哭鬼
+ • 
+醋缸
+ • 
+好奇
+ • 
+耿直
+ • 
+八卦
+ • 
+变态
+（
+变态帅
+ • 
+变态萌
+） • 
+恶心帅
+/
+恶心萌
+ • 
+迟钝
+ • 
+富有正义感
+ • 
+地雷系
+ • 
+博学
+ • 
+情绪化
+ / 
+无感情
+ • 
+自来熟
+ • 
+怕生
+ • 
+怕麻烦
+ • 
+情种
+ • 
+孩子气
+ • 
+妈宝
+ • 
+阳角
+ / 
+阴角
+ • 
+多疑
+ • 
+幸灾乐祸
+ • 
+任性
+ • 
+贪玩
+ • 
+暴躁
+ • 
+勇敢
+
+
+
+
+
+
+
+
+
+【深层性格】
+
+
+
+腹黑
+ / 
+腹白
+ / 
+复合型腹黑/腹白
+ • 
+可靠
+ • 
+无心
+ • 
+热血
+  • 
+外柔内刚
+ • 
+外热内冷
+/
+外冷内热
+  • 
+女王
+ • 
+戏精
+ • 
+猥琐
+ • 
+不懂爱
+ • 
+多重人格
+ • 
+性格切换
+ • 
+无节操
+ • 
+少女心
+ • 
+温柔
+ • 
+暖男
+ • 
+玻璃心
+ • 
+老好人
+ • 
+优柔寡断
+ • 
+S属性
+ / 
+M属性
+ • 
+支配者（Dom）
+ / 
+服从者（Sub）
+ • 
+小恶魔
+ • 
+贱萌
+ • 
+常识人
+ / 
+无常识
+ • 
+坦率
+/
+别扭
+（不坦率） • 
+单纯
+ • 
+清纯
+ • 
+清楚系
+ • 
+孤僻
+ • 
+厌世
+ • 
+护短
+ • 
+闷骚
+ • 
+恋爱脑
+ • 
+酒品差
+ / 
+醉酒变纯情
+ • 
+反社会人格
+ • 
+恶德
+ • 
+不择手段
+/
+有原则
+ • 
+执着
+ • 
+固执
+ • 
+偏执
+ • 
+脱线
+ • 
+早熟
+ • 
+自负
+ • 
+自卑
+ • 
+谨慎
+ • 
+神经质
+ • 
+大智若愚
+ • 
+雌小鬼
+ • 
+自我意识过剩
+ • 
+亦正亦邪
+/
+墙头草
+ • 
+欺软怕硬
+ • 
+鬼畜
+ • 
+沉重
+ • 
+老实人
+ • 
+愉悦犯
+ • 
+高攻低防
+  • 
+小天使
+ • 
+和平主义者
+ • 
+节能主义
+ • 
+完美主义者
+ • 
+贪婪
+ • 
+吝啬
+ • 
+野心家
+ • 
+伪阳角
+/
+伪阴角
+ • 
+专一
+ • 
+反战
+
+
+
+
+
+
+
+
+
+【性格组合】
+
+
+
+没头脑和不高兴
+ • 
+周瑜打黄盖
+ • 
+欢喜冤家
+ / 
+冤家
+ • 
+猫系or犬系
+ • 
+
+oo小三，xx碧池
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+血缘关系、人际关系类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【家庭 / 家族】
+
+
+
+
+
+
+
+同辈
+
+
+
+双胞胎
+ / 
+多胞胎
+ • 
+哥哥
+（
+实兄
+ / 
+义兄
+ / 
+表哥
+ / 
+堂哥
+ / 
+继兄
+ / 
+姐夫
+ / 
+大伯子
+ / 
+大舅子
+） • 
+弟弟
+（
+实兄
+ / 
+义弟
+ / 
+表弟
+ / 
+堂弟
+ / 
+继弟
+ / 
+妹夫
+ / 
+小叔子
+ / 
+小舅子
+） • 
+姐姐
+（
+实姐
+ / 
+义姐
+ / 
+表姐
+ / 
+堂姐
+ / 
+继姐
+ / 
+嫂子
+ / 
+大姨子
+ / 
+大姑子
+） • 
+妹妹
+（
+实妹
+ / 
+义妹
+ / 
+表妹
+ / 
+堂妹
+ / 
+继妹
+ /
+弟媳
+ / 
+小姨子
+ / 
+小姑子
+） • 
+同父异母
+ / 
+同母异父
+兄弟姐妹 • 
+人夫
+ / 
+人妻
+
+
+
+
+
+
+
+
+
+父母辈
+
+
+
+爸爸
+（
+养父
+ / 
+义（教）父
+ / 
+继父
+） • 
+妈妈
+（
+养母
+ / 
+义（教）母
+ / 
+继母
+） • 
+单亲
+ • 
+岳母
+ • 
+岳父
+ • 
+伯父 / 叔父
+ • 
+伯母
+ • 
+叔母
+ • 
+姑姑
+ • 
+姑父
+ • 
+舅舅
+ • 
+舅妈
+ • 
+姨妈
+ • 
+姨父
+
+
+
+
+
+
+
+
+
+子女辈
+
+
+
+儿子
+（
+养子
+/
+义子
+/
+继子
+）/ 
+女儿
+（
+养女
+/
+义女
+/
+继女
+）/ 
+儿媳
+ / 
+女婿
+ / 
+上门女婿
+ • 
+独生子女
+ / 
+长子女
+ • 
+遗腹子女
+ • 
+私生子女
+ • 
+侄子
+ / 
+侄女
+ / 
+外甥
+ / 
+外甥女
+
+
+
+
+
+
+
+
+
+祖辈 / 孙辈
+
+
+
+爷爷 / 外公
+ • 
+奶奶 / 外婆
+ • 
+孙子 / 外孙 / 孙女 / 外孙女
+
+
+
+
+
+
+
+
+
+其他
+
+
+
+亲戚
+ / 
+远亲
+ • 
+祖先
+ • 
+家主 / 族长
+ • 
+孤儿 / 弃儿
+ • 
+丧子
+ • 
+已婚
+ • 
+离异
+ • 
+鳏夫
+ • 
+寡妇（未亡人）
+ • 
+再婚
+ • 
+丁克
+ • 
+剩女
+ • 
+宠物相伴
+ / 
+坐骑相伴
+ • 
+留守子女
+ • 
+辈分高
+ / 
+辈分低
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【学校 / 社会】
+
+
+
+前辈
+ / 
+后辈
+ • 
+学长
+ / 
+师兄
+ • 
+学弟
+ / 
+师弟
+ • 
+学姐
+ / 
+师姐
+ • 
+学妹
+ / 
+师妹
+ • 
+师叔 / 师伯
+ • 
+师侄
+ • 
+同班同学（同级生）
+ • 
+同桌
+ • 
+基友
+ / 
+红颜知己
+ / 
+姬友 / 闺蜜
+ / 
+男闺蜜
+ / 
+异性朋友
+ • 
+学生
+ • 
+教师
+ • 
+部下 / 下属
+ • 
+同事 / 同僚
+ • 
+上司
+ • 
+室友
+ • 
+主人
+ / 
+佣人 / 仆人
+ • 
+迷弟
+ / 
+迷妹
+ • 
+邻居
+ • 
+房客
+ • （参见【职业】和【校内职业身份】分组）
+
+
+
+
+
+
+
+
+【恋人相关】
+
+
+
+CP
+ • 
+恋人未满
+ • 
+许婚
+ / 
+未婚妻
+ / 
+未婚夫
+ • 
+备胎
+ • 
+前任对象
+ • 
+情敌
+ • 
+青梅竹马 / 幼驯染
+ • 
+天降系
+ • 
+天降青梅
+ • 
+初恋对象
+ • 
+暗恋对象
+ • 
+第三者
+ • 
+倒贴
+ • 
+性伴侣
+ • 
+
+宿敌
+
+ • 
+NTR
+ • 
+苦主
+ • 
+工具人
+ • 
+僚机
+ •  
+自攻自受
+ • 
+电灯泡
+
+
+
+
+
+
+
+
+
+【人际组合】
+
+
+
+搭档
+ • 
+二人娘
+ • 
+姐妹
+ • 
+苦命鸳鸯
+ • 
+大叔与萝莉
+ / 
+御姐与正太
+ • 
+黑发与金发
+ • 
+胖瘦二人组
+ • 
+护法
+ / 
+C位
+ • 
+三人娘
+ • 
+铁三角 / 黄金铁三角
+ • 
+三姐妹
+ / 
+三兄弟
+ • 
+一家三口
+ • 
+经典四人组
+ • 
+战队
+ • 
+相爱相杀
+ • 
+骑士vs浪子
+ • 
+忘年交
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+相貌、体型特征类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【发型】
+
+
+
+
+
+
+
+后发
+
+
+
+马尾
+（
+低马尾
+ / 
+高马尾
+ / 
+侧单马尾
+ / 
+半马尾 / 披肩侧单马尾
+ / 
+朝天辫
+） • 
+双马尾
+（
+下双马尾
+ / 
+双螺旋
+ / 
+披肩双马尾
+） • 
+多马尾
+ • 
+环形辫
+（
+蝶形髻
+ / 
+环形鬓发
+） • 
+灯笼辫
+ • 
+辫子
+（
+麻花辫
+ / 
+螺旋辫
+ / 
+公主辫
+ / 
+王冠编发
+ / 
+脏辫
+） • 
+丸子头
+（
+双丸子头
+） • 
+盘发
+ • 
+尾扎长发
+ • 
+死亡发型（马法式风情编发）
+ • 
+Half-up
+ • 
+翻翘
+ • 
+耳状发
+ • 
+斜切后发
+ • 
+弧形后发
+
+
+
+
+
+
+
+
+
+前发
+
+
+
+遮眼发
+（
+片目
+） • 
+齐刘海
+ • 
+短刘海
+ • 
+长刘海
+ • 
+斜刘海
+ • 
+三角刘海
+ • 
+刘海尾
+ • 
+高额头（露额头、无刘海）
+ • 
+进气口发型
+ • 
+中分
+（
+人字刘海
+ / 
+M字中分
+ / 
+龙须刘海
+ / 
+心形刘海
+） • 
+偏分
+ • 
+美人尖
+ • 
+平发际
+ • 
+M形刘海
+（
+交叉刘海
+） • 
+泡面刘海
+ • 
+别后刘海
+ • 
+空气刘海
+ • 
+上梳刘海
+ • 
+斜切刘海
+ • 
+弧形刘海
+ • 
+长鬓角
+（
+螺旋鬓发
+ / 
+环形鬓发
+）• 
+不对称鬓发
+ • 
+束鬓
+ • 
+鬓角须
+ • 
+翘鬓角
+
+
+
+
+
+
+
+长发
+（
+超长发
+）/ 
+中长发
+ / 
+短发
+ • 
+呆毛
+（
+蟑螂毛
+ / 
+心形呆毛
+） • 
+假发
+ • 
+剪刀头
+ • 
+卷发
+（
+罗马卷
+/
+天然卷
+/
+大波浪
+） • 
+妹妹头（BOBO头）
+ • 
+蘑菇头
+ • 
+刺猬头
+ • 
+乱发
+ • 
+碎发
+ • 
+另类发型
+ • 
+光头
+ • 
+平头
+ • 
+飞机头
+ • 
+秃顶
+（
+地中海发型
+ / 
+传教士发型
+） • 
+爆炸头
+ • 
+莫霍克发型（莫西干发型）
+ • 
+分层发
+ • 
+水母头
+ • 
+大背头
+ • 
+姬发式
+ • 
+精灵耳发型
+ • 
+隐藏长发
+ • 
+遮耳发
+ • 
+凤梨头
+ • 
+精灵头
+ • 
+狼尾发型
+ / 
+鲻鱼头
+ • 
+平切发梢
+ • 
+分叉长发
+ • 
+平发尾
+ • 
+月代
+ • 
+梨花头
+
+
+
+
+
+
+
+
+
+【发色】
+
+
+
+黑发
+ • 
+红发 / 赤发
+ • 
+橙发
+ • 
+金发 / 黄发
+ • 
+绿发
+ • 
+蓝发 / 青发
+ • 
+紫发
+ • 
+粉发
+ • 
+棕发 / 褐发
+ • 
+银发 / 灰发
+ / 
+白发
+ • 
+双色发
+（
+阴阳发
+ / 
+布丁头
+） • 
+多色发
+（
+挑染
+（
+内层挑染
+）/ 
+渐变色发
+ / 
+彩虹发
+） • 
+变发色
+
+
+
+
+
+
+
+
+
+【瞳色】
+
+
+
+黑瞳
+ • 
+红瞳 / 赤瞳
+ • 
+橙瞳
+ • 
+金瞳 / 黄瞳
+ • 
+绿瞳
+ • 
+蓝瞳 / 青瞳
+ • 
+紫瞳
+ • 
+粉瞳
+ • 
+棕瞳 / 褐瞳
+ • 
+灰瞳 / 银瞳
+ • 
+白瞳
+ • 
+暗瞳
+ • 
+异色瞳
+ • 
+多色瞳
+（
+渐变瞳
+ / 
+彩虹瞳
+ / 
+分层瞳
+） • 
+异色眼白（黑白目）
+ • 
+变瞳色
+
+
+
+
+
+
+
+
+
+【眼型】
+
+
+
+大眼睛
+ / 
+小眼睛
+ • 
+吊眼（丹凤眼）
+ • 
+垂眼
+ • 
+半睁眼
+ • 
+大小眼
+ • 
+圆眼
+ • 
+异形眼
+ • 
+三白眼
+ • 
+单眼
+ • 
+三只眼
+ / 
+多眼
+ • 
+无眼
+ • 
+单眼皮
+ • 
+双眼皮
+ • 
+竖瞳
+ • 
+死鱼眼
+ • 
+眯眯眼
+ • 
+豆豆眼（点状眼）
+ • 
+圈圈眼
+ • 
+特殊瞳孔
+ （
+星形瞳孔
+ • 
+心形瞳孔
+ • 
+箭头瞳孔
+ • 
+矩形瞳孔
+ • 
+菱形瞳孔
+ • 
+花形瞳孔
+ • 
+十字瞳孔
+ • 
+X形瞳孔
+） • 
+重瞳
+ • 
+卧蚕
+ • 
+眼中眉
+ • 
+无眼球
+ • 
+重眼
+ • 
+复眼
+
+
+
+
+
+
+
+
+
+【眼、眉部】
+
+
+
+眉心点
+ • 
+粗眉
+ • 
+豆眉
+ • 
+弦月眉
+ • 
+吊梢眉
+ • 
+剑眉
+ • 
+一条眉
+ • 
+断眉
+ • 
+分叉眉
+ • 
+无眉
+ • （其它眉毛形状见
+异形眉毛
+） • 
+黑眼圈
+ • 
+长睫毛
+ • 
+厚睫毛
+ • 
+异色睫毛
+ • 
+异形睫毛
+ • 
+下睫毛长
+ / 
+下睫毛明显
+ • 
+睫毛精
+ • 
+无睫毛
+
+
+
+
+
+
+
+
+
+【耳朵】
+
+
+
+兽耳
+（
+猫耳
+/
+狐耳
+/
+犬耳
+/
+兔耳
+） • 
+尖耳朵
+ • 
+机械耳
+ • 
+翅膀型耳朵
+ • 
+鳍型耳朵
+ • 
+长耳垂
+ • 
+大耳朵
+ • 
+无耳
+ • 
+四耳
+
+
+
+
+
+
+
+
+
+【脸部】
+
+
+
+酒窝
+ • 
+红晕
+ • 
+高鼻梁
+ • 
+无鼻
+ • 
+瓜子脸
+ • 
+京都脸
+ • 
+PoRO脸
+ • 
+包子脸
+ • 
+锥子脸
+ • 
+鹅蛋脸
+ • 
+大叔脸
+ • 
+凶恶脸
+ • 
+婴儿肥
+ • 
+童颜
+ • 
+美人痣
+ • 
+泪痣
+ • 
+雀斑
+ • 
+美人沟
+ • 
+男相
+/
+女相
+ • 
+多面
+ • 
+无面
+ • 
+毁容
+
+
+
+
+
+
+
+
+
+【口部】
+
+
+
+虎牙（八重齿）
+ • 
+长犬齿
+ • 
+锯齿牙
+ • 
+换牙
+ • 
+猫嘴
+ • 
+三角嘴/V型嘴
+ • 
+胡须
+ • 
+染黑齿
+ • 
+异色口腔（异色舌）
+ • 
+长舌
+ • 
+分舌
+ • 
+尖舌
+ • 
+龅牙
+ • 
+裂口
+ • 
+无嘴
+ • 
+多口
+
+
+
+
+
+
+
+
+
+【胸部】
+
+
+
+贫乳（平胸）
+ • 
+美乳（普乳）
+ • 
+巨乳
+ • 
+超乳
+ • 
+隐藏巨乳
+ • 
+隐藏贫乳
+ • 
+下乳
+ • 
+侧乳
+ • 
+中乳
+ • 
+假乳
+ • 
+凸点
+ • 
+胸痣
+ • 
+四次元乳沟
+
+
+
+
+
+
+
+
+
+【臂、手部】
+
+
+
+肱二头肌
+ • 
+长臂
+ • 
+多臂
+ • 
+爪子
+ • 
+长指甲
+ • 
+异色指甲
+
+
+
+
+
+
+
+
+
+【腰、腹、臀部】
+
+
+
+A4腰
+ • 
+小肚腩
+ • 
+白虎
+ • 
+骆驼趾
+ • 
+谜之凸起
+ • 
+安产型
+ • 
+美臀
+ • 
+翘臀
+
+
+
+
+
+
+
+
+
+【腿、脚部】
+
+
+
+八字脚
+ • 
+动物足
+ • 
+粗腿
+ • 
+美腿
+ • 
+大长腿
+ • 
+京都腿
+ • 
+绝对空域
+
+
+
+
+
+
+
+
+
+【附属器官】
+
+
+
+翅膀
+（
+羽翼型
+ / 
+蝠翼型
+ / 
+蝉翼型
+ / 
+蝶翼型
+ / 
+机械翼
+ / 
+黑白翼
+ / 
+四翼
+ / 
+六翼
+ / 
+片翼
+ / 
+复合翼
+ / 
+翅膀型上肢
+ / 
+头部翅膀
+ / 
+腰部翅膀
+ / 
+悬浮翅膀
+） • 
+羽毛
+ • 
+角
+（
+独角
+ / 
+双角
+ / 
+断角
+） • 
+触角
+ • 
+触手
+ • 
+尾巴
+（
+双尾
+ / 
+九尾
+ / 
+多尾
+ / 
+心形尾巴
+ / 
+箭头尾巴
+） • 
+鳍
+ • 
+胸灯
+ • 
+鳞
+
+
+
+
+
+
+
+
+
+【皮肤】
+
+
+
+白色皮肤
+ • 
+黑色皮肤
+ • 
+褐色皮肤 / 棕色皮肤
+ • 
+异色皮肤
+（红色、蓝色、绿色等） • 
+伤疤
+ • 
+晒痕
+ • 
+胎记
+ • 
+痣
+（
+美人痣
+ • 
+泪痣
+ • 
+胸痣
+） • 
+缝合线
+ • 
+白癜风
+
+
+
+
+
+
+
+
+
+【化妆】
+
+
+
+文身
+（
+淫纹
+） • 
+唇彩
+ / 
+唇膏
+ / 
+多色口红
+ • 
+眼影
+ • 
+美瞳
+ • 
+彩妆
+ • 
+伤疤妆
+ • 
+美甲
+ • 
+美甲片
+ • 
+人体彩绘
+
+
+
+
+
+
+
+
+
+【特殊】
+
+
+
+丑陋
+ • 
+整容
+ • 
+易容
+ • 
+不露脸
+ • 
+无头
+ • 
+无脸
+ • 
+覆面
+ • 
+异形头
+ • 
+多头
+ • 
+光环
+ • 
+尾气
+ • 
+悬浮肢体
+ • 
+非人肢体
+（
+动物足
+ • 
+翅膀型上肢
+） • 
+异质头发
+（
+水头发
+ • 
+火焰头发
+ • 
+生物头发
+）
+
+
+
+
+
+
+
+
+【总体体型】
+
+
+
+掌上娘
+ • 
+矮小
+（
+幼儿体型
+） • 
+长身
+ • 
+驼背
+ • 
+巨人
+（
+巨大娘
+/
+巨女
+） • 
+掌上娘
+ • 
+肌肉体型
+（
+肌肉女
+ / 
+肌肉男
+） • 
+肥胖体型
+ • 
+丰满体型
+ • 
+穿衣显瘦
+ • 
+薄细系
+
+
+
+
+
+
+
+
+
+【复合型】
+
+
+
+长直
+（
+黑长直
+ / 
+白长直
+ / 
+金长直
+） • 
+童颜巨乳
+ • 
+巨乳萝莉
+/ 
+贫乳御姐
+ • 
+金发黑皮
+ • 
+金发碧眼
+ • 
+白发红眼
+ • 
+黑发红眼
+ • 
+醋溜便当
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+服装、饰品、着装状态类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【服装】
+
+
+
+女装
+ / 
+男装
+ • 
+夏装
+ • 
+冬装
+ • 
+制服
+ • 
+运动服
+（
+网球装
+ • 
+艺术体操服
+） • 
+啦啦队服
+ • 
+衬衫
+ • 
+T恤
+ • 
+皮衣
+ • 
+毛衣
+（
+高领毛衣
+（
+露背高领毛衣
+）） • 
+和服
+（
+花嫁和服（结婚礼服）
+ • 
+花魁服
+ • 
+浴衣
+ • 
+羽织
+ • 
+弓道服
+ • 
+巫女服
+ • 
+祭典服
+） • 
+汉服
+ • 
+旗袍
+ • 
+中山装
+ • 
+韩服
+ • 
+奥黛
+ • 
+泰装
+ • 
+燕尾服
+ • 
+晚礼服
+ • 
+圣诞服
+ • 
+洛丽塔装
+（
+王子系
+） • 
+演出服
+ / 
+打歌服
+ • 
+作战服 / 战斗服
+ • 
+中国武术服
+ • 
+袈裟
+ • 
+军服
+ • 
+连衣裙
+（
+无袖连衣裙
+ • 
+太阳裙
+） • 
+连衫裤
+ • 
+背带裙
+ / 
+背带裤
+ • 
+睡衣
+ • 
+女仆装
+ • 
+护士服
+ • 
+兔女郎
+ • 
+布偶装
+ • 
+南瓜装
+ • 
+青蛙装
+ • 
+奶牛装
+ • 
+宇航服
+ • 
+紧身衣
+ • 
+高叉连体衣
+ • 
+实验服
+ • 
+棒球服
+ • 
+西装
+ • 
+潜水服
+ • 
+反重力裙
+ • 
+侠客装
+ • 
+露脐装
+ • 
+婚纱
+ • 
+拘束服
+ • 
+头盔
+ • 
+防具
+ • 
+盔甲 / 铠甲 / 装甲
+ • 
+防护服
+ • 
+外骨骼装甲
+ • 
+杀死童贞服
+ • 
+兽皮装
+ • 
+透明服装
+ • 
+雨衣
+ • 
+破损服饰
+ • 
+芭蕾舞服
+
+    
+
+
+
+
+【整体风格】
+
+
+
+撞色
+ • 服饰配色（
+粉
+ / 
+红
+ / 
+蓝
+ / 
+绿
+ / 
+黄
+ / 
+橙
+ / 
+黑
+ / 
+紫
+ / 
+白
+） • 
+传统 / 复古
+ • 
+韩系
+ • 
+欧美风
+ • 
+和洋折衷
+ • 
+汉洋折衷
+ • 
+原宿系
+ / 
+涩谷系
+ / 
+新宿系
+ • 
+民族风
+ • 
+哥特萝莉风
+ • 
+森女风
+ • 
+中性
+ • 
+机能风
+ • 
+地雷系
+ • 
+量产系
+ • 
+水色界隈
+（
+天使界隈
+） • 
+中国风
+ • 
+罐头
+
+
+
+
+
+
+
+
+
+【上装】
+
+
+
+无袖
+ • 
+短袖
+ • 
+长袖
+ • 
+五分袖
+ • 
+七分袖
+ • 
+萌袖
+ • 
+超长袖 / 水袖
+ • 
+广袖 / 振袖
+ • 
+泡泡袖 / 公主袖
+ • 
+分离袖子
+ • 
+单边袖子
+ • 
+护手袖
+ • 
+开胸高领衫
+ • 
+连帽衫/帽衫
+ • 
+兜帽
+ • 
+风衣
+ • 
+露肩装
+ • 
+单肩装
+ • 
+吊带装
+ • 
+背心 / 马甲
+ • 
+围裙
+ • 
+冲锋衣
+ • 
+POLO衫
+ • 
+娃娃领（丸襟）
+ • 
+V字领
+ • 
+钥匙孔
+ • 
+乳袋
+ / 
+乳帘
+ / 
+乳篷
+ / 
+乳窗
+ • 
+假两件
+ • 
+露背装
+ • 
+夹克
+ • 
+波列罗夹克衫 / 短套领衫
+ • 
+外套半脱
+ • 
+外套披肩
+ • 
+只穿半边
+ • 
+条纹衫
+ • 
+格子衫
+ • 
+花衬衫
+ • 
+文字衫
+
+
+
+
+
+
+
+
+
+【下装】
+
+
+
+短裤
+（
+半腿裤
+ / 
+热裤
+ / 
+高腰短裤
+） • 
+长裤
+ • 
+七分裤
+ • 
+灯笼裤
+ • 
+布鲁玛（体育短裤）
+ • 
+单腿裤
+ • 
+开裆裤
+ • 
+大腿内侧开口裤
+ • 
+超短裙（迷你裙）
+ • 
+超长裙
+ • 
+百褶裙
+ • 
+蛋糕裙
+ • 
+直筒裙
+ • 
+包臀裙
+ • 
+开叉裙
+ • 
+鱼尾裙
+ • 
+四次元裙底
+ • 
+纱笼
+ • 
+低腰裤
+ / 
+高腰裤
+ • 
+紧身裤
+ • 
+裤裙
+ • 
+阔腿裤
+ • 
+低裆裤
+ • 
+喇叭裤
+ • 
+脚蹬裤
+ • 
+苏格兰裙
+ • 
+牛仔裤
+ • 
+皮裤
+ • 
+行灯袴
+ • 
+不对称裙摆
+ • 
+破洞裤
+
+
+
+
+
+
+
+
+
+【内衣】
+
+
+
+创可贴（OK绷）
+ • 
+决胜内衣
+ • 
+猫咪内衣
+ • 
+胖次套头
+ • 
+缠胸布
+ • 
+胸罩
+（
+贝壳胸罩
+ / 
+星形胸罩
+） • 
+抹胸
+ • 
+绷带
+ • 
+乳贴
+ • 
+肚兜
+
+
+
+
+
+
+
+
+
+【内裤（底裤）】
+
+
+
+胖次总论
+ • 
+薛定谔的胖次
+ • 
+蓝白胖次
+ • 
+小熊胖次
+ • 
+草莓胖次
+ • 
+棉白胖次
+ • 
+蕾丝胖次
+ • 
+丁字胖次
+ • 
+系带胖次
+（
+长系带胖次
+） • 
+C型胖次
+ • 
+四角裤 / 平角裤
+ / 
+安全裤
+ • 
+打底裤
+ • 
+灯笼裤
+ • 
+兜裆布
+ • 
+纸尿裤
+
+
+
+
+
+
+
+
+
+【
+泳装
+】
+
+
+
+连体泳装
+ • 
+比基尼
+ • 
+竞赛泳装
+ • 
+死库水（学校泳装）
+ • 
+吊带泳装（Y字泳装）
+ • 
+短袖泳装
+
+
+
+
+
+
+
+
+
+【
+校服
+】
+
+
+
+不穿校服
+ • 
+只穿校服
+ • 
+校服敞开
+ • 
+水手服
+ • 
+学兰
+ • 
+运动衫
+ • 
+日式学校体操服
+ • 
+中国校服
+ • 
+五四装
+ • 
+泰国校服
+ • 
+马来西亚校服
+ • （详见【
+模板:各国校服
+】）
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【
+帽子
+】
+
+
+
+毛线帽（针织帽）
+ • 
+礼帽
+ • 
+小丑帽
+ • 
+鸭舌帽
+ • 
+棒球帽
+ • 
+遮阳帽
+ • 
+斗笠
+ • 
+王冠 / 皇冠
+ • 
+贝雷帽
+ • 
+船形帽
+ • 
+大檐帽
+ • 
+卷檐帽
+ • 
+棉毡帽（火车头帽）
+ • 
+草帽
+ • 
+基帕帽
+ • 
+头盔
+（
+安全帽
+ • 
+骑行头盔
+ • 
+诺曼盔
+）• 
+牛仔帽
+ • 
+睡帽
+ • 
+哥萨克帽
+ • 
+苏联毛帽
+ • 
+解放帽
+ • 
+锥形帽
+ / 
+魔法帽子
+  • 
+博耐特帽
+ • 
+反戴帽
+ • 
+荷叶边洋帽
+ • 
+头套
+ • 
+天冠
+ • 
+绿帽子
+ • 
+学生帽
+ • 
+学位帽
+ • 
+动物帽子
+
+
+
+
+
+
+
+
+
+【
+眼镜
+】
+
+
+
+
+
+
+
+【矫正用】
+
+
+
+圈圈眼镜
+ • 
+夹鼻眼镜
+ • 
+单片眼镜
+ • 
+隐形眼镜
+
+
+
+
+
+
+
+
+
+【保护用】
+
+
+
+太阳镜（墨镜）
+ • 
+护目镜
+ • 
+泳镜
+
+
+
+
+
+
+
+
+
+【装饰用】
+
+
+
+平光眼镜（平镜）
+ • 
+无镜片眼镜
+ • 
+美瞳
+
+
+
+
+
+
+
+
+
+【功能型】
+
+
+
+平视显示器
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【上肢】
+
+
+
+袖标 / 袖章
+ • 
+手套
+（
+长手套
+ • 
+露指手套
+ • 
+兽爪手套
+ • 
+左右手套不同
+ • 
+单手戴手套
+ • 
+半掌手套
+ • 
+花边手套
+） • 
+袖套
+ • 
+卫生袖套
+ • 
+中指袖套
+ • 
+护腕
+ • 
+假袖口
+
+
+
+
+
+
+
+
+
+【
+袜子
+】
+
+
+
+船袜（裸袜）
+ • 
+短袜
+ • 
+三折袜
+ • 
+四分之三袜
+ • 
+及膝袜
+ • 
+五趾袜
+ • 
+过膝袜
+/长筒袜（
+白
+ / 
+黑
+ / 
+条纹
+） • 
+左右袜子不同
+（
+鸳鸯袜 / 异色袜
+ • 
+长短袜
+） • 
+假膝上袜
+ • 
+吊带袜
+ • 
+日式短布袜
+ • 
+日式过膝布袜
+ • 
+袜带
+ • 
+连裤袜
+（
+白
+ / 
+黑
+ / 
+条纹
+ / 
+半透明
+） • 
+泡泡袜
+ • 
+网袜
+ • 
+黑底白袜
+ • 
+条纹袜
+ • 
+袜套
+ • 
+无袜
+ • 
+连体袜
+ • 
+踩脚袜
+ • 
+单腿袜
+ • 
+袜子一角
+ • 
+有袜无鞋
+ • 
+袜子叠穿
+（长袜套短袜） • 
+花边袜
+ • 
+渐变袜
+ • 
+破洞袜
+ • （详见【
+模板:请把袜子还给我
+】）
+
+
+
+
+
+
+
+
+【鞋子】
+
+
+
+木屐
+ • 
+草履
+ • 
+拖鞋
+ • 
+凉鞋
+ / 
+洞洞鞋
+ • 
+浅口鞋
+ • 
+皮鞋
+ • 
+靴子
+（
+短靴
+ / 
+中靴
+ / 
+长靴
+ / 
+过膝靴
+ / 
+连裤靴
+ / 
+雨鞋 / 雨靴
+ / 
+雪地靴
+ / 
+袜靴
+ / 
+长短靴
+）  • 
+布鞋
+ • 
+玛丽珍鞋
+ • 
+乐福鞋 / 制服鞋
+ • 
+高跟鞋
+ • 
+厚底鞋
+ • 
+运动鞋
+ • 
+帆布鞋
+ • 
+舞蹈鞋
+ • 
+溜冰鞋
+ • 
+轮滑鞋 / 旱冰鞋
+ • 
+室内鞋
+ / 
+一带白布鞋
+ • 
+兽爪鞋
+  • 
+翘头鞋
+ • 
+露趾鞋
+ • 
+玻璃鞋
+ • 
+左右鞋子不同
+（
+鸳鸯鞋
+ / 
+长短靴
+）
+
+
+
+
+
+
+
+
+【饰品】
+
+
+
+丝带（发带）
+ • 
+绷带
+ • 
+创可贴
+ • 
+提胸带
+ • 
+披风 / 斗篷
+ • 
+披肩
+ • 
+铃铛
+ • 
+锁链
+ • 
+心形锁
+ • 
+匪帮说唱三件套
+ • 
+飘带 / 披帛
+ • 
+胸针
+ / 
+胸花
+ • 
+胸垫 / 假胸
+ • 
+补丁
+ • 
+蝴蝶结
+（
+尾巴蝴蝶结
+ / 
+大蝴蝶结
+） • 
+脐环
+ • 
+弹链
+ • 
+佩剑 / 刀
+ • 
+徽章
+ • 
+绶带
+ • 
+腰带
+ • 
+电线
+ • 
+数据线
+ • 
+天线
+ • 
+饰品翅膀
+ • 
+饰品尾巴
+
+    
+
+
+
+
+头部
+
+
+
+
+
+
+
+
+发饰
+
+
+
+
+发箍
+ • 
+发夹
+ • 
+发带
+ • 
+发绳
+ • 
+头带
+ • 
+头巾
+ • 
+头纱
+ • 
+头链
+ • 
+抹额
+ • 
+钵卷
+ • 
+冠
+ • 
+耳套
+ • 
+蝴蝶结
+（
+胖次蝴蝶结
+ / 
+兔耳蝴蝶结
+） • 
+簪
+ • 
+发珠
+ • 
+大肠发圈
+ • 
+植物发饰
+（
+头花
+ / 
+花环
+） • 
+动物发饰
+（
+羽毛发饰
+） • 
+月亮发饰
+ • 
+星星发饰
+ • 
+骷髅发饰
+ • 
+心形发饰
+ • 
+X形发饰
+ • 
+角发饰
+ • 
+兽耳发饰
+ • 
+翅膀发饰
+ • 
+音符发饰
+ • 
+礼帽发箍
+
+
+
+
+
+
+
+
+
+面部
+
+
+
+面具
+ （
+防毒面具
+ • 
+曲棍球面具
+ • 
+狐狸面具
+） • 
+面罩
+ • 
+面纱
+ • 
+花钿
+ • 
+眼罩
+ • 
+口罩
+ • 
+鼻环
+ • 
+舌钉
+ • 
+唇钉
+ • 
+牙套
+ • 
+额饰
+ • 
+片目
+
+
+
+
+
+
+
+
+
+
+耳饰
+
+
+
+
+耳环
+ • 
+耳坠
+ • 
+耳钉
+ • 
+耳桥
+ • 
+耳夹
+ • 
+单边耳饰
+ • 
+左右耳饰不同
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+颈部
+
+
+
+红领巾
+ • 
+领巾
+ • 
+领结
+ • 
+领带
+ • 
+围巾
+ • 
+项圈 / 颈圈
+ • 
+项链
+ • 
+项绳
+ • 
+吊坠
+ • 
+拉夫领
+ • 
+水手领
+ • 
+毛领
+ • 
+假领
+
+
+
+
+
+
+
+
+
+上肢
+
+
+
+戒指
+ • 
+手铐
+ • 
+手绳
+ • 
+手环 / 手镯
+ • 
+手链
+ • 
+手串
+ • 
+臂环 / 臂钏
+
+
+
+
+
+
+
+
+
+下肢
+
+
+
+腿环
+ / 
+腿带
+ • 
+脚环
+ • 
+脚戒
+ • 
+脚镣
+ • 
+护膝
+ • 
+绑腿
+ • 
+吊敦
+/
+恰卜斯
+（护腿套裤）
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【裸装】
+
+
+
+半裸
+（
+无上装
+ / 
+无下装
+） • 
+真空
+（
+不穿胸罩
+ / 
+不穿内裤
+ / 
+裸体围裙
+ / 
+裸体衬衫
+ / 
+裸体长筒袜
+） • 
+裸足
+（
+不穿袜子
+） • 
+爆衣 / 破衣
+ • 
+不穿裙子
+ • 
+裸腿
+ • 
+露背
+ • 
+露肩
+ • 
+浴巾
+ • 
+逆兔女郎
+ • 
+露胸
+ • 
+露腋
+ • 
+独鞋
+ • （详见【
+模板:裸体
+】）
+
+
+
+
+
+
+
+
+【特殊服饰】
+
+
+
+生物服饰
+ • 
+能力形成的服饰
+ • 
+武器化服饰
+
+
+
+
+
+
+
+
+
+【服饰搭配】
+
+
+
+水手服配学校泳装
+ • 
+学校泳装配过膝袜
+ • 
+内衣围裙
+ / 
+比基尼围裙
+ • 
+长袖套短袖
+ • 
+裙子里穿裤子
+ • 
+衣服系腰
+ • 
+绝对领域
+ • 
+连裤袜配短裙
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+职业、身份、种族类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【职业】
+
+
+
+
+
+
+
+农业
+
+
+
+农民 / 农业业者
+ • 
+饲养员
+ • 
+渔民
+ • 
+驯养师
+ • 
+猎人
+ • 
+牧人
+ • 
+樵夫
+
+
+
+
+
+
+
+
+
+工业 / 手工业
+
+
+
+工人
+（
+伐木工
+ / 
+矿工
+ / 
+技师 / 技工
+）• 
+工匠 / 手工艺人
+（
+铁匠
+ / 
+匠师
+） • 
+调香师
+ • 
+裁缝
+
+
+
+
+
+
+
+
+
+科技 / 教育
+
+
+
+科学家
+（
+疯狂科学家
+ • 
+海洋学家
+） • 
+研究员
+ • 
+工程师
+ • 
+程序员
+ • 
+教授
+ • 
+考古学家
+ • 
+炼金术士 / 炼丹师
+ • 
+发明家
+ • 
+数学家
+
+
+
+
+
+
+
+
+
+文艺 / 娱乐
+
+
+
+艺人
+（
+落语家
+/
+街头艺人
+） • 
+演员
+（
+旦角演员
+ / 
+配音演员
+） • 
+导演
+ • 
+偶像
+ / 
+网络偶像
+ / 
+地下偶像
+ /
+舰队偶像
+ • 
+经纪人
+ • 
+歌手 / 歌姬
+ • 
+舞者 / 舞姬
+ • 
+模特
+ • 
+漫画家
+ • 
+画家
+ • 
+作家
+（
+诗人
+） • 
+人偶师
+ • 
+魔术师
+ • 
+音乐人
+ • 
+作曲
+ • 
+作词
+ • 
+乐师
+ • 
+动画师
+ • 
+DJ
+ • 
+解说员
+ • 
+实况主 / 直播主
+ • 
+设计师
+ • 
+编辑
+ • 
+记者
+ • 
+主持人
+ • 
+马戏演员 / 小丑
+ • 
+摄影师
+ • 
+吟游诗人
+ • 
+伶人
+ • 
+艺妓
+ • 
+花魁
+ • 
+角斗士
+ • 
+说书人
+
+
+
+
+
+
+
+
+
+体育
+
+
+
+运动员
+ • 
+教练
+ • 
+格斗家 / 武术家
+ • 
+雀士
+ • 
+棋士
+ • 
+赛车女郎
+ / 
+赛车手
+ • 
+电竞选手 / 电子竞技运动员 / 职业玩家
+ • 
+摔跤手
+ / 摔角手 • 
+角斗士
+
+
+
+
+
+
+
+
+
+卫生
+
+
+
+医生
+（
+神医
+ • 
+瘟疫医生
+ • 
+心理医生
+） • 
+药剂师
+ • 
+护士
+ • 
+助产士 / 接生员
+
+
+
+
+
+
+
+
+
+商务 / 经营
+
+
+
+Office Lady
+ / 
+上班族
+ • 
+店主 / 老板娘
+ • 
+理事长
+ • 
+董事长
+ • 
+秘书
+ • 
+会计
+ • 
+出租伴侣
+ • 
+商人
+（
+奸商
+ • 
+企业家
+）• 
+情报商（情报屋）
+ • 
+中介
+
+
+
+
+
+
+
+
+
+交通 / 运输行业
+
+
+
+司机
+ • 
+舰长 / 船长
+ • 
+船夫
+ • 
+纤夫
+ • 
+水手
+ • 
+飞行员
+ • 
+电梯小姐
+ • 
+乘务员
+ / 
+空姐
+ / 
+空少（空哥）
+ / 
+列车乘务员
+  • 
+宇航员
+ • 
+领航员
+ • 
+航海家
+
+
+
+
+
+
+
+
+
+服务业
+
+
+
+电梯小姐
+ • 
+服务生
+（
+看板娘
+ / 
+看板郎
+） • 
+厨师
+（
+糕点师
+ • 
+面包师
+） • 
+酒保 / 调酒师
+ • 
+荷官
+ • 
+导游
+ • 
+丫鬟
+ • 
+保姆
+ • 
+管家（执事）
+ • 
+耳小町
+ • 
+援助交际
+ / 
+娼妇 / 风俗（女）娘
+ / 
+牛郎
+ • 
+佣人
+（
+女仆
+（
+和风女仆
+ / 
+大正女仆
+）） • 
+园艺师
+ • 
+ 家庭教师
+ • 
+快递员
+ / 
+外卖员
+ • 
+理发师
+ • 
+清洁工
+ • 
+翻译
+ • 
+护工
+ • 
+护理员
+ • 
+家政工
+ • 
+美发师
+ • 
+化妆师
+
+
+
+
+
+
+
+
+
+政 / 军 / 法
+
+
+
+国家元首
+ • 
+政治家
+ • 
+党首
+ • 
+政委
+ • 
+公务员
+ • 
+帝师
+ • 
+警察
+（
+特警
+） • 
+外交官
+ • 
+军人
+（
+宪兵
+） • 
+狙击手
+ • 
+爆破手
+ • 
+佣兵
+ • 
+保镖
+ • 
+杀手
+ • 
+间谍
+ • 
+特工
+ • 
+指挥官
+ • 
+法官
+ • 
+检察官
+ • 
+律师
+ • 
+恐怖分子
+ • 
+私法制裁者
+ • 
+革命者
+ • 
+军官
+（
+军衔
+ • 
+将军 / 元帅
+ ）• 
+武士
+ • 
+忍者
+ • 
+刺客
+ • 
+射手 / 神射手
+ （
+神枪手
+）• 
+军师
+ • 
+提督
+ • 
+剑士
+ / 
+剑圣
+ • 
+战士
+ • 
+骑士
+ • 
+谋士
+ • 
+大使
+ • 
+典狱长
+  • 
+法医
+
+
+
+
+
+
+
+
+
+公共服务
+
+
+
+消防员
+ • 
+邮递员
+ • 
+环卫工
+ • 
+救生员
+
+
+
+
+
+
+
+
+
+宗教
+
+
+
+巫女
+ / 
+巫觋（萨满）
+ • 
+圣女
+ • 
+牧师
+ / 
+修女
+ / 
+修士
+ / 
+神父
+ • 
+尼姑
+ / 
+僧侣
+ / 
+武僧
+ • 
+道士 / 道姑
+ • 
+祭司
+ • 
+神官
+ • 
+教主（宗教领袖）
+ • 
+德鲁伊
+ • 
+阴阳师
+
+
+
+
+
+
+
+
+
+综合 / 其他
+
+
+
+助手
+ • 
+黑客 / 骇客
+ • 
+侦探
+（
+神探
+） • 
+建筑师
+ • 
+打工族
+ • 
+赏金猎人
+ • 
+盗贼
+ / 
+强盗
+ / 
+怪盗
+ / 
+海盗
+ / 
+义贼
+ • 
+欺诈师
+ • 
+受付娘
+ • 
+管理员
+ / 
+公寓管理员
+ / 
+宿舍管理员
+ • 
+替身
+ • 
+门番
+ • 
+总管
+ • 
+门客
+ • 
+赶尸人
+ • 
+侠客
+ • 
+巫师
+ • 
+土匪
+ • 
+书生
+ • 
+文官
+ • 
+太监 / 宦官
+ • 
+宫女
+ • 
+屠夫
+ • 
+处刑人
+ • 
+提刑官
+ • 
+入殓师
+ • 
+占卜师 / 风水师
+ • 
+护院
+ • 
+o长
+ • 
+乳母
+ • 
+拾荒者
+
+
+
+
+
+
+
+
+
+架空职业
+
+
+
+系统
+ • 
+魔法师
+ / 
+巫师
+（
+元素法师
+ / 
+亡灵法师
+ / 
+召唤师
+ / 
+魔女
+ / 
+术士
+ / 
+蛊师
+） • 
+魔法少女
+ / 
+魔法少年
+ • 
+使魔
+ • 
+英雄
+（
+超级英雄
+ • 
+反英雄
+） • 
+超级恶棍 / 超级反派
+ • 
+假面骑士
+ • 
+奥特曼
+ • 
+修真者 / 修仙者
+ • 
+魔武双修
+ • 
+机甲驾驶员
+ • 
+除妖师 / 驱魔师
+ / 
+狩魔者
+ • 
+圣骑士
+ / 
+黑暗骑士
+ / 
+死亡骑士
+ / 
+龙骑士
+ • 
+超级士兵
+ • 
+毒师
+ • 
+游侠
+ • 
+空贼
+ • 
+地球大使
+ • 
+训练师
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【身份】
+
+
+
+
+
+
+
+君主相关
+
+
+
+君主
+（
+女王 / 女皇
+ / 
+酋长
+） • 
+王后 / 皇后
+ • 
+太后
+ • 
+王妃
+ / 
+皇妃
+ • 
+公主
+（
+长公主
+） • 
+王子
+ • 
+储君
+ • 
+郡主
+ • 
+驸马
+ • 
+摄政王
+ • 
+领主
+
+
+
+
+
+
+
+
+
+豪贵相关
+
+
+
+大小姐
+（
+恶役大小姐
+ / 
+贫穷大小姐
+）/ 
+大少爷
+（
+恶役大少爷
+ / 
+贫穷贵公子
+） • 
+贵族
+（
+没落贵族
+）
+
+
+
+
+
+
+
+
+组织 / 团队
+
+
+
+初代
+ • 
+组织领导人
+（
+掌门
+ / 
+网游公会会长
+ / 
+黑社会首领
+  / 
+族群首领
+） • 
+宗族领导人 / 族长
+ • 
+村长
+ • 
+跟班
+ • 
+双重身份
+ • 
+师父
+ • 
+徒弟
+ • 
+幸存者
+ • 
+伯乐
+ • 
+宠物
+ / 
+坐骑
+ • 
+储备粮
+ • 
+内鬼
+ • 
+敌女
+ • 
+领袖
+ • 
+宗门圣子 / 宗门圣女
+
+
+
+
+
+
+
+
+
+军事相关
+
+
+
+童子军
+ • 
+军武娘
+ • 
+军阀
+ • 
+战犯
+
+
+
+
+
+
+
+
+
+违法相关
+
+
+
+黑社会人士
+ • 
+奴隶
+ • 
+人质
+ • 
+囚犯
+ • 
+罪犯
+ • 
+战犯
+ • 
+赌徒
+ • 
+杀人狂（连环杀手）
+ • 
+走私贩
+
+
+
+
+
+
+
+
+
+种族 / 地域 / 出身
+
+
+
+本地人
+ / 
+外地人
+ • 
+本国人
+ / 
+外国人
+ • 
+中国人
+ • 
+犹太人
+ • 
+美国人
+ • （更多现实人类种族请见{{
+ACG族群
+}}） • 
+归国子女
+ • 
+二代
+（
+星二代
+） • 
+混血儿
+ • 
+野生儿
+ • 
+原始人
+ • 
+野蛮人
+ • 
+外裔 / 外籍
+
+
+
+
+
+
+
+
+
+架空相关
+
+
+
+探险家 / 冒险者 / 探险者
+ • 
+魔王
+ • 
+勇者
+ • 
+未来人
+ • 
+异世界人
+ • 
+超能力者
+ • 
+无能力者
+ • 
+穿越者
+ / 
+反穿越者
+ / 
+召唤者
+ • 
+重生者
+ • 
+转世者
+（
+前世
+） • 
+位面之子
+ • 
+天选之子
+ • 
+随身老爷爷
+ • 
+预言家
+ • 
+救世主
+ • 
+怪人
+ • 
+精灵王
+ • 
+神使
+ • 
+魔女(称号)
+ • 
+异人
+ • 
+神皇
+ • 
+贤者
+
+
+
+
+
+
+
+
+
+无业相关
+
+
+
+NEET
+ • 
+乞丐
+ / 
+流浪者
+ • 
+无职
+ • 
+家里蹲
+ • 
+家庭主夫
+ / 
+家庭主妇
+ • 
+隐士
+
+
+
+
+
+
+
+
+
+形象相关
+
+
+
+辣妹
+（
+纯情辣妹
+） • 
+美男子
+ • 
+丧女
+ • 
+土妹子
+ • 
+绅士 / 淑女
+(
+英伦淑女
+）
+
+
+
+
+
+
+
+
+综合 / 其他
+
+
+
+飞特族
+ • 
+收藏家
+ • 
+旅行者
+ • 
+志愿者 / 义工
+ • 
+情强 / 情报通
+ • 
+拉拉队员
+ • 
+箱娘
+ • 
+网友 / 网民
+ • 
+文盲
+ • 
+归宅部
+ • 
+农家女
+ • 
+红娘 / 媒人
+ • 
+牛仔
+ • 
+玩家
+ • 
+守墓人
+ • 
+沦为凡人
+ • 
+实验体
+ • 
+孑遗
+ • 
+天才
+ • 
+明星
+ • 
+社会人
+ • 
+试管婴儿
+ • 
+艺术家
+ • 
+登山家
+ • 
+暴走族
+ • 
+祭品
+ • 
+弥赛亚
+ • 
+教徒
+
+
+
+
+
+
+
+
+
+作品中地位
+
+
+
+路人（龙套）
+ • 
+女一号
+ / 
+男一号
+ • 
+路人女主
+ / 
+路人男主
+ • 
+正宫
+ • 
+隐藏主角
+ • 
+敌对角色
+ • 
+反派角色
+（
+滑稽反派
+）• 
+幕后黑手
+ • 
+玩家角色（PC）
+ （
+摄像头
+）• 
+非玩家角色（NPC）
+ • 
+BOSS
+ • 
+剧情祭品
+ • 
+通配角色
+ • 
+吉祥物
+ • 
+团宠
+ • 
+吐槽役
+ • 
+白月光
+ • 
+杂兵
+ • 
+精英怪
+ • 
+作中作角色
+ • 
+联动角色
+ • 
+新手引导角色
+ • 
+历史角色
+ • 
+历史人物
+ • 
+未登场角色
+ • 
+已故角色
+ • 
+改编原创角色
+ • 
+作者化身 / 作者本人
+ • 
+原型角色
+ • 
+教材角色
+ • 
+主角后代
+ • 
+主角厨
+ • 
+反派后代
+ • 
+最强
+ • 
+最弱
+ • 
+战斗力单位
+ • 行当（
+生
+、
+旦
+、
+净
+、
+丑
+、
+末
+） • 
+量产型角色
+ • 
+分身角色
+ • 
+工具人
+ • 
+神秘人
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【校内职业、身份】
+
+
+
+
+学生
+（
+小学生
+ / 
+初中生
+ / 
+高中生
+ / 
+大学生
+ / 
+研究生
+） • 
+普通高中生
+ • 学生会（
+学生会长 / 学生会主席
+ • 
+学生会副会长
+ • 
+学生会书记
+ • 
+学生会会计
+） • 
+部长 / 社团负责人
+ / 
+副部长
+ • 
+风纪委员
+ • 
+美化委员
+ • 
+饲育委员
+ • 
+放送委员
+ • 
+电教委员
+ • 
+班长（学级委员长）
+ / 
+副班长（副委员长）
+ • 
+o班学生
+ • 
+交换生
+ • 
+留学生
+ • 
+学园偶像
+ • 
+文科生
+ • 
+理科生
+ • 
+艺术生
+ • 
+体育生
+ • 
+不良
+ • 
+番长
+ • 
+校长
+ • 
+教头 / 教务长 / 教务主任
+ • 
+教授
+ • 
+教师（老师）
+ • 
+班主任
+ / 
+副班主任
+ • 
+学生社团顾问（社团指导教师）
+ • 
+保健老师
+ • 
+社团经理人
+ • 
+褓母 / 褓父
+ • 
+图书管理员
+ • 
+校友
+（
+转学生
+ / 
+毕业生
+） • 
+留级生
+ • 
+跳级生
+ • 
+辍学生
+ • 
+优等生（学霸）
+ • 
+差生（学渣）
+ • 
+偏科生
+ • 
+宿舍管理员
+ • 
+宿舍长 / 寝室长
+ • 
+幽灵社员
+
+
+
+
+
+
+
+
+
+【种族】
+
+
+
+人类
+（
+现实人类种族
+） • 
+人外
+ • 
+动物
+ • 
+植物
+ • 
+亚人
+ • 
+思念体
+ • 
+幻想角色
+ • 
+不明生物
+ • 
+魔物娘
+ • 
+兽娘
+/
+兽郎
+（
+猫娘
+ / 
+猫郎
+ • 
+犬娘
+ / 
+犬郎
+ • 
+狼娘
+ • 
+狐娘
+ / 
+狐郎
+ • 详见【
+模板:生物体萌化
+】）• 
+Furry
+（
+兽人
+） • 
+兽化人
+  • 
+半人半虫
+  • 
+二重身
+
+      
+
+
+
+
+神话
+
+
+
+神明
+（
+女神
+ / 
+死神
+ / 
+半神
+ / 
+最高神
+ / 
+创世神
+ / 
+守护神
+ / 
+太阳神
+ / 
+月神
+ / 
+水神 / 海神
+ / 
+火神
+ / 
+丰收之神
+ / 
+战神
+ / 
+军神
+ / 
+爱神
+ / 
+风神
+ / 
+雷神
+ / 
+山神
+ / 
+天神
+ / 
+土地神 / 大地之神
+ / 
+时间神
+/ 
+稻荷神
+） • 
+神族
+ • 
+天使
+ / 
+堕天使
+ • 
+阿其翁
+ • 
+泰坦
+ • 
+仙人
+ • 
+夜叉
+
+
+
+
+
+
+
+
+
+魔幻
+
+
+
+恶魔
+ / 
+魔族
+ / 
+魅魔
+ • 
+龙
+ / 
+龙族
+ /
+龙女
+ • 
+亡灵
+ / 
+僵尸 / 丧尸
+ / 
+巫妖
+ / 
+尸妖
+ • 
+幽灵
+（
+地缚灵
+ / 
+恶灵
+ / 
+骚灵
+） • 
+无头骑士
+ • 
+食尸鬼
+ • 
+木乃伊
+ • 
+饿者骷髅
+ • 
+活化盔甲
+ • 
+怪兽
+ • 
+妖怪
+（
+半妖
+ • 
+植物妖
+ • 
+虫妖
+（
+蜘蛛精
+）） • 
+叶下小人
+ • 
+雪女
+ • 
+付丧神（九九神）
+ • 
+座敷童子
+ • 
+鬼
+ • 
+猫又
+ • 
+天狗
+ • 
+妖精（小仙子）
+ • 
+调换儿
+ • 
+黑暗精灵
+ / 
+精灵
+（
+半精灵
+） • 
+元素精灵
+ • 
+吸血鬼
+（
+半吸血鬼
+） • 
+狼人
+ • 
+美人鱼
+ / 
+鱼人
+ • 
+半人半蛇
+ • 
+半羊人
+ • 
+人马
+ • 
+牛头人
+ • 
+奇美拉
+ • 
+矮人
+ • 
+半身人
+ • 
+巨灵
+ • 
+巨魔
+ • 
+寇伯
+ / 
+哥布林
+ / 
+大哥布林
+ / 
+半兽人（欧克）
+ / 
+食人魔
+ • 
+地精
+ • 
+巨人
+ • 
+魔像
+ • 
+人偶
+ • 
+魔女
+ • 
+史莱姆
+ • 
+骷髅
+ • 
+狂战士
+ • 
+食品生物
+ • 
+守墓人(种族)
+ • 
+原初实体
+ • 
+石头人
+ • 
+双体兽
+ • 
+温迪戈
+ • 
+小魔怪
+ • 
+鬣狗人
+
+
+
+
+
+
+
+
+
+科幻
+
+
+
+机娘
+ / 
+机郎
+ • 
+机器人
+ • 
+机械生命体
+ • 
+义体人
+ • 
+人格化兵器
+ （
+舰娘
+） • 
+克隆人
+ • 
+虚拟人
+ • 
+AI姬
+ • 
+人造人
+ • 
+外星人
+ • 
+虫族
+ • 
+变种人 / 变异人类
+ • 
+怪人
+ • 
+生物兵器
+ • 
+原型 / 试产 / 技术验证机
+ • 
+仿生人
+ • 
+硅基生命
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+武器、道具类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【日常用具】
+
+
+
+扇子
+（
+折扇
+ / 
+团扇
+ / 
+羽扇
+ / 
+铁扇
+） • 
+伞
+ • 
+酒器
+ • 
+照相机
+ • 
+摄像机
+ • 
+怀表
+ / 
+手表
+ • 
+烟斗
+ • 
+手推车
+ • 
+玩偶（人偶）
+ • 
+手偶
+ • 
+耳机
+ / 
+通讯器
+ / 
+手机
+ • 
+计算机
+ • 
+随身听
+ • 
+鞭子 / 皮鞭
+ • 
+自行车
+ • 
+摩托车
+ • 
+手提包 / 挎包
+ • 
+背包
+ • 
+腰包
+ • 
+公文包
+ • 
+手提箱
+ • 
+电击器
+ • 
+手杖 / 拐杖
+ • 
+权杖
+ • 
+捕虫网
+
+
+
+
+
+
+
+
+
+【文具】
+
+
+
+剪刀
+ • 
+粉笔
+ • 
+毛笔
+ • 
+笔刀
+ • 
+尺
+ • 
+美工刀
+ • 
+纸
+ • 
+胶水
+ • 
+圆规
+ • 
+日式小学生书包
+ • 
+笔记本
+
+
+
+
+
+
+
+
+
+【劳动工具】
+
+
+
+柴刀
+ • 
+铲 / 锹
+ • 
+菜刀
+ • 
+斧
+ • 
+撬棍
+ • 
+锤
+ • 
+杵
+ • 
+钉
+ • 
+叉
+ • 
+镰刀
+ • 
+扫帚
+ • 
+锯子
+（
+动力锯
+） • 
+钻头
+ • 
+扳手
+ • 
+钓竿
+ • 
+连枷
+
+
+
+
+
+
+
+
+
+【一般
+武器
+】
+
+
+
+
+
+
+
+冷兵器
+
+
+
+
+
+
+
+【锐器】
+
+
+
+刀剑
+（
+匕首
+ / 
+中国剑
+ / 
+中国刀
+ / 
+日本刀
+ / 
+巨剑
+ / 
+军刀
+ / 
+刺刀
+ / 
+光剑
+ / 
+蛇腹剑
+ / 
+弯刀
+ / 
+廓尔喀刀（尼泊尔军刀）
+） • 
+矛枪
+（
+骑枪
+） • 
+绳镖
+ • 
+长柄刀 / 偃月刀 / 薙刀
+ • 
+斧
+ • 
+镰刀
+ • 
+钩（护手钩）
+ • 
+钩爪
+ • 
+戟
+ • 
+斧枪（瑞士戟）
+ • 
+叉
+ • 
+三叉戟
+ • 
+偃月轮
+ • 
+袖剑
+ • 
+枪刃
+ • 
+贯钉
+
+
+
+
+
+
+
+
+
+【钝器】
+
+
+
+锤
+（
+钉头锤
+） • 
+棍棒
+ • 
+狼牙棒
+ • 
+流星锤
+ • 
+拳套
+ • 
+指虎
+ • 
+铁尺 / 十手
+ • 
+锏
+ • 
+警棍
+ • 
+环
+ • 
+拐棍
+ • 
+判官笔
+ • 
+连枷
+ • 
+双节棍
+ • 
+三节棍
+
+
+
+
+
+
+
+
+
+【远程 / 暗器】
+
+
+投掷类武器（
+飞刀
+ / 
+苦无
+ / 
+手里剑
+ / 
+飞针
+ / 
+飞镖
+ / 
+回旋镖
+ / 
+飞爪
+ / 
+飞盘
+） • 
+弓
+ • 
+弩
+ • 
+箭矢
+ • 
+弹弓
+ • 
+气枪
+ • 
+铁蒺藜 / 撒菱 / 三角钉
+
+
+
+
+
+
+
+
+
+【防具 / 特殊】
+
+
+
+盾牌
+ • 
+丝 / 线 / 绳 / 索
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+枪械
+
+
+
+
+枪刃
+ • 
+火枪
+ • 
+步枪
+ / 
+突击步枪
+ / 
+反器材步枪
+ • 
+机枪
+ • 
+冲锋枪
+ • 
+手枪
+ / 
+转轮手枪
+ • 
+霰弹枪
+ • 
+狙击枪
+ • 
+伪装枪
+
+      
+
+
+
+
+注
+
+
+关于大型热兵器以及对于体现角色萌属性不强的通用热兵器，另见【
+模板:军事话题索引
+】。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+魔法 / 法术兵器
+
+
+
+魔剑
+ • 
+魔法杖
+ • 
+魔导书
+ • 
+卷轴
+ • 
+符箓 / 符咒
+ • 
+法宝
+
+
+
+
+
+
+
+
+
+其他兵器
+
+
+
+光剑
+ • 
+火焰喷射器
+ • 
+火箭筒
+ • 
+无后坐力炮
+ • 
+手榴弹
+ • 
+燃烧瓶
+ • 
+电击器
+ • 
+能量枪械
+ / 
+能量炮
+
+
+
+
+
+
+
+
+
+武器特征
+
+
+
+暗器
+ • 
+双头武器 / 双刃剑
+ • 
+结合式武器
+ • 
+组合武器
+  • 
+多形态武器
+ • 
+可折叠武器
+  • 
+巨大武器
+ / 
+巨人武器
+ • 
+无人武器
+ • 
+伪装武器
+ • 
+土造武器
+ • 
+临时武器
+ • 
+镇暴武器
+ • 
+人格化兵器
+ • 
+神造武器
+ • 
+武器化乐器
+ • 
+武器化服饰
+
+
+
+
+
+
+
+
+
+武器搭配
+
+
+
+剑盾组合
+ • 
+多种武器
+ • 
+武器专家
+ • 
+双持武器
+ / 
+双枪 / 双持火器
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【体育用品】
+
+
+
+棒球棒
+ • 
+棒球手套
+ • 
+棒球
+ • 
+拳套
+ • 
+露指拳套
+ • 
+网球拍
+ • 
+网球
+ • 
+乒乓拍
+ • 
+乒乓球
+ • 
+羽毛球拍
+ • 
+滑板
+ • 
+滑雪板
+ • 
+冲浪板
+ • 
+冰鞋
+ • 
+泳镜
+ • 
+天鹅泳圈
+ • 
+水球
+ • 
+艺术体操棒
+ • 
+高尔夫球
+ • 
+高尔夫球杆
+ • 
+冰球
+ • 
+排球
+ • 
+篮球
+ • 
+足球
+ • 
+风筝
+
+
+
+
+
+
+
+
+
+【音乐用品】
+
+
+
+
+
+
+
+拨弦乐器
+
+
+
+吉他
+ / 
+电吉他
+ • 
+贝斯
+ • 
+三味线
+ • 
+尤克里里
+ • 
+琵琶
+ • 
+古琴
+ • 
+筝
+ • 
+阮
+ • 
+班卓琴
+ • 
+托甫秀尔
+ • 
+竖琴
+
+
+
+
+
+
+
+
+
+拉弦乐器
+
+
+
+小提琴
+ • 
+中提琴
+ • 
+大提琴
+ • 
+低音提琴
+ • 
+马头琴
+ • 
+二胡
+
+
+
+
+
+
+
+
+
+木管乐器
+
+
+
+长笛
+ • 
+短笛
+ • 
+单簧管
+ • 
+双簧管
+ • 
+大管
+ • 
+萨克斯
+ • 
+唢呐
+ • 
+竖笛
+ • 
+箫
+
+
+
+
+
+
+
+
+
+铜管乐器
+
+
+
+号角
+ • 
+小号
+ • 
+圆号 / 法国号
+ • 
+长号
+ • 
+大号
+ • 
+上低音号 / 次中音号
+ • 
+迪吉里杜管
+
+
+
+
+
+
+
+
+
+自由簧乐器
+
+
+
+口琴
+
+
+
+
+
+
+
+
+
+键盘乐器
+
+
+
+钢琴
+ • 
+电子琴
+ • 
+手风琴
+ • 
+口风琴
+ • 
+风琴
+
+
+
+
+
+
+
+
+
+打击乐器
+
+
+
+铃铛
+ • 
+三角铁
+ • 
+锣
+ • 
+钹
+ • 
+架子鼓
+ • 
+响板
+ • 
+钢片琴
+ • 
+牛铃
+ • 
+沙锤
+ • 
+钟
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【食物 / 饮品】
+
+
+
+茶
+ • （详见【
+模板:ACG道具
+】）
+
+
+
+
+
+
+
+
+
+【辅助性工具、设备】
+
+
+
+
+义肢
+ • 
+拐杖
+ • 
+轮椅
+ • 
+义眼
+ • 
+无人机
+
+
+
+
+
+
+
+
+
+【其他道具】
+
+
+
+语录
+ • 
+书
+ • 
+宝塔
+ • 
+御柱
+ • 
+御币
+ • 
+葫芦
+ • 
+水晶球
+ • 
+泰式花环
+ • 
+绷带
+ • 
+旗帜
+ • 
+令牌
+ • 
+喷气背包
+
+
+
+
+
+
+
+
+
+注
+
+
+对于体现角色萌属性不强的通用性物品、生活用具，另见【
+模板:ACG道具
+】。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+语言、动作、表情类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【语言 / 文字】
+
+
+
+
+
+
+
+行为 / 习惯
+
+
+
+口癖
+ / 
+口头禅
+ / 
+大小姐口癖
+ • 
+口胡
+ • 
+敬语
+ • 
+语速快
+ / 
+语速慢
+ • 
+话痨
+ • 
+电子音
+ • 
+哑语 / 手语
+ • 
+书写对话
+ / 
+扇书
+ • 
+口吃（结巴）
+ • 
+伪声
+ • 
+腹语
+ • 
+说谎
+ • 
+阴阳怪气
+ • 
+冷笑话
+ • 
+双关语
+ • 
+引用癖
+ • 
+吐槽
+ • 
+旁白
+ • 
+外语
+ • 
+外来语
+ • 
+粗口
+ • 
+棒读
+ • 
+暴言
+ • 
+报招式名
+ • 
+隐喻
+ • 
+押韵
+ • 
+藏头
+ / 
+藏尾
+ • 
+语言不通
+ • 
+片言
+ • 
+漫才
+ • 夹杂外文（
+夹杂英文
+） • 
+谜语人
+ • 
+特殊声线
+ • 
+多种声线
+ • 
+精通多语
+ • 
+特殊字幕
+ • 
+大喘气
+ • 
+大嗓门
+ • 
+语气助词
+ • 
+字迹潦草
+
+
+
+
+
+
+
+
+
+
+腔调 / 方言
+
+
+
+[+]
+
+
+
+
+
+
+汉语方言
+ • 
+中式英语
+ • 
+关西腔 / 京都腔
+ • 
+广岛腔
+ • 
+江户腔
+ • 
+九州腔
+ • 
+北海道腔
+ • 
+日式普通话
+ • 
+日式英语
+ • 
+角色腔
+ • 
+廓词
+ • 
+古风腔
+ • 
+Onee腔
+ • 
+宅语言
+ • 
+塑料普通话
+ • 
+AI腔
+
+
+
+
+
+
+
+
+
+姓名 / 称呼
+
+
+
+特殊第一人称
+（特例：
+第三人称己称
+） • 
+第一人称变化
+ • 
+特殊第二人称
+ • 
+小名 / 乳名
+ • 
+绰号
+ / 
+昵称
+ • 
+同名
+ / 
+同姓
+（与名人同姓） • 
+姓前名后 / 名前姓后
+ • 
+另类名字
+ • 
+平假名名字
+ • 
+片假名名字
+ • 
+音译假名
+ • 
+借字
+ • 
+随母姓
+ • 
+外文名
+ • 
+英文名
+ • 
+名字暗示
+ • 
+无名无姓
+ • 
+有姓无名
+ • 
+有名无姓
+ • 
+本名不明
+ • 
+复姓
+ • 
+多节姓氏
+ • 
+改名
+ / 
+换姓
+ • 
+绰号
+ / 
+昵称
+ • 
+赐名
+ • 
+继承名字
+ • 
+异性化名字
+ • 
+本名厌恶
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【行为动作】
+
+
+
+
+
+
+
+综合行为
+
+
+
+卖萌
+（
+限定卖萌对象
+） / 
+撒娇
+ / 
+恶意卖萌
+ • 
+发情 / 求欢
+ • 
+搞事
+ • 
+抢戏
+ • 
+复仇
+ • 
+报恩
+ • 
+赎罪
+ • 
+背叛
+ • 
+暗堕
+ • 
+暴走
+ • 
+绑架
+ • 
+偷窥
+ • 
+偷拍
+ • 
+夜袭
+ • 
+叼棒棒糖
+ • 
+叼面包
+ • 
+装逼
+ / 
+装弱
+ • 
+装鬼
+ • 
+装嫩
+ • 
+装成熟
+ • 
+装傻
+ • 
+装纯
+ • 
+装死
+ • 
+恶作剧
+ • 
+欺负
+ • 
+无理取闹
+ • 
+离家出走
+ • 
+逃学 / 不登校
+ • 
+祈祷
+ • 
+诅咒
+ / 
+蹲下画圈圈
+ • 
+飙车
+ • 
+转行
+ • 
+写情书 / 送情书
+ • 
+赖账（欠钱不还/霸王餐/推卸责任）
+ • 
+迟到大王
+ • 
+等候
+ • 
+自曝
+ • 
+自拍
+ • 
+撞头
+ • 
+战损
+ • 
+食人
+ • 
+自慰
+ • 
+自残
+ • 
+突破第四面墙
+ • 
+越狱
+ • 
+湿身
+ • 
+失禁
+ • 
+放屁
+ • 
+开门王
+ • 
+隐居
+ • 
+AAO
+ • 
+减肥
+
+
+
+
+
+
+
+
+
+超自然行为
+
+
+
+变身
+ • 
+穿越
+ • 
+复活
+ • 
+封印
+ • 
+转世
+（
+转世者
+） • 
+改变种族
+ • 
+成神
+ / 
+升仙
+ / 
+成佛
+ • 
+弑神
+ • 
+透明消失
+
+
+
+
+
+
+
+
+
+思想行为
+
+
+
+妄想 / 脑补
+ • 
+暗爽
+ • 
+想象高潮
+ • 
+一见钟情
+ • 
+日久生情
+ • 
+觊觎
+ • 
+嫉妒
+ • 
+憎恨
+ • 
+脑内天使和恶魔
+ • 
+脑内会议
+ • 
+迷信
+
+
+
+
+
+
+
+
+
+毛发行为
+
+
+
+炸毛
+ • 
+撩头发
+ • 
+玩头发
+ • 
+换发型
+（
+剪发
+ • 
+留长发 / 蓄发
+ • 
+接发
+ • 
+烫发
+ • 
+拉发
+） • 
+染发
+ • 
+去除染发
+ • 
+呆毛自己动
+
+
+
+
+
+
+
+
+
+头部行为
+
+
+
+鼻血
+ • 
+娇喘
+ • 
+吹口哨
+ • 
+强吻
+ • 
+呕吐
+ • 
+吐血
+ • 
+吞
+ • 
+打嗝
+ • 
+打喷嚏
+ • 
+流泪
+ • 
+闭眼
+ • 
+打哈欠
+ • 
+舔手指
+ • 
+衔
+ • 
+抢镜脸
+ • 
+磨牙
+
+
+
+
+
+
+
+
+
+躯干行为
+
+
+
+乳摇
+ • 
+憋尿
+ • 
+吃撑
+
+
+
+
+
+
+
+
+
+上肢行为
+
+
+
+咬手指
+ • 
+对手指
+ • 
+手刀
+ • 
+耳光
+ • 
+转转拳
+ • 
+摁铅笔
+ • 
+转笔
+ • 
+干杯
+ • 
+掰手指
+ • 
+手势
+ • 
+剪刀手 / V手势
+ • 
+OK手
+ • 
+嘘
+ • 
+响指
+ • 
+竖大拇指
+ • 
+竖中指
+ • 
+画圈圈
+ • 
+手背垫手肘
+ • 
+撩裙子
+ • 
+拉钩
+ • 
+拽衣领
+ • 
+插口袋
+ • 
+背手
+ • 
+拍胸口
+ • 
+千手观音
+ • 
+一手指天
+ • 
+托腮
+ • 
+刷牙
+ • 
+双手抱胸
+ • 
+挡脸
+ • 
+推眼镜
+ • 
+抽烟
+
+
+
+
+
+
+
+
+
+下肢行为
+
+
+
+平地摔
+ • 
+绝倒
+ • 
+二郎腿
+ • 
+独腿站立
+ • 
+鸭子坐
+ • 
+体育坐 / 体育座 / 抱腿坐
+ • 
+亚洲蹲 / 斯拉夫蹲
+ • 
+股间摩擦
+ • 
+盘腿坐
+ • 
+跏趺坐（双盘坐 / 莲花坐）
+
+
+
+
+
+
+
+
+
+站立行为
+
+
+
+仁王立
+ • 
+宅社立
+ • 
+JOJO立
+ • 
+Saber立
+ • 
+大张一刀流
+
+
+
+
+
+
+
+
+
+运动行为
+
+
+
+跑步
+ • 
+游泳
+ / 
+裸泳
+ • 
+跳高
+ • 
+后掠翼奔跑
+ • 
+翻墙
+ • 
+二段跳
+ • 
+墙上跳
+ • 
+跳舞
+ / 
+尬舞
+ • 
+滑板
+ • 
+飞翔
+ • 
+爬树
+ • 
+钻地
+ • 
+竞走
+ • 
+骑倒车
+ • 
+走路沿
+ • 
+匍匐 / 爬行
+ • 
+翻跟斗
+ • 
+打棒球
+ • 
+猫步
+ • 
+裸奔
+ • 
+泪奔
+
+
+
+
+
+
+
+
+
+休息行为
+
+
+
+萌睡相
+ • 
+梦呓
+ • 
+做春梦
+ • 
+梦游
+ • 
+装睡
+ • 
+裸睡
+ • 
+睡相差
+
+
+
+
+
+
+
+
+
+互动行为
+
+
+
+弗列门反应
+ • 
+蹭
+ • 
+蒙眼
+ • 
+捏脸颊
+ • 
+挤脸
+ • 
+对拳
+ • 
+肘击
+ • 
+打屁股
+ • 
+袭胸 / 龙爪手
+ • 
+锁喉 / 掐脖子
+ • 
+抱大腿
+ • 
+掀裙
+ • 
+撕衣
+ • 
+咬人
+ • 
+千年杀
+ • 
+摸头杀
+ • 
+点穴
+ • 
+飞踢
+ • 
+骑坐
+ • 
+膝枕
+ • 
+头槌
+ • 
+举高高
+ • 
+共伞
+ （相合伞）• 
+带球撞人
+ • 
+拍别人大腿
+ • 
+扯他人领带
+ • 
+同寝
+ • 
+互换女友
+ • 
+互换身份
+ • 
+共用身份
+ • 
+冒名顶替
+ • 
+叫醒服务
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【肢体语言】
+
+
+
+星间飞行
+ • 
+绮罗星
+ • 
+死刑手势
+ • 
+比心
+ • 
+女王三段笑
+ • 
+拥抱
+ • 
+く形跳跃
+ • 
+扮鬼脸
+ • 
+扶额
+ • 
+捂脸 / 掩面
+ • 
+摊手
+ / 
+耸肩
+ • 
+飞吻
+ • 
+请等一下
+ • 
+手印
+
+
+
+
+
+
+
+
+
+【礼节专题】
+
+
+
+鼓掌
+ • 
+合掌 / 合十礼
+ • 
+三指礼
+ • 
+提裙礼
+ • 
+万福礼
+ • 
+吻手礼
+ • 
+鞠躬
+ • 
+揖礼
+ • 
+抱拳礼
+ • 
+握手
+ • 
+拥抱礼
+ • 
+举手礼（军礼）
+
+
+
+
+
+
+
+
+
+【表情】
+
+
+
+
+
+
+
+脸部表情
+
+
+
+颜艺
+ • 
+面瘫
+ • 
+臭脸
+ • 
+扑克脸
+ • 
+无表情
+ • 
+单一表情
+ • 
+商用表情
+ • 
+挤眼
+ • 
+盯
+ • 
+痴汉脸
+ • 
+跩脸
+ • 
+目瞪口呆
+ • 
+张口闭眼
+ • 
+吐舌头
+ / 
+锤头吐舌
+ • 
+流口水(ˉ﹃ˉ)
+ • 
+栗子嘴
+ • 
+
+脸
+
+ۖิ
+
+红
+
+ • 
+腮红
+ • 
+鼓脸颊
+ • 
+友里惠口型
+ • 
+头部肿包
+ • 
+嘲讽脸
+ • 
+石化
+ • 
+嫌弃脸
+
+
+
+
+
+
+
+
+
+艺术手法（脸部）
+
+
+
+星星眼
+ • 
+心形眼
+ • 
+心形瞳孔
+ • 
+尖括号眼
+ • 
+圈圈眼 / 蚊香眼
+ • 
+豆豆眼 / 点状眼
+ • 
+×形眼
+ • 
+3形眼
+ • 
+三白眼
+ • 
+眼睛飞出
+ • 
+眼镜反光
+ • 
+眼镜破碎
+ • 
+跳眉
+ • 
+黑线
+ • 
+眼睛亮点化
+ • 
+流汗
+ • 
+鼻涕泡
+ • 
+青筋 / 愤怒标记
+ • 
+面部阴影
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+嗜好、习惯、性取向类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【嗜好 / 习惯】
+
+
+
+御宅族
+（
+宅女
+ / 
+宅男
+ • 
+肥宅
+ • 
+游戏宅
+ • 
+偶像宅
+ • 
+技术宅
+ • 
+隐藏宅
+ • 
+铁道宅
+ • 
+军事宅
+ • 
+宅圈公主
+ • 
+大友
+）• 
+腐女
+ / 
+腐男
+ • 
+文学少女
+ • 
+理科少女
+ • 
+运动少女
+ / 
+运动少年
+ • 
+乱室佳人
+ • 
+同人女
+ • 
+桌角女
+ • 
+百合男子 / 百合女子
+ • 
+吃货
+ • 
+挑食
+ • 
+嗜杀
+ • 
+嗜血
+ • 
+嗜战 / 战斗狂
+ • 
+武器狂 / 武器控
+ • 
+素食主义
+ • 
+吃辣
+ • 
+嗜痛
+ • 
+嗜睡 / 睡神
+ / 
+赖床
+ / 
+起床气
+ • 
+熬夜 / 通宵
+ / 
+失眠
+ • 
+Coser
+ • 
+影迷
+ • 
+特摄迷
+ • 
+追星族
+ • 
+胶佬
+ • 
+牌佬
+ • 
+跟踪狂
+ • 
+工作狂 / 勤劳
+ • 
+努力 / 修行狂
+ • 
+购物狂
+ • 
+神待
+ • 
+♯♯魔
+ • 
+掀裙魔
+ • 
+手癌 / 错字受
+ • 
+森女
+ • 
+痴女 / 痴汉
+ • 
+历女
+ • 
+女装癖 / 男扮女装
+ • 
+女扮男装
+ • 
+观察人类
+ • 
+收集癖
+ • 
+盗窃癖
+ • 
+洁癖
+ • 
+花痴
+ • 
+耍宝
+ • 
+怀旧
+ • 
+拜金
+ • 
+节能主义
+ • 
+语言洁癖
+ • 
+酒豪
+ • 
+裸族
+ • 
+露出癖
+ • 
+纸尿裤play
+ • 
+
+バブみ
+
+ • 
+乐子人
+ • 
+恨人类
+/
+爱人类
+ • 
+自拍
+ • 
+节俭
+ • 
+恐婚
+ • 
+左撇子
+ • 
+双撇子
+
+
+
+
+
+
+
+
+
+【感情 / 性取向】
+
+
+
+百合
+ • 
+蔷薇
+ • 
+伪百合
+ • 
+异性恋
+（
+第四爱
+） • 
+同性恋
+ • 
+双性恋
+ • 
+泛性恋
+ • 
+无性恋
+ • 
+身份差异恋
+ （
+跨种恋
+（
+人机恋
+） • 
+主仆恋
+ • 
+师生恋
+） • 
+姐弟恋
+ • 
+职场恋情
+ • 
+纸性恋
+ • 
+失恋
+ • 
+自恋
+ • 
+单恋
+ • 
+暗恋
+ / 
+双向暗恋
+ • 
+性单恋
+ • 
+oo型依恋
+ • 
+三角恋 / 三角关系
+ • 
+四角恋 / 四角关系
+ • 
+多角恋 / 多角关系
+ • 
+多边恋 / 多边关系
+ • 
+出轨 / 劈腿
+ • 
+败犬
+ • 
+慕残
+ • 
+Player Love
+ • 
+禁断恋爱
+ • 
+兄妹恋
+
+
+
+
+
+
+
+
+
+【情结】
+
+
+
+颜控
+ • 
+动物控
+ • 
+萌物控
+/可爱控 • 
+甜食控
+ • 
+咸食控
+ • （详见【
+模板:控
+】）
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+体质、疾病、残疾类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+【体质】
+
+
+
+不老不死
+ • 
+不老
+ • 
+不死
+ • 
+短命
+ • 
+高智商
+ • 
+体香
+ • 
+稀有血型
+ • 
+脚臭
+ • 
+鼻血
+ • 
+怀孕
+ • 
+大胃王
+ • 
+可食用
+ • 
+嗅觉灵敏
+ • 
+猫舌
+ • 
+怪力
+（
+怪力女
+）• 
+毒体
+ • 
+百毒不侵
+ • 
+性转换
+ • 
+体魂异性
+ • 
+祥瑞
+ • 
+天才
+ • 
+
+阿卡林
+
+ • 
+克妻 / 克夫
+ • 
+娃娃音
+ • 
+味痴
+ • 
+音痴
+ • 
+绝对音感
+ • 
+动态视力
+ • 
+画伯
+ / 灵魂画师 • 
+养啥死啥
+ • 
+死神
+ • 
+瘟神
+ • 
+魅魔
+ • 
+麻瓜
+ / 
+无能力者
+ • 
+不幸
+（
+幸运E
+）/ 
+强运
+ • 
+命大
+ • 
+雨男 / 雨女
+ • 
+晴女 / 晴男
+ • 
+天煞孤星
+ • 
+乌鸦嘴
+ • 
+一级插旗师
+ • 
+载具杀手
+ • 
+路痴
+ • 
+健忘
+ • 
+计算障碍
+ / 不识数 • 
+敏感
+ • 
+厌食
+ • 
+畏寒
+ / 
+畏光
+ • 
+晕动症（晕车、晕船等）
+ • 
+酒豪
+（酒量好） • 
+酒量差
+ • 
+醉饮料
+ • 
+不怕
+ • 
+胆小
+ • 
+体力差
+ • 
+体力好
+ • 
+吸引动物
+ • 
+半透明身体
+ • 
+电器杀手
+ • 
+机械白痴
+ • 
+身体柔软
+ • 
+猫毛
+ • 
+另类发质
+ • 
+逆生长
+ • 
+反转化
+ • 
+忽胖忽瘦
+  • 
+女难之相
+ • 
+易出汗 / 出汗体质
+ • 
+脸红
+ • 
+变异
+ • 
+人缘好
+/
+人缘差
+ • 
+万人迷
+ • 
+文武双全
+ •（详见【
+模板:ACG能力
+】）
+
+
+
+
+
+
+
+
+【疾病 / 残疾】
+
+
+
+病弱
+ • 
+异性过敏症
+ • 
+过敏
+ • 
+雀斑
+ • 
+痣
+（
+美人痣
+ • 
+泪痣
+ • 
+胸痣
+） • 
+白癜风
+ • 
+沉睡（昏迷）
+ • 
+贫血
+ • 
+失忆
+ • 
+心智不全
+ • 
+高度近视
+ • 
+色盲
+ • 
+独眼
+ • 
+失明
+ / 
+复明
+ • 
+重瞳
+ • 
+无眼球
+ • 
+重眼
+ • 
+口吃（结巴）
+ • 
+面瘫
+ • 
+聋哑 / 失聪 / 哑巴
+ • 
+毁容
+（
+裂口
+） • 
+肢体残疾
+ • 
+八字脚
+ • 
+白化病
+ • 
+绝症
+ • 
+过呼吸
+ • 
+玻璃人
+ • 
+连体人
+ • 
+感觉缺失
+（
+味觉缺失
+）  • 
+认知异常
+  • 
+性冷淡
+  • 
+胃疼
+ • （详见【
+模板:残疾
+】）
+
+
+
+
+
+
+
+
+【心理症状】
+
+
+
+
+
+
+
+综合型病症
+
+
+
+心理阴影 / 心理创伤
+ • 
+强迫症
+ • 
+被害妄想症
+ • 
+阿斯伯格综合征
+ • 
+斯德哥尔摩综合征
+ • 
+彼得·潘综合征 / 公主病
+ • 
+二次元禁断综合征
+ • 
+D.L.L.R syndrome（杀伤症候群、杀戮症候群）
+ • 
+反社会人格
+ • 
+弗拉格综合征
+ • 
+创伤后压力综合征
+ • 
+孤独症
+ • 
+抑郁症
+ • 
+躁郁症
+ • 
+焦虑症
+ • 
+进食障碍
+（
+异食癖
+） • 
+述情障碍
+ • 
+ADHD（注意缺陷多动障碍）
+ • 
+幼儿退行
+
+
+
+
+
+
+
+
+
+
+恐惧症总论
+
+
+
+
+异性恐惧症
+ • 
+社交恐惧症
+ • 
+数字恐惧症
+ • 
+恐高症
+ • 
+怕水症
+ • 
+深海恐惧症
+ • 
+巨物恐惧症
+ • 
+龙恐惧症
+ • 
+幽闭恐惧症
+ • 
+小丑恐惧症
+ • 
+尖锐恐惧症
+ • 
+密集恐惧症
+ • 
+尸体恐惧症
+ • 
+晕血症（血液恐惧症）
+ • 
+胆小
+（
+怕黑
+ / 
+怕鬼
+ / 
+怕打雷
+ / 
+怕虫子
+ / 
+怕照镜子
+ / 
+怕死
+ / 
+怕动物
+ / 
+怕打针
+）
+
+
+
+
+
+
+
+
+
+依赖症总论
+
+
+
+
+手机依赖症
+ • 
+咖啡依赖症
+ • 
+网络依赖症
+ • 
+社交软件依赖症
+ • 
+情感依赖症
+ • 
+家长依赖症
+ • （详见【
+模板:心理学
+】）
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+复合型、综合类及其他类
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+绝对领域
+ / 
+绝对空域
+ • 
+家务全能
+ • 
+幼妻
+ • 
+忠诚 / 忠心
+（
+忠犬
+） • 
+反差萌
+（
+本体差异型
+ / 
+黑历史
+）/ 
+落差萌
+ • 
+贞子
+ • 
+搅屎棍
+ • 
+发胶手
+ • 
+受气包
+ • 
+狂吃不胖
+ • 
+口嫌体正直
+ • 
+料理达人
+ / 
+黑暗料理
+ • 
+四次元乳沟
+ / 
+四次元裙底
+ / 
+四次元尾巴
+ / 
+四次元帽子
+ • 
+相貌相似
+ • 
+美强惨
+ • 
+旱鸭子
+ • 
+苦劳人
+ • 
+苦命人
+ • 
+干物女
+ • 
+贫穷
+ • 
+欠债
+ • 
+破产
+ • 
+分班
+ • 
+毒亲
+ • 
+败家
+ • 
+废柴
+ • 
+不悯
+ • 
+早夭
+ • 
+吃瘪
+ • 
+假死
+ • 
+可爱
+ • 
+色气
+ • 
+普通
+ • 
+全知
+ / 
+全能
+ / 
+全在
+ • 
+妻奴 / 妻管严
+ • 
+治愈系
+ • 
+母性
+ • 
+神性
+ • 
+男妈妈
+ • 
+残念系
+ • 
+宝冢系
+ • 
+不可思议系
+ • 
+擅长推理
+ • 
+大和抚子
+ • 
+霸道总裁
+ • 
+高岭之花
+ • 
+捡漏王
+ • 
+老顽童
+ • 
+花花公子
+ • 
+本色出演
+ • 
+饰演自己
+ • 
+角色与声优同生日
+ • 
+遇见自己的声优 / 演员
+  • 
+赛博女鬼
+ • 
+萌娘百科
+ • 
+起名废
+ • 
+影帝
+ / 
+影后
+ • 
+龙傲天
+ / 
+凤傲天
+ • 
+盖瑞苏
+ / 
+玛丽苏
+ • 
+小孩哥
+ / 
+小孩姐
+ • 
+动物系
+（
+猫系
+/
+犬系
+/
+狐系
+/
+狼系
+/
+兔系
+/
+鼠系
+/
+刺猬系
+等） • 
+黑化
+ • 
+粉切黑
+ • 
+自带BGM
+ • 
+猪队友
+ • 
+受欺凌
+ • 
+衣品差
+ • 
+干什么都不ooc
+ • 
+人格开关
+ • 
+逆鳞
+ • 
+台风反差
+ • 
+静态美人
+ • 
+榨汁姬
+ • 
+女神系
+ / 
+男神系
+ • 
+草食系
+ / 
+肉食系
+ • 
+真男人
+ • 
+娘炮
+ • 
+记仇
+ • 
+神出鬼没
+ • 
+伴生萌属性
+ • 
+王子系
+ • 
+清纯碧池
+ • 
+弱男
+ • 
+坏掉
+ / 
+恶堕
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+更多拥有此萌属性的人物
+
+
+
+
+
+
+
+
+
+<!-- 
+NewPP limit report
+Cached time: 20260917150431
+Cache expiry: 2592000
+Reduced expiry: false
+Complications: []
+CPU time usage: 0.892 seconds
+Real time usage: 0.949 seconds
+Preprocessor visited node count: 2394/1000000
+Post‐expand include size: 710780/2097152 bytes
+Template argument size: 3059/2097152 bytes
+Highest expansion depth: 17/100
+Expensive parser function count: 0/50
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 299/5000000 bytes
+Lua time usage: 0.039/7.000 seconds
+Lua memory usage: 2128450/52428800 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+109.31%  105.942     15 Template:Navbox
+100.00%   96.916      1 -total
+ 70.34%   68.172      1 Template:萌属性
+ 25.59%   24.802     15 Template:Navbox_subgroup
+ 14.27%   13.834      2 Template:Info
+  9.93%    9.627      1 Template:萌属性top
+  8.71%    8.441      1 Template:Customtop
+  8.10%    7.851      1 Template:消歧义
+  7.43%    7.201      4 Template:TemplateCate
+  3.63%    3.517      1 Template:经典人物列表提醒
+-->
+
+<!-- Saved in parser cache with key zhmoegirl:pcache:idhash:389096-0!canonical!zh-cn and timestamp 20260917150431 and revision id 7930598. Rendering was triggered because: page-view
+ -->
+
+
+
+
+{"title":"
+预言家
+","pagetitle":"预言家 - 萌娘百科 万物皆可萌的百科全书","thispage":"预言家","titleprefixeddbkey":"预言家","titletext":"预言家","articleid":389096,"isarticle":true,"subtitle":"
+
+","undelete":null,"feeds":false,"mimetype":"text\/html","charset":"UTF-8","wgScript":"\/index.php","skinname":"moeskin","printable":false,"handheld":false,"notspecialpage":true,"searchaction":"\/Special:%E6%90%9C%E7%B4%A2","searchtitle":"Special:搜索","search":"","stylepath":"\/skins","articlepath":"\/$1","scriptpath":"","serverurl":"https:\/\/mzh.moegirl.org.cn","sitename":"萌娘百科","lang":"zh-Hans-CN","dir":"ltr","rtl":false,"logopath":"https:\/\/storage.moegirl.org.cn\/moegirl\/logo\/zhMoegirl15.2.png","showjumplinks":true,"specialpageattributes":"","logo":"
+
+
+","copyright":"
+\n
+\n
+关注萌百
+\n
+
+bilibili
+
+\n
+
+微博
+
+\n
+微信：萌娘百科
+\n
+\n \n
+\n
+联系帮助
+\n
+
+创建条目
+
+\n
+
+测试沙盒
+
+\n
+
+合作事项&汇报Bug
+
+\n
+\n \n
+\n
+人员招募
+\n
+
+管理员
+
+\n
+
+维护姬
+
+\n
+
+技术编辑员
+
+\n
+\n\n
+\n
+移动应用
+\n
+
+下载页面
+
+\n
+\n\n\n
+本站全部内容禁止商业使用。文本内容除另有声明外，均在
+知识共享 署名-非商业性使用-相同方式共享 4.0（CC BY-NC-SA 4.0）许可协议
+下提供，附加条款亦可能应用，详细信息参见
+萌娘百科:著作权信息
+。
+\n其他类型作品著作权归属于其著作权人，如有授权遵照授权协议使用。
+\n萌娘百科®、Moegirlpedia®是注册商标。\n
+\n
+","viewcount":false,"lastmod":" 此页面最后编辑于2025年3月25日 (星期二) 09:44。","credits":false,"numberofwatchingusers":false,"disclaimer":false,"indicators":[],"printfooter":"检索自“
+https:\/\/mzh.moegirl.org.cn\/index.php?title=预言家&amp;oldid=7930598
+”","language_urls":false,"content_navigation":{"namespaces":{"main":{"class":"selected","text":"页面","href":"\/%E9%A2%84%E8%A8%80%E5%AE%B6","exists":true,"primary":true,"context":"subject","id":"ca-nstab-main","title":"查看内容页面​[c]","accesskey":"c"},"talk":{"class":"new","text":"讨论","href":"\/index.php?title=Talk:%E9%A2%84%E8%A8%80%E5%AE%B6&action=edit&redlink=1","exists":false,"primary":true,"link-class":"new","context":"talk","rel":"discussion","id":"ca-talk","title":"有关内容页面的讨论​[t]","accesskey":"t"}},"views":{"view":{"class":"selected","text":"阅读","href":"\/%E9%A2%84%E8%A8%80%E5%AE%B6","exists":true,"primary":true,"redundant":true,"id":"ca-view"},"viewsource":{"class":false,"text":"查看源代码","href":"\/index.php?title=%E9%A2%84%E8%A8%80%E5%AE%B6&action=edit","primary":true,"id":"ca-viewsource","title":"本页面受到保护。\n您可以查看其源代码​[e]","accesskey":"e"},"history":{"class":false,"text":"查看历史","href":"\/index.php?title=%E9%A2%84%E8%A8%80%E5%AE%B6&action=history","id":"ca-history","title":"该页面过去的修订​[h]","accesskey":"h"}},"actions":[],"variants":[{"class":" ca-variants-zh","text":"关闭转换","href":"\/zh\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh","hreflang":"zh","id":"ca-varlang-0"},{"class":" ca-variants-zh-Hans","text":"简体","href":"\/zh-hans\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hans","hreflang":"zh-Hans","id":"ca-varlang-1"},{"class":" ca-variants-zh-Hant","text":"繁體","href":"\/zh-hant\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hant","hreflang":"zh-Hant","id":"ca-varlang-2"},{"class":"selected ca-variants-zh-Hans-CN","text":"简体（中国）","href":"\/zh-cn\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hans-CN","hreflang":"zh-Hans-CN","id":"ca-varlang-3"},{"class":" ca-variants-zh-Hant-HK","text":"繁體（中國香港）","href":"\/zh-hk\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hant-HK","hreflang":"zh-Hant-HK","id":"ca-varlang-4"},{"class":" ca-variants-zh-Hant-TW","text":"繁體（中國臺灣）","href":"\/zh-tw\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hant-TW","hreflang":"zh-Hant-TW","id":"ca-varlang-5"}]},"content_actions":{"nstab-main":{"class":"selected","text":"页面","href":"\/%E9%A2%84%E8%A8%80%E5%AE%B6","exists":true,"primary":true,"context":"subject","id":"ca-nstab-main","title":"查看内容页面​[c]","accesskey":"c"},"talk":{"class":"new","text":"讨论","href":"\/index.php?title=Talk:%E9%A2%84%E8%A8%80%E5%AE%B6&action=edit&redlink=1","exists":false,"primary":true,"link-class":"new","context":"talk","rel":"discussion","id":"ca-talk","title":"有关内容页面的讨论​[t]","accesskey":"t"},"viewsource":{"class":false,"text":"查看源代码","href":"\/index.php?title=%E9%A2%84%E8%A8%80%E5%AE%B6&action=edit","primary":true,"id":"ca-viewsource","title":"本页面受到保护。\n您可以查看其源代码​[e]","accesskey":"e"},"history":{"class":false,"text":"查看历史","href":"\/index.php?title=%E9%A2%84%E8%A8%80%E5%AE%B6&action=history","id":"ca-history","title":"该页面过去的修订​[h]","accesskey":"h"},"varlang-0":{"class":" ca-variants-zh","text":"关闭转换","href":"\/zh\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh","hreflang":"zh","id":"ca-varlang-0"},"varlang-1":{"class":" ca-variants-zh-Hans","text":"简体","href":"\/zh-hans\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hans","hreflang":"zh-Hans","id":"ca-varlang-1"},"varlang-2":{"class":" ca-variants-zh-Hant","text":"繁體","href":"\/zh-hant\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hant","hreflang":"zh-Hant","id":"ca-varlang-2"},"varlang-3":{"class":"selected ca-variants-zh-Hans-CN","text":"简体（中国）","href":"\/zh-cn\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hans-CN","hreflang":"zh-Hans-CN","id":"ca-varlang-3"},"varlang-4":{"class":" ca-variants-zh-Hant-HK","text":"繁體（中國香港）","href":"\/zh-hk\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hant-HK","hreflang":"zh-Hant-HK","id":"ca-varlang-4"},"varlang-5":{"class":" ca-variants-zh-Hant-TW","text":"繁體（中國臺灣）","href":"\/zh-tw\/%E9%A2%84%E8%A8%80%E5%AE%B6","lang":"zh-Hant-TW","hreflang":"zh-Hant-TW","id":"ca-varlang-5"}},"nav_urls":{"mainpage":{"href":"\/","text":"Mainpage"},"upload":{"href":"https:\/\/commons.moegirl.org.cn\/Special:%E4%B8%8A%E4%BC%A0%E6%96%87%E4%BB%B6","text":"上传文件","title":"上传文件​[u]","accesskey":"u"},"specialpages":{"href":"\/Special:%E7%89%B9%E6%AE%8A%E9%A1%B5%E9%9D%A2","text":"特殊页面","title":"所有特殊页面的列表​[q]","accesskey":"q"},"print":{"text":"打印版本","href":"javascript:print();","title":"本页面的可打印版本​[p]","accesskey":"p"},"permalink":{"icon":"link","text":"固定链接","href":"\/index.php?title=%E9%A2%84%E8%A8%80%E5%AE%B6&oldid=7930598","title":"此页面该修订版本的固定链接"},"info":{"icon":"infoFilled","text":"页面信息","href":"\/index.php?title=%E9%A2%84%E8%A8%80%E5%AE%B6&action=info","title":"关于此页面的更多信息"},"whatlinkshere":{"href":"\/Special:%E9%93%BE%E5%85%A5%E9%A1%B5%E9%9D%A2\/%E9%A2%84%E8%A8%80%E5%AE%B6","text":"链入页面","title":"所有链接至本页面的wiki页面列表​[j]","accesskey":"j"},"recentchangeslinked":{"href":"\/Special:%E9%93%BE%E5%87%BA%E6%9B%B4%E6%94%B9\/%E9%A2%84%E8%A8%80%E5%AE%B6","text":"相关更改","title":"链自本页的页面的最近更改​[k]","accesskey":"k"},"contributions":false,"log":false,"blockip":false,"changeblockip":false,"unblockip":false,"mute":false,"emailuser":false,"userrights":false},"debug":"","debughtml":{},"dataAfterContent":"
+\n\t
+
+\n
+\n","moeskin_header_logo_url":"https:\/\/storage.moegirl.org.cn\/logos\/MoegirlPedia-Title.svg","moeskin_avatar_url":"https:\/\/storage.moegirl.org.cn\/moegirl\/avatars\/$userid\/latest.png","is_mainpage":false,"mainpage_title":"Mainpage","category_data":{"normal":[{"text":"身份职业","href":"\/Category:%E8%BA%AB%E4%BB%BD%E8%81%8C%E4%B8%9A","title":"Category:身份职业","exists":true}],"hidden":[],"show_hidden":false,"total":1},"subject_page_link":"","latest_contributors":{"total":11,"limit":10,"users":[{"userName":"GuoPC","userId":572538},{"userName":"大萝莉金仙","userId":53818},{"userName":"4O74Y74L74J7","userId":393356},{"userName":"蓝色7号","userId":523600},{"userName":"星海子","userId":428626},{"userName":"BearBin","userId":264802},{"userName":"UCHIHAWJ","userId":694812},{"userName":"奥利给35090503","userId":720814},{"userName":"雾丢丢","userId":550972},{"userName":"猫耳云朵","userId":435886},{"userName":"咖喱骑士","userId":521982}]}}
+
+{"__lang__":"zh-Hans-CN","moeskin-search-input-placeholder":"搜索萌娘百科 (Ctrl+K)","moeskin-search-input-placeholder-focus":"输入搜索内容……","moeskin-editor-central":"編輯中心","moeskin-header-download-app-button":"下载最新版APP，体验条目角色扮演！","toolbox":"工具","moeskin-userlink-aboutme":"我的","moeskin-userlink-sitenotice":"公告","moeskin-userlink-mycontris":"贡献","moeskin-userlink-watchlist":"监视","moeskin-userlink-echo-alert":"提醒","moeskin-userlink-echo-notice":"通知","tagline":"萌娘百科，万物皆可萌的百科全书！转载请标注来源页面的网页链接，并声明引自萌娘百科。内容不可商用。","moeskin-subtitle-back-to-subject":"回到页面","creditspage":"页面编辑名单","moeskin-page-contributors":"贡献者：","moeskin-page-contributors-more":"以及另外 $1 位贡献者","watch":"监视","watching":"正在监视...","unwatch":"取消监视","unwatching":"正在取消监视...","moeskin-pagetool-show-sidenav":"显示侧栏","moeskin-pagetool-hide-sidenav":"折叠侧栏","moeskin-pagetool-backtotop":"回到顶部","moredotdotdot":"更多…","moeskin-advancedsearch-kbd-tips":"提示：用$1$2选择，(ctrl+)$3进入，$4关闭。","moeskin-advancedsearch-noinput":"请输入关键词来搜索","moeskin-advancedsearch-noresult":"没有找到相关内容","moeskin-advancedsearch-error":"搜索时遇到问题","moeskin-advancedsearch-loading":"正在搜索中……","moeskin-advancedsearch-totalhits":"第$1~$2条结果，共$3条搜索结果","moeskin-advancedsearch-getmore":"更多有关“$1”的搜索结果","moeskin-advancedsearch-itemstats":"共$1字 \/ 最后编辑于$2","moeskin-advancedsearch-subpages-more":"还有 $1 个相关页面","moeskin-sitenotice-button":"查看公告","moeskin-sitenotice-title":"全站公告","moeskin-sitenotice-dismiss":"我知道了","moeskin-sitenotice-new-unread":"有新的未读公告","toc":"目录","categories":"分类","hidden-categories":"$1 个隐藏分类","pagecategories":"$1 个分类","pagecategorieslink":"Special:Categories","moeskin-comments-comment":"评论","moeskin-comments-reply":"回复","moeskin-comments-expression-like":"推荐","moeskin-comments-expression-dislike":"不推荐","moeskin-comments-expression-x-total":"$1人评价","moeskin-comments-expression-x-likes":"$1人推荐","moeskin-comments-show-all":"查看全部评论","moeskin-comments-add-comment":"发布评论","moeskin-comments-reply-to":"回复 $1 的评论","moeskin-comments-rules-title":"评论区指引","moeskin-comments-rules-body":"🎉 亲爱的小伙伴，欢迎踊跃参与评论！在这里，您可以围绕条目所介绍的内容积极展开讨论，分享您独到的见解与评价。\n🤫 评论内容会在审核后展示。请严格遵守相关法律法规，文明发言，让我们的交流环境始终保持积极、健康。\n👊 若违反规定，我们将对违规评论进行删除处理，严重违规者会被封禁账号。情节特别严重的，将依法移交公安机关处理。\n✏️ 此外，若您在条目中发现错误，欢迎提交编辑，让我们共同完善内容，提升阅读体验！","moeskin-comments-rules-show":"查看评论区指引","moeskin-comments-submit-shortcut-hint":"提示：Ctrl(⌘) + Enter 可以快速提交评论","moeskin-editor-create-button":"创建","moeskin-editor-create-wiki-page":"wiki 条目","moeskin-editor-create-upload-file":"上传文件","moeskin-editor-create-create-post":"帖子·文章","moeskin-comment-input-login-prefix":"请先","moeskin-comment-input-bind-phone":"绑定手机","moeskin-comment-input-login":"登录","moeskin-comment-input-login-suffix":"后发表评论~","moeskin-comment-input-switch-editor":"切换编辑器 ($1)","moeskin-comment-input-submit":"提交","moeskin-comment-input-placeholder":"咕噜咕噜……","moeskin-comment-input-warning-login-first":"请先登录","moeskin-comment-input-success-published":"评论发表成功","moeskin-comment-input-info-review":"评论将在审核通过后显示","moeskin-comment-input-error-bind-phone":"请先绑定手机","moeskin-comment-input-error-failed":"评论发表失败：$1","moeskin-comment-input-warning-empty":"评论不能为空","moeskin-comment-input-insert-image-title":"插入图片","moeskin-comment-input-insert-image-placeholder":"只能插入moegirl.org.cn的图片","moeskin-comment-input-insert-image-confirm":"插入","moeskin-comment-input-warning-only-moegirl-image":"只能插入萌百图片","moeskin-comment-input-warning-too-long":"评论过长，请精简后再提交","moeskin-rating-level-few":"评价较少","moeskin-rating-level-overwhelmingly-positive":"好评如潮","moeskin-rating-level-very-positive":"特别好评","moeskin-rating-level-mostly-positive":"多半好评","moeskin-rating-level-mixed":"褒贬不一","moeskin-rating-level-mostly-negative":"多半差评","moeskin-rating-level-overwhelmingly-negative":"差评如潮","moeskin-rating-level-very-negative":"特别差评","moeskin-grandpa-subscription-title":"萌娘百科会员订阅","moeskin-grandpa-subscription-text":"会员","moeskin-comments-autoload-error":"评论加载失败","moeskin-comments-autoload-retry":"重试","moeskin-artwork-header-title":"作品讨论","moeskin-artwork-header-loading":"Loading...","moeskin-artwork-score-unit":"分","moeskin-artwork-tab-description":"简介","moeskin-artwork-tab-reviews":"短评","moeskin-artwork-open-in-app":"打开App查看更多","moeskin-artwork-type-book-label":"书籍","moeskin-artwork-type-book-want":"想读","moeskin-artwork-type-book-already":"读过","moeskin-artwork-type-music-label":"音乐","moeskin-artwork-type-music-want":"想听","moeskin-artwork-type-music-already":"听过","moeskin-artwork-type-game-label":"游戏","moeskin-artwork-type-game-want":"想玩","moeskin-artwork-type-game-already":"玩过","moeskin-artwork-type-video-label":"动画","moeskin-artwork-type-video-want":"想看","moeskin-artwork-type-video-already":"看过","moeskin-float-open-in-app":"在APP内打开，体验条目角色扮演","moeskin-mobile-gate-button":"打开 App 继续阅读","moeskin-mobile-gate-heading":"在 APP 里，接着看吧","moeskin-mobile-gate-not-installed":"还没安装？","moeskin-mobile-gate-download":"下载 APP","createacct-benefit-heading":"萌娘百科是由像您一样的爱好者构筑的。","createaccount":"创建账号","echo-overlay-link":"所有通知","echo-mark-all-as-read":"标记全部通知为已读","echo-notification-markasread":"标记为已读","echo-notification-markasunread":"标记为未读","moeskin-footer-top":"
+\n
+\n
+\n
+
+
+
+萌娘百科
+
+\n
+
+关于我们
+
+\n
+
+联系我们
+
+\n
+
+合作事项&amp;汇报Bug
+
+\n
+
+意见反馈
+
+\n
+\n
+\n
+
+
+
+招贤纳士
+
+\n
+
+管理员
+
+\n
+
+维护姬
+
+\n
+
+技术编辑员
+
+\n
+\n
+\n
+
+
+
+帮助
+
+\n
+
+创建条目
+
+\n
+
+测试沙盒
+
+\n
+
+
+
+商务合作
+
+\n
+广告投放&amp;宣传推广咨询和合作
+
+yunying
+
+
+
+
+moegirl.org
+
+\n
+\n
+\n
+
+
+
+关注我们
+
+\n
+不要错过更多有趣的ACGN内容☆～
+\n
+\n
+
+&lt;img src=\"https:\/\/storage.moegirl.org.cn\/moegirl\/commons\/5\/51\/Mgp_qrcode_bilibili.png\"&gt;
+bilibili
+
+
+\n
+
+&lt;img src=\"https:\/\/storage.moegirl.org.cn\/moegirl\/commons\/9\/94\/Mgp_qrcode_weibo.png\"&gt;
+微博
+
+
+\n
+&lt;img src=\"
+\"&gt;
+公众号
+
+\n
+\n
+\n
+\n
+","moeskin-footer-copyright":"
+\n
+\n
+
+
+
+
+
+
+\n
+
+\n
+
+帮助
+ 
+商务合作
+ 
+下载App
+
+\n
+\n
+本站全部内容禁止商业使用。文本内容除另有声明外，均在
+知识共享 署名-非商业性使用-相同方式共享 4.0（CC BY-NC-SA 4.0）许可协议
+下提供，附加条款亦可能应用，详细信息参见
+萌娘百科:著作权信息
+。其他类型作品著作权归属于其著作权人，如有授权遵照授权协议使用。
+\n
+\n
+\n
+萌娘百科®、Moegirlpedia®是注册商标
+\n
+
+隐私权政策
+ | 
+关于萌娘百科
+ | 
+免责声明
+
+\n
+\n
+","moeskin-footer-app-copyright":"&#169; 2026 萌娘百科 (
+Modify this text
+)","moeskin-topbar":"
+
+|导航\n
+
+Mainpage|首页
+\n
+
+
+Special:随机页面|随机页面
+\n
+
+
+Special:最近更改|最近更改
+\n
+https:\/\/commons.moegirl.org.cn\/Special:%E6%96%B0%E5%BB%BA%E6%96%87%E4%BB%B6|最新文件
+\n
+|讨论版\n
+
+萌娘百科_talk:讨论版|目录
+\n
+萌娘百科_talk:讨论版\/技术实现|技术实现
+\n
+萌娘百科_talk:讨论版\/权限变更|权限变更
+\n
+萌娘百科_talk:讨论版\/操作申请|操作申请
+\n
+萌娘百科_talk:讨论版\/方针政策|方针政策
+\n
+萌娘百科_talk:讨论版\/页面相关|页面相关
+\n
+萌娘百科_talk:讨论版\/提问求助|提问求助
+\n
+萌娘百科_talk:讨论版\/群组信息|群组信息
+\n
+萌娘百科_talk:提案|提案
+
+
+\n
+|分类索引\n
+
+Category:作品|作品
+\n
+Category:人物|人物
+\n
+Category:组织|组织
+\n
+Category:概念用语|概念用语
+\n
+Category:设定|设定
+\n
+Category:软件|软件
+\n
+Category:活动|活动
+
+
+
+
+\n
+|帮助\n
+
+Category:帮助|帮助
+\n
+Draft:沙盒|沙盒
+\n
+Help:Wiki入门|Wiki入门
+\n
+Help:萌百编辑简明指南\/欢迎|编辑教程
+\n
+萌娘百科:编辑规范|编辑规范
+\n
+Template:萌娘百科政策文件|萌娘百科政策
+\n
+Help:创建新条目|创建新条目
+\n
+萌娘百科:条目创建请求|请求创建条目
+\n
+萌娘百科:常见问题与解答|常见问题集
+
+
+\n
+|关注我们\n
+
+
+
+
+
+
+哔哩哔哩
+
+
+微博
+
+
+公众号
+
+
+\n
+萌娘百科:官方群组|聊天群
+\n
+https:\/\/item.taobao.com\/item.htm?id=829392312809&amp;utm_source=moeskin_topbar|官方淘宝店
+
+
+
+","moeskin-sitenotice":"
+\n
+\n
+编辑页面前请先阅读 
+
+Wiki入门使用指南
+
+、
+
+
+萌百编辑教程
+
+ 以及 
+
+萌百编辑规范
+
+
+\n
+有任何意见、建议、求助
+都可以在 
+
+提问求助区
+
+ 提出！
+\n
+欢迎
+订阅
+ 
+
+萌娘百科月报
+
+，
+掌握萌百每月大事！
+\n
+编辑保存出错？
+先点浏览器的返回按钮，尝试再保存，
+如果还出错请在 
+
+提问求助区
+
+ 提出！
+\n
+欢迎加入 
+
+萌娘百科官方QQ群
+
+
+加入时请写明【自己的萌百用户名】
+\n
+欢迎关注 
+
+萌娘百科各大平台官方账号
+
+ ～
+\n
+觉得萌娘百科有趣的话，请推荐给朋友哦～
+\n
+\n
+","moeskin-anonnotice":"
+\n
+
+你好～！欢迎来到萌娘百科！
+
+如果您是第一次来到这里，
+点这里
+加入萌娘百科!
+
+\n
+
+欢迎具有翻译能力的同学～
+有意者请点→
+Category:需要翻译的条目
+←
+
+\n
+
+如果您在萌百上发现某些内容
+错误\/空缺
+，
+请
+勇于
+修正\/添加！
+
+编辑萌娘百科其实很容易！
+
+
+\n
+欢迎关注 
+
+萌娘百科各大平台官方账号
+
+ ～
+\n
+觉得萌娘百科有趣的话，请推荐给朋友哦～
+\n
+
+
+萌娘百科新人\/游客群
+
+119170500欢迎加入，
+加入时请写明
+萌百用户名
+或
+拟反馈内容
+～
+\n
+","moeskin-allnotice":"
+
+
+
+
+公告
+
+
+\n
+
+评论区功能与管理FAQ
+
+\n
+
+关于萌娘百科著作权协议升级更新的公告
+
+\n
+
+\n
+\n
+
+ ","moeskin-topbanner":""}
+
+{"loggedin":false,"name":"","displayName":"","rawUserName":"","id":0,"lang":"zh-cn","userpage":null,"userpageurl":null,"groups":["*"],"blocked":false,"registration_time":null,"avatar_url":"https:\/\/storage.moegirl.org.cn\/moegirl\/avatars\/0\/latest.png","newtalk":"","personal_urls":{"createaccount":{"single-id":"pt-createaccount","text":"创建账号","href":"\/index.php?title=Special:%E5%88%9B%E5%BB%BA%E8%B4%A6%E6%88%B7&returnto=%E9%A2%84%E8%A8%80%E5%AE%B6","active":false,"icon":"userAdd","id":"ca-createaccount"},"login":{"single-id":"pt-login","text":"登录","href":"\/index.php?title=Special:%E7%94%A8%E6%88%B7%E7%99%BB%E5%BD%95&returnto=%E9%A2%84%E8%A8%80%E5%AE%B6","active":false,"icon":"logIn","id":"ca-login"}}}
+
+
+
+
+
+
+(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":664,"wgPageParseReport":{"limitreport":{"cputime":"0.892","walltime":"0.949","ppvisitednodes":{"value":2394,"limit":1000000},"postexpandincludesize":{"value":710780,"limit":2097152},"templateargumentsize":{"value":3059,"limit":2097152},"expansiondepth":{"value":17,"limit":100},"expensivefunctioncount":{"value":0,"limit":50},"unstrip-depth":{"value":0,"limit":20},"unstrip-size":{"value":299,"limit":5000000},"timingprofile":["109.31%  105.942     15 Template:Navbox","100.00%   96.916      1 -total"," 70.34%   68.172      1 Template:萌属性"," 25.59%   24.802     15 Template:Navbox_subgroup"," 14.27%   13.834      2 Template:Info","  9.93%    9.627      1 Template:萌属性top","  8.71%    8.441      1 Template:Customtop","  8.10%    7.851      1 Template:消歧义","  7.43%    7.201      4 Template:TemplateCate","  3.63%    3.517      1 Template:经典人物列表提醒"]},"scribunto":{"limitreport-timeusage":{"value":"0.039","limit":"7.000"},"limitreport-memusage":{"value":2128450,"limit":52428800}},"cachereport":{"timestamp":"20260917150431","ttl":2592000,"transientcontent":false}}});});
+
+
+;(window.RLQ ||= []).push([
+  'mediawiki.base',
+  () => {
+    mw.hook('wikipage.content').add(() => {
+      const editLinks = document.querySelectorAll('a#ca-edit, #ca-edit a')
+      if (!editLinks.length) {
+        return
+      }
+      editLinks.forEach((i) => {
+        const url = new URL(i.href)
+        url.searchParams.delete('oldid')
+        i.href = url.href
+      })
+    })
+  },
+])
+
+
+(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e03c728e7b2b64',t:'MTc4OTkwMTA3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+
+
+

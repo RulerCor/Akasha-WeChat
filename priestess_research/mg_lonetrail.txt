@@ -1,0 +1,5513 @@
+明日方舟/孤星 - 萌娘百科 万物皆可萌的百科全书
+document.documentElement.className="client-js";RLCONF={"wgBreakFrames":true,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"zh","wgMonthNames":["","1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],"wgRequestId":"dba020725fee8731e673dd6d","wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"明日方舟/孤星","wgTitle":"明日方舟/孤星","wgCurRevisionId":8108712,"wgRevisionId":8108712,"wgArticleId":562712,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["含有萌娘百科作品页的页面","需要长期关注及更新的条目","含有受损文件链接的页面","明日方舟"],"wgPageViewLanguage":"zh-cn","wgPageContentLanguage":"zh-cn","wgPageContentModel":"wikitext","wgRelevantPageName":"明日方舟/孤星","wgRelevantArticleId":562712,"wgUserVariant":"zh-cn","wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgCiteReferencePreviewsActive":false,"wgMediaViewerOnClick":true,"wgMediaViewerEnabledByDefault":true,"wgVisualEditor":{"pageLanguageCode":"zh","pageLanguageDir":"ltr","pageVariantFallbacks":["zh-hans","zh-sg","zh-my"]},"wgMoeDisplayName":"","wgRelatedArticlesCompat":[],"ext.avatar.current_user.url":"https://storage.moegirl.org.cn/moegirl/avatars/0/latest.png","ext.avatar.current_user.thumb_url":"https://storage.moegirl.org.cn/moegirl/avatars/0/latest.png!avatar.thumb","wgCheckUserClientHintsHeadersJsApi":["architecture","bitness","brands","fullVersionList","mobile","model","platform","platformVersion"],"wgEditSubmitButtonLabelPublish":false,"wgMoeAuthConfig":{"endpoint":"https://app.moegirl.org.cn/moe-auth/","specialHijackMap":{"ChangeCredentials":["更改凭据","變更憑證","ChangeCredentials"],"ChangePassword":["修改密码","重置密码","找回密码","修改密码","修改密碼","變更密碼","修改密碼","密碼重設","ChangePassword","ResetPass","ResetPassword"],"CreateAccount":["创建账户","创建账户","創建賬戶","建立帳戶","建立帳號","建立帐号","建立帳號","建立帳戶","CreateAccount"],"Userlogin":["用户登录","登录","用户登录","用戶登入","使用者登入","使用者登入","UserLogin","Login"]}}};
+RLSTATE={"ext.gadget.GothicMoe":"ready","ext.gadget.site-styles":"ready","ext.gadget.moeskin-styles":"ready","site.styles":"ready","user.styles":"ready","user":"ready","user.options":"loading","jquery.tablesorter.styles":"ready","jquery.makeCollapsible.styles":"ready","ext.relatedArticles.styles":"ready","ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.moderation.commons":"ready","ext.moegirl.achievements.badge":"ready","skins.moeskin.base":"ready"};RLPAGEMODULES=["site","mediawiki.page.ready","jquery.tablesorter","jquery.makeCollapsible","mediawiki.toc","ext.checkUser.clientHints","ext.gadget.Purgecache","ext.gadget.code-prettify","ext.gadget.noteTA","ext.gadget.ReferenceTooltips","ext.gadget.report","ext.gadget.pageInfo","ext.gadget.wikidiff2","ext.gadget.SideBarPic","ext.gadget.ShowAvatar","ext.gadget.UserLinkAvatar","ext.gadget.displayname-default","ext.gadget.Logout-confirm","ext.gadget.site-js","mmv.bootstrap","ext.relatedArticles.readMore.bootstrap","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader","ext.moeauth.hijack"];
+(RLQ=window.RLQ||[]).push(function(){mw.loader.impl(function(){return["user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});mw.user.options.set({"language":"zh-cn","variant":"zh-cn"});
+}];});});
+window.dataLayer = window.dataLayer || [];
+function gtag() { dataLayer.push(arguments); }
+gtag('js', new Date());
+gtag('config', 'UA-173135727-1');
+(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();
+(function(){/*
+Copyright The Closure Library Authors.
+SPDX-License-Identifier: Apache-2.0
+*/
+"use strict";var aa=function(a){var b=0;return function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}},ba="function"==typeof Object.create?Object.create:function(a){var b=function(){};b.prototype=a;return new b},k;if("function"==typeof Object.setPrototypeOf)k=Object.setPrototypeOf;else{var m;a:{var ca={a:!0},n={};try{n.__proto__=ca;m=n.a;break a}catch(a){}m=!1}k=m?function(a,b){a.__proto__=b;if(a.__proto__!==b)throw new TypeError(a+" is not extensible");return a}:null}
+var p=k,q=function(a,b){a.prototype=ba(b.prototype);a.prototype.constructor=a;if(p)p(a,b);else for(var c in b)if("prototype"!=c)if(Object.defineProperties){var d=Object.getOwnPropertyDescriptor(b,c);d&&Object.defineProperty(a,c,d)}else a[c]=b[c];a.v=b.prototype},r=this||self,da=function(){},t=function(a){return a};var u;var w=function(a,b){this.g=b===v?a:""};w.prototype.toString=function(){return this.g+""};var v={},x=function(a){if(void 0===u){var b=null;var c=r.trustedTypes;if(c&&c.createPolicy){try{b=c.createPolicy("goog#html",{createHTML:t,createScript:t,createScriptURL:t})}catch(d){r.console&&r.console.error(d.message)}u=b}else u=b}a=(b=u)?b.createScriptURL(a):a;return new w(a,v)};var A=function(){return Math.floor(2147483648*Math.random()).toString(36)+Math.abs(Math.floor(2147483648*Math.random())^Date.now()).toString(36)};var B={},C=null;var D="function"===typeof Uint8Array;function E(a,b,c){return"object"===typeof a?D&&!Array.isArray(a)&&a instanceof Uint8Array?c(a):F(a,b,c):b(a)}function F(a,b,c){if(Array.isArray(a)){for(var d=Array(a.length),e=0;e<a.length;e++){var f=a[e];null!=f&&(d[e]=E(f,b,c))}Array.isArray(a)&&a.s&&G(d);return d}d={};for(e in a)Object.prototype.hasOwnProperty.call(a,e)&&(f=a[e],null!=f&&(d[e]=E(f,b,c)));return d}
+function ea(a){return F(a,function(b){return"number"===typeof b?isFinite(b)?b:String(b):b},function(b){var c;void 0===c&&(c=0);if(!C){C={};for(var d="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split(""),e=["+/=","+/","-_=","-_.","-_"],f=0;5>f;f++){var h=d.concat(e[f].split(""));B[f]=h;for(var g=0;g
+>2];y=c[(y&3)<<
+4|z>>4];z=c[(z&15)
+>6];l=c[l&63];d[f++]=""+g+y+z+l}g=0;l=e;switch(b.length-h){case 2:g=b[h+1],l=c[(g&15)
+>2]+c[(b&3)
+>4]+l+e}return d.join("")})}var fa={s:{value:!0,configurable:!0}},G=function(a){Array.isArray(a)&&!Object.isFrozen(a)&&Object.defineProperties(a,fa);return a};var H;var J=function(a,b,c){var d=H;H=null;a||(a=d);d=this.constructor.u;a||(a=d?[d]:[]);this.j=d?0:-1;this.h=null;this.g=a;a:{d=this.g.length;a=d-1;if(d&&(d=this.g[a],!(null===d||"object"!=typeof d||Array.isArray(d)||D&&d instanceof Uint8Array))){this.l=a-this.j;this.i=d;break a}void 0!==b&&-1<b?(this.l=Math.max(b,a+1-this.j),this.i=null):this.l=Number.MAX_VALUE}if(c)for(b=0;b<c.length;b++)a=c[b],a<this.l?(a+=this.j,(d=this.g[a])?G(d):this.g[a]=I):(d=this.l+this.j,this.g[d]||(this.i=this.g[d]={}),(d=this.i[a])?
+G(d):this.i[a]=I)},I=Object.freeze(G([])),K=function(a,b){if(-1===b)return null;if(b<a.l){b+=a.j;var c=a.g[b];return c!==I?c:a.g[b]=G([])}if(a.i)return c=a.i[b],c!==I?c:a.i[b]=G([])},M=function(a,b){var c=L;if(-1===b)return null;a.h||(a.h={});if(!a.h[b]){var d=K(a,b);d&&(a.h[b]=new c(d))}return a.h[b]};J.prototype.toJSON=function(){var a=N(this,!1);return ea(a)};
+var N=function(a,b){if(a.h)for(var c in a.h)if(Object.prototype.hasOwnProperty.call(a.h,c)){var d=a.h[c];if(Array.isArray(d))for(var e=0;e<d.length;e++)d[e]&&N(d[e],b);else d&&N(d,b)}return a.g},O=function(a,b){H=b=b?JSON.parse(b):null;a=new a(b);H=null;return a};J.prototype.toString=function(){return N(this,!1).toString()};var P=function(a){J.call(this,a)};q(P,J);function ha(a){var b,c=(a.ownerDocument&&a.ownerDocument.defaultView||window).document,d=null===(b=c.querySelector)||void 0===b?void 0:b.call(c,"script[nonce]");(b=d?d.nonce||d.getAttribute("nonce")||"":"")&&a.setAttribute("nonce",b)};var Q=function(a,b){b=String(b);"application/xhtml+xml"===a.contentType&&(b=b.toLowerCase());return a.createElement(b)},R=function(a){this.g=a||r.document||document};R.prototype.appendChild=function(a,b){a.appendChild(b)};var S=function(a,b,c,d,e,f){try{var h=a.g,g=Q(a.g,"SCRIPT");g.async=!0;g.src=b instanceof w&&b.constructor===w?b.g:"type_error:TrustedResourceUrl";ha(g);h.head.appendChild(g);g.addEventListener("load",function(){e();d&&h.head.removeChild(g)});g.addEventListener("error",function(){0<c?S(a,b,c-1,d,e,f):(d&&h.head.removeChild(g),f())})}catch(l){f()}};var ia=r.atob("aHR0cHM6Ly93d3cuZ3N0YXRpYy5jb20vaW1hZ2VzL2ljb25zL21hdGVyaWFsL3N5c3RlbS8xeC93YXJuaW5nX2FtYmVyXzI0ZHAucG5n"),ja=r.atob("WW91IGFyZSBzZWVpbmcgdGhpcyBtZXNzYWdlIGJlY2F1c2UgYWQgb3Igc2NyaXB0IGJsb2NraW5nIHNvZnR3YXJlIGlzIGludGVyZmVyaW5nIHdpdGggdGhpcyBwYWdlLg=="),ka=r.atob("RGlzYWJsZSBhbnkgYWQgb3Igc2NyaXB0IGJsb2NraW5nIHNvZnR3YXJlLCB0aGVuIHJlbG9hZCB0aGlzIHBhZ2Uu"),la=function(a,b,c){this.h=a;this.j=new R(this.h);this.g=null;this.i=[];this.l=!1;this.o=b;this.m=c},V=function(a){if(a.h.body&&!a.l){var b=
+function(){T(a);r.setTimeout(function(){return U(a,3)},50)};S(a.j,a.o,2,!0,function(){r[a.m]||b()},b);a.l=!0}},T=function(a){for(var b=W(1,5),c=0;c<b;c++){var d=X(a);a.h.body.appendChild(d);a.i.push(d)}b=X(a);b.style.bottom="0";b.style.left="0";b.style.position="fixed";b.style.width=W(100,110).toString()+"%";b.style.zIndex=W(2147483544,2147483644).toString();b.style["background-color"]=ma(249,259,242,252,219,229);b.style["box-shadow"]="0 0 12px #888";b.style.color=ma(0,10,0,10,0,10);b.style.display=
+"flex";b.style["justify-content"]="center";b.style["font-family"]="Roboto, Arial";c=X(a);c.style.width=W(80,85).toString()+"%";c.style.maxWidth=W(750,775).toString()+"px";c.style.margin="24px";c.style.display="flex";c.style["align-items"]="flex-start";c.style["justify-content"]="center";d=Q(a.j.g,"IMG");d.className=A();d.src=ia;d.style.height="24px";d.style.width="24px";d.style["padding-right"]="16px";var e=X(a),f=X(a);f.style["font-weight"]="bold";f.textContent=ja;var h=X(a);h.textContent=ka;Y(a,
+e,f);Y(a,e,h);Y(a,c,d);Y(a,c,e);Y(a,b,c);a.g=b;a.h.body.appendChild(a.g);b=W(1,5);for(c=0;c<b;c++)d=X(a),a.h.body.appendChild(d),a.i.push(d)},Y=function(a,b,c){for(var d=W(1,5),e=0;e<d;e++){var f=X(a);b.appendChild(f)}b.appendChild(c);c=W(1,5);for(d=0;d<c;d++)e=X(a),b.appendChild(e)},W=function(a,b){return Math.floor(a+Math.random()*(b-a))},ma=function(a,b,c,d,e,f){return"rgb("+W(Math.max(a,0),Math.min(b,255)).toString()+","+W(Math.max(c,0),Math.min(d,255)).toString()+","+W(Math.max(e,0),Math.min(f,
+255)).toString()+")"},X=function(a){a=Q(a.j.g,"DIV");a.className=A();return a},U=function(a,b){0>=b||null!=a.g&&0!=a.g.offsetHeight&&0!=a.g.offsetWidth||(na(a),T(a),r.setTimeout(function(){return U(a,b-1)},50))},na=function(a){var b=a.i;var c="undefined"!=typeof Symbol&&Symbol.iterator&&b[Symbol.iterator];b=c?c.call(b):{next:aa(b)};for(c=b.next();!c.done;c=b.next())(c=c.value)&&c.parentNode&&c.parentNode.removeChild(c);a.i=[];(b=a.g)&&b.parentNode&&b.parentNode.removeChild(b);a.g=null};var pa=function(a,b,c,d,e){var f=oa(c),h=function(l){l.appendChild(f);r.setTimeout(function(){f?(0!==f.offsetHeight&&0!==f.offsetWidth?b():a(),f.parentNode&&f.parentNode.removeChild(f)):a()},d)},g=function(l){document.body?h(document.body):0<l?r.setTimeout(function(){g(l-1)},e):b()};g(3)},oa=function(a){var b=document.createElement("div");b.className=a;b.style.width="1px";b.style.height="1px";b.style.position="absolute";b.style.left="-10000px";b.style.top="-10000px";b.style.zIndex="-10000";return b};var L=function(a){J.call(this,a)};q(L,J);var qa=function(a){J.call(this,a)};q(qa,J);var ra=function(a,b){this.l=a;this.m=new R(a.document);this.g=b;this.i=K(this.g,1);b=M(this.g,2);this.o=x(K(b,4)||"");this.h=!1;b=M(this.g,13);b=x(K(b,4)||"");this.j=new la(a.document,b,K(this.g,12))};ra.prototype.start=function(){sa(this)};
+var sa=function(a){ta(a);S(a.m,a.o,3,!1,function(){a:{var b=a.i;var c=r.btoa(b);if(c=r[c]){try{var d=O(P,r.atob(c))}catch(e){b=!1;break a}b=b===K(d,1)}else b=!1}b?Z(a,K(a.g,14)):(Z(a,K(a.g,8)),V(a.j))},function(){pa(function(){Z(a,K(a.g,7));V(a.j)},function(){return Z(a,K(a.g,6))},K(a.g,9),K(a.g,10),K(a.g,11))})},Z=function(a,b){a.h||(a.h=!0,a=new a.l.XMLHttpRequest,a.open("GET",b,!0),a.send())},ta=function(a){var b=r.btoa(a.i);a.l[b]&&Z(a,K(a.g,5))};(function(a,b){r[a]=function(c){for(var d=[],e=0;e<arguments.length;++e)d[e-0]=arguments[e];r[a]=da;b.apply(null,d)}})("__h82AlnkH6D91__",function(a){"function"===typeof window.atob&&(new ra(window,O(qa,window.atob(a)))).start()});}).call(this);
+window.__h82AlnkH6D91__("WyJwdWItMTU0ODI3Mjg2MzU0NTc3NyIsW251bGwsbnVsbCxudWxsLCJodHRwczovL2Z1bmRpbmdjaG9pY2VzbWVzc2FnZXMuZ29vZ2xlLmNvbS9iL3B1Yi0xNTQ4MjcyODYzNTQ1Nzc3Il0sbnVsbCxudWxsLCJodHRwczovL2Z1bmRpbmdjaG9pY2VzbWVzc2FnZXMuZ29vZ2xlLmNvbS9lbC9BR1NLV3hXNkp2cHlNRlF0X0hfMkhjY2h0bUpISzBnZVRnajhMczk2Y3ZaWmNPLXczVURMcWxHZGp2T0lzRmo4VFRTRW1XREFoMG1rbDVjVFlFWXVsekF2ZGVGYXJRXHUwMDNkXHUwMDNkP3RlXHUwMDNkVE9LRU5fRVhQT1NFRCIsImh0dHBzOi8vZnVuZGluZ2Nob2ljZXNtZXNzYWdlcy5nb29nbGUuY29tL2VsL0FHU0tXeFhDTm1LWS1iSjJ1YjZ3NHBFV0l5VHF1ZC1PbWZMczBZTHZWUDJveURuUGRlOExoUGxQRTFWSWtMalFGVXhOci1mMVg5ZWI0NFBmWVA0VS1pZ0puQll6SEFcdTAwM2RcdTAwM2Q/YWJcdTAwM2QxXHUwMDI2c2JmXHUwMDNkMSIsImh0dHBzOi8vZnVuZGluZ2Nob2ljZXNtZXNzYWdlcy5nb29nbGUuY29tL2VsL0FHU0tXeFhFRkNMUFcwNGFTVHl2WDJhUzNnUUtKUUg5cmVlVjZOaUhYUlR0c0hBbG9GZEFVVEdKajlYY3pIRzhnOVVwTmlOX2FPeXpaQVpJMnRqemdHZlV1MVpSN0FcdTAwM2RcdTAwM2Q/YWJcdTAwM2QyXHUwMDI2c2JmXHUwMDNkMSIsImh0dHBzOi8vZnVuZGluZ2Nob2ljZXNtZXNzYWdlcy5nb29nbGUuY29tL2VsL0FHU0tXeFZSQkJPVXphejZsUTdnQ0xpRFY3bGNGMDZYUTgwaXFUeE9JQ1pFT1JhLXBteElNbV8zOE9fdUxiSlpqbVdEVUx2eVNJb29COHRobk9ZTEFEeXFiT25uX0FcdTAwM2RcdTAwM2Q/c2JmXHUwMDNkMiIsImRpdi1ncHQtYWQiLDIwLDEwMCwiY0hWaUxURTFORGd5TnpJNE5qTTFORFUzTnpjXHUwMDNkIixbbnVsbCxudWxsLG51bGwsImh0dHBzOi8vd3d3LmdzdGF0aWMuY29tLzBlbW4vZi9wL3B1Yi0xNTQ4MjcyODYzNTQ1Nzc3LmpzP3VzcXBcdTAwM2RDQUkiXSwiaHR0cHM6Ly9mdW5kaW5nY2hvaWNlc21lc3NhZ2VzLmdvb2dsZS5jb20vZWwvQUdTS1d4WFZCT1FwSlQ2eS1WV2RkR2FzcHBSZVZMRUFKNjk5VXQ0VWJPYTJzcEdfMTZ2eF9hc2ZCRDdYNUJ5dkc4RzB3SlZTdGlCT3RQc3ctbDBPTUM5bENBWUh1d1x1MDAzZFx1MDAzZCJd");
+{"@context":"https://schema.org","@type":"Article","headline":"
+明日方舟/孤星
+","url":"https://mzh.moegirl.org.cn/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F/%E5%AD%A4%E6%98%9F","inLanguage":"zh-Hans-CN","isPartOf":{"@type":"WebSite","name":"萌娘百科","url":"https://mzh.moegirl.org.cn/"},"publisher":{"@type":"Organization","name":"萌娘百科","url":"https://mzh.moegirl.org.cn","logo":{"@type":"ImageObject","url":"https://storage.moegirl.org.cn/moegirl/logo/zhMoegirl15.2.png"}},"author":{"@type":"Organization","name":"萌娘百科 contributors"},"description":".mw-parser-output .hover-change,.mw-parser-output ....","image":"https://storage.moegirl.org.cn/moegirl/commons/2/21/Arknights_%E5%AD%A4%E6%98%9F%E5%A4%8D%E5%88%BB.png","dateModified":"2025-08-11T13:03:02Z","datePublished":"2023-05-01T13:54:23Z"}
+This site requires JavaScript enabled. Please check your browser settings.
+.mw-parser-output .hover-change,.mw-parser-output .hover-remote{position:relative;display:inline-block;transition:opacity 0.5s linear}.mw-parser-output .hover-change-before,.mw-parser-output .hover-change-after,.mw-parser-output .hover-remote-target{transition:inherit}.mw-parser-output .hover-change-after,.mw-parser-output .hover-remote-target{opacity:0;position:absolute;top:0;left:0}.mw-parser-output .hover-remote-target{left:100%}.mw-parser-output .hover-change-after[style^="right:"],.mw-parser-output .hover-change-after[style*=" right:"],.mw-parser-output .hover-remote-after[style^="right:"],.mw-parser-output .hover-remote-after[style*=" right:"]{left:initial}.mw-parser-output .hover-change-after[style^="bottom:"],.mw-parser-output .hover-change-after[style*=" bottom:"],.mw-parser-output .hover-remote-after[style^="bottom:"],.mw-parser-output .hover-remote-after[style*=" bottom:"]{top:initial}.mw-parser-output .hover-change-after:hover,.mw-parser-output .hover-remote-target{opacity:0;margin-left:-9999px}.mw-parser-output .hover-tab-mode{position:relative;transition:none}.mw-parser-output .hover-tab-mode .hover-remote{transition:inherit;position:static}.mw-parser-output .hover-change.flash:hover .hover-change-before{margin-left:-9999px}.mw-parser-output .hover-change:hover>.hover-change-before,.mw-parser-output .hover-remote>.hover-remote-target,.mw-parser-output .hover-change:hover>a>.hover-change-before,.mw-parser-output .hover-remote>a>.hover-remote-target{opacity:0}.mw-parser-output .hover-change:hover>.hover-change-after,.mw-parser-output .hover-remote:hover>.hover-remote-target,.mw-parser-output .hover-change:hover>a>.hover-change-after,.mw-parser-output .hover-remote:hover>a>.hover-remote-target{opacity:1;margin-left:initial}.mw-parser-output [class*="hovers-"]{display:inline-block;box-shadow:0 0 1px rgba(0,0,0,0);vertical-align:middle;transition-duration:0.25s;transition-property:all}.mw-parser-output .hovers-rotate-shrink{transition-duration:0.5s;transform:rotate(0)scale(0.75)}.mw-parser-output .hovers-rotate-shrink:hover{transform:rotate(360deg)scale(1)}.mw-parser-output .hovers-rotate-shrink-reverse{transition-duration:0.5s;transform:rotate(360deg)scale(0.75)}.mw-parser-output .hovers-rotate-shrink-reverse:hover{transform:rotate(0)scale(1)}.mw-parser-output .hovers-rotate,.mw-parser-output .hovers-rotate-reverse:hover{transition-duration:0.5s;transform:rotate(0)}.mw-parser-output .hovers-rotate-reverse,.mw-parser-output .hovers-rotate:hover{transition-duration:0.5s;transform:rotate(360deg)}.mw-parser-output .hovers-fade-deep,.mw-parser-output .hovers-fade,.mw-parser-output .hovers-fade-shallow{opacity:1}.mw-parser-output .hovers-fade-deep:hover,.mw-parser-output .hovers-fade-deep.active{opacity:0.35}.mw-parser-output .hovers-fade:hover,.mw-parser-output .hovers-fade.active{opacity:0.5}.mw-parser-output .hovers-fade-shallow:hover,.mw-parser-output .hovers-fade-shallow.active{opacity:0.75}.mw-parser-output .hovers-bloom-deep{opacity:0.35}.mw-parser-output .hovers-bloom{opacity:0.5}.mw-parser-output .hovers-bloom-shallow{opacity:0.75}.mw-parser-output .hovers-bloom-deep:hover,.mw-parser-output .hovers-bloom-deep.active,.mw-parser-output .hovers-bloom:hover,.mw-parser-output .hovers-bloom.active,.mw-parser-output .hovers-bloom-shallow:hover,.mw-parser-output .hovers-bloom-shallow.active{opacity:1}.mw-parser-output .hovers-grow-deep,.mw-parser-output .hovers-grow,.mw-parser-output .hovers-grow-shallow{transform:scale(1)}.mw-parser-output .hovers-grow-deep:hover,.mw-parser-output .hovers-grow-deep.active{transform:scale(1.5)}.mw-parser-output .hovers-grow:hover,.mw-parser-output .hovers-grow.active{transform:scale(1.25)}.mw-parser-output .hovers-grow-shallow:hover,.mw-parser-output .hovers-grow-shallow.active{transform:scale(1.1)}.mw-parser-output .hovers-shrink-deep:hover,.mw-parser-output .hovers-shrink-deep.active,.mw-parser-output .hovers-shrink:hover,.mw-parser-output .hovers-shrink.active,.mw-parser-output .hovers-shrink-shallow:hover,.mw-parser-output .hovers-shrink-shallow.active{transform:scale(1)}.mw-parser-output .hovers-shrink-deep{transform:scale(0.5)}.mw-parser-output .hovers-shrink{transform:scale(0.75)}.mw-parser-output .hovers-shrink-shallow{transform:scale(0.9)}@keyframes shake-flexible{25%{transform:translateX(-0.0625em)}50%{transform:translateX(0.0625em)}75%{transform:translateX(-0.0625em)}}.mw-parser-output .hovers-shake-flexible:hover,.mw-parser-output .hovers-shake-flexible.active{animation:shake-flexible 0.5s ease-out}@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-8px)}}.mw-parser-output .hovers-shake:hover,.mw-parser-output .hovers-shake.active{animation:shake 0.5s ease-out}@keyframes bounce-flexible{25%{transform:translateY(-0.0625em)}50%{transform:translateY(0.0625em)}75%{transform:translateY(-0.0625em)}}.mw-parser-output .hovers-bounce-flexible:hover,.mw-parser-output .hovers-bounce-flexible.active{animation:bounce-flexible 0.5s ease-out}@keyframes bounce{25%{transform:translateY(-8px)}50%{transform:translateY(8px)}75%{transform:translateY(-8px)}}.mw-parser-output .hovers-bounce:hover,.mw-parser-output .hovers-bounce.active{position:relative;left:0;animation:bounce 0.5s ease-out}@keyframes swing{20%{transform:rotate(10deg)}40%{transform:rotate(-10deg)}60%{transform:rotate(5deg)}80%{transform:rotate(-5deg)}to{transform:rotate(0deg)}}.mw-parser-output .hovers-swing{transform-origin:top center}.mw-parser-output .hovers-swing:hover,.mw-parser-output .hovers-swing.active{animation:swing 0.75s ease-out}@keyframes pulse-grow{to{transform:scale(1.1)}}.mw-parser-output .hovers-pulse-grow:hover,.mw-parser-output .hovers-pulse-grow.active{animation:pulse-grow 0.5s linear infinite alternate}@keyframes pulse-shrink{to{transform:scale(0.9)}}.mw-parser-output .hovers-pulse-shrink:hover,.mw-parser-output .hovers-pulse-shrink.active{animation:pulse-shrink 0.5s linear infinite alternate}@keyframes push{50%{transform:scale(0.8)}}.mw-parser-output .hovers-push:hover,.mw-parser-output .hovers-push.active{animation:push 0.3s linear}@keyframes pop{50%{transform:scale(1.2)}}.mw-parser-output .hovers-pop:hover,.mw-parser-output .hovers-pop.active{animation:pop 0.3s linear}.mw-parser-output .hovers-bounce-in:hover,.mw-parser-output .hovers-bounce-in.active{transform:scale(1.2);transition-duration:0.5s;transition-timing-function:cubic-bezier(0.47,2.02,0.31,-0.36)}.mw-parser-output .hovers-bounce-out:hover,.mw-parser-output .hovers-bounce-out.active{transform:scale(0.8);transition-duration:0.5s;transition-timing-function:cubic-bezier(0.47,2.02,0.31,-0.36)}.mw-parser-output .hovers-tilt:hover,.mw-parser-output .hovers-tilt.active{transition-duration:0.3s;transform:rotate(4deg)}.mw-parser-output .hovers-grow-rotate:hover,.mw-parser-output .hovers-grow-rotate.active{transition-duration:0.3s;transform:scale(1.1)rotate(4deg)}.mw-parser-output .hovers-float:hover,.mw-parser-output .hovers-float.active{transition-duration:0.3s;transition-timing-function:ease-out;transform:translateY(-8px)}.mw-parser-output .hovers-sink:hover,.mw-parser-output .hovers-sink.active{transition-duration:0.3s;transition-timing-function:ease-out;transform:translateY(8px)}@keyframes bob{0%{transform:translateY(-10px)}50%{transform:translateY(-5px)}100%{transform:translateY(-10px)}}@keyframes bob-float{100%{transform:translateY(-10px)}}.mw-parser-output .hovers-bob:hover,.mw-parser-output .hovers-bob.active{animation-name:bob-float,bob;animation-duration:0.3s,1.5s;animation-delay:0s,0.3s;animation-timing-function:ease-out,ease-in-out;animation-iteration-count:1,infinite;animation-fill-mode:forwards;animation-direction:normal,alternate}@keyframes hang{0%{transform:translateY(10px)}50%{transform:translateY(5px)}100%{transform:translateY(10px)}}@keyframes hang-sink{100%{transform:translateY(10px)}}.mw-parser-output .hovers-hang:hover,.mw-parser-output .hovers-hang.active{animation-name:hang-sink,hang;animation-duration:0.3s,1.5s;animation-delay:0s,0.3s;animation-timing-function:ease-out,ease-in-out;animation-iteration-count:1,infinite;animation-fill-mode:forwards;animation-direction:normal,alternate}.mw-parser-output .hovers-skew:hover,.mw-parser-output .hovers-skew.active{transform:skew(-10deg)}.mw-parser-output .hovers-skew-forward{transform-origin:0 100%}.mw-parser-output .hovers-skew-forward:hover,.mw-parser-output .hovers-skew-forward.active{transform:skew(-10deg)}.mw-parser-output .hovers-skew-backward{transform-origin:0 100%}.mw-parser-output .hovers-skew-backward:hover,.mw-parser-output .hovers-skew-backward.active{transform:skew(10deg)}@keyframes wobble-vertical{16.65%{transform:translateY(8px)}33.3%{transform:translateY(-6px)}49.95%{transform:translateY(4px)}66.6%{transform:translateY(-2px)}83.25%{transform:translateY(1px)}100%{transform:translateY(0)}}.mw-parser-output .hovers-wobble-vertical:hover,.mw-parser-output .hovers-wobble-vertical.active{animation-name:wobble-vertical;animation-duration:1s;animation-timing-function:ease-in-out;animation-iteration-count:1}@keyframes wobble-horizontal{16.65%{transform:translateX(8px)}33.3%{transform:translateX(-6px)}49.95%{transform:translateX(4px)}66.6%{transform:translateX(-2px)}83.25%{transform:translateX(1px)}100%{transform:translateX(0)}}.mw-parser-output .hovers-wobble-horizontal:hover,.mw-parser-output .hovers-wobble-horizontal.active{animation-name:wobble-horizontal;animation-duration:1s;animation-timing-function:ease-in-out;animation-iteration-count:1}@keyframes wobble-to-bottom-right{16.65%{transform:translate(8px,8px)}33.3%{transform:translate(-6px,-6px)}49.95%{transform:translate(4px,4px)}66.6%{transform:translate(-2px,-2px)}83.25%{transform:translate(1px,1px)}100%{transform:translate(0,0)}}.mw-parser-output .hovers-wobble-to-bottom-right:hover,.mw-parser-output .hovers-wobble-to-bottom-right.active{animation-name:wobble-to-bottom-right;animation-duration:1s;animation-timing-function:ease-in-out;animation-iteration-count:1}@keyframes wobble-to-top-right{16.65%{transform:translate(8px,-8px)}33.3%{transform:translate(-6px,6px)}49.95%{transform:translate(4px,-4px)}66.6%{transform:translate(-2px,2px)}83.25%{transform:translate(1px,-1px)}100%{transform:translate(0)}}.mw-parser-output .hovers-wobble-to-top-right:hover,.mw-parser-output .hovers-wobble-to-top-right.active{animation-name:wobble-to-top-right;animation-duration:1s;animation-timing-function:ease-in-out;animation-iteration-count:1}@keyframes wobble-top{16.65%{transform:skew(-12deg)}33.3%{transform:skew(10deg)}49.95%{transform:skew(-6deg)}66.6%{transform:skew(4deg)}83.25%{transform:skew(-2deg)}100%{transform:skew(0)}}.mw-parser-output .hovers-wobble-top{transform-origin:0 100%}.mw-parser-output .hovers-wobble-top:hover,.mw-parser-output .hovers-wobble-top.active{animation-name:wobble-top;animation-duration:1s;animation-timing-function:ease-in-out;animation-iteration-count:1}@keyframes wobble-bottom{16.65%{transform:skew(-12deg)}33.3%{transform:skew(10deg)}49.95%{transform:skew(-6deg)}66.6%{transform:skew(4deg)}83.25%{transform:skew(-2deg)}100%{transform:skew(0)}}.mw-parser-output .hovers-wobble-bottom{transform-origin:100%0}.mw-parser-output .hovers-wobble-bottom:hover,.mw-parser-output .hovers-wobble-bottom.active{animation-name:wobble-bottom;animation-duration:1s;animation-timing-function:ease-in-out;animation-iteration-count:1}@keyframes wobble-skew{16.65%{transform:skew(-12deg)}33.3%{transform:skew(10deg)}49.95%{transform:skew(-6deg)}66.6%{transform:skew(4deg)}83.25%{transform:skew(-2deg)}100%{transform:skew(0)}}.mw-parser-output .hovers-wobble-skew:hover,.mw-parser-output .hovers-wobble-skew.active{animation-name:wobble-skew;animation-duration:1s;animation-timing-function:ease-in-out;animation-iteration-count:1}@keyframes buzz{50%{transform:translateX(3px)rotate(2deg)}100%{transform:translateX(-3px)rotate(-2deg)}}.mw-parser-output .hovers-buzz:hover,.mw-parser-output .hovers-buzz.active{animation-name:buzz;animation-duration:0.15s;animation-timing-function:linear;animation-iteration-count:infinite}@keyframes buzz-out{10%{transform:translateX(3px)rotate(2deg)}20%{transform:translateX(-3px)rotate(-2deg)}30%{transform:translateX(3px)rotate(2deg)}40%{transform:translateX(-3px)rotate(-2deg)}50%{transform:translateX(2px)rotate(1deg)}60%{transform:translateX(-2px)rotate(-1deg)}70%{transform:translateX(2px)rotate(1deg)}80%{transform:translateX(-2px)rotate(-1deg)}90%{transform:translateX(1px)rotate(0)}100%{transform:translateX(-1px)rotate(0)}}.mw-parser-output .hovers-buzz-out:hover,.mw-parser-output .hovers-buzz-out.active{animation-name:buzz-out;animation-duration:0.75s;animation-timing-function:linear;animation-iteration-count:1}.mw-parser-output .hovers-forward:hover,.mw-parser-output .hovers-forward.active{transform:translateX(8px)}.mw-parser-output .hovers-backward:hover,.mw-parser-output .hovers-backward.active{transform:translateX(-8px)}.mw-parser-output .hovers-top,.mw-parser-output .hovers-left,.mw-parser-output .hovers-bottom,.mw-parser-output .hovers-right{transition:all 0.5s}.mw-parser-output .hovers-top:hover,.mw-parser-output .hovers-top.active{transform:translateY(-0.0625em)}.mw-parser-output .hovers-left:hover,.mw-parser-output .hovers-left.active{transform:translateX(-0.0625em)}.mw-parser-output .hovers-bottom:hover,.mw-parser-output .hovers-bottom.active{transform:translateY(0.0625em)}.mw-parser-output .hovers-right:hover,.mw-parser-output .hovers-right.active{transform:translateX(0.0625em)}.mw-parser-output .hovers-blur,.mw-parser-output .hovers-blur-reverse,.mw-parser-output .hovers-brightness,.mw-parser-output .hovers-brightness-reverse,.mw-parser-output .hovers-contrast,.mw-parser-output .hovers-contrast-reverse,.mw-parser-output .hovers-grayscale,.mw-parser-output .hovers-grayscale-reverse,.mw-parser-output .hovers-invert,.mw-parser-output .hovers-invert-reverse,.mw-parser-output .hovers-saturate,.mw-parser-output .hovers-saturate-reverse,.mw-parser-output .hovers-sepia,.mw-parser-output .hovers-sepia-reverse,.mw-parser-output .hovers-hue-rotate,.mw-parser-output .hovers-hue-rotate-reverse{transition-duration:0.75s}.mw-parser-output .hovers-blur:hover,.mw-parser-output .hovers-blur.active,.mw-parser-output .hovers-brightness:hover,.mw-parser-output .hovers-brightness.active,.mw-parser-output .hovers-contrast:hover,.mw-parser-output .hovers-contrast.active,.mw-parser-output .hovers-grayscale:hover,.mw-parser-output .hovers-grayscale.active,.mw-parser-output .hovers-invert:hover,.mw-parser-output .hovers-invert.active,.mw-parser-output .hovers-saturate:hover,.mw-parser-output .hovers-saturate.active,.mw-parser-output .hovers-sepia:hover,.mw-parser-output .hovers-sepia.active,.mw-parser-output .hovers-hue-rotate:hover,.mw-parser-output .hovers-hue-rotate.active{filter:initial}.mw-parser-output .hovers-blur{filter:blur(5px)}.mw-parser-output .hovers-blur-reverse:hover,.mw-parser-output .hovers-blur-reverse.active{filter:blur(5px)}.mw-parser-output .hovers-brightness{filter:brightness(50%)}.mw-parser-output .hovers-brightness-reverse:hover,.mw-parser-output .hovers-brightness-reverse.active{filter:brightness(50%)}.mw-parser-output .hovers-contrast{filter:contrast(50%)}.mw-parser-output .hovers-contrast-reverse:hover,.mw-parser-output .hovers-contrast-reverse.active{filter:contrast(50%)}.mw-parser-output .hovers-grayscale{filter:grayscale(100%)}.mw-parser-output .hovers-grayscale-reverse:hover,.mw-parser-output .hovers-grayscale-reverse.active{filter:grayscale(100%)}.mw-parser-output .hovers-invert{filter:invert(100%)}.mw-parser-output .hovers-invert-reverse:hover,.mw-parser-output .hovers-invert-reverse.active{filter:invert(100%)}.mw-parser-output .hovers-saturate{filter:saturate(200%)}.mw-parser-output .hovers-saturate-reverse:hover,.mw-parser-output .hovers-saturate-reverse.active{filter:saturate(200%)}.mw-parser-output .hovers-sepia{filter:sepia(100%)}.mw-parser-output .hovers-sepia-reverse:hover,.mw-parser-output .hovers-sepia-reverse.acitve{filter:sepia(100%)}.mw-parser-output .hovers-hue-rotate{filter:hue-rotate(180deg)}.mw-parser-output .hovers-hue-rotate-reverse:hover,.mw-parser-output .hovers-hue-rotate-reverse.active{filter:hue-rotate(180deg)}.mw-parser-output .hovers-sweep-to-right,.mw-parser-output .hovers-sweep-to-left,.mw-parser-output .hovers-sweep-to-bottom,.mw-parser-output .hovers-sweep-to-top,.mw-parser-output .hovers-radial-out,.mw-parser-output .hovers-radial-in{position:relative;transition-duration:0.3s;transition-timing-function:ease-out;overflow:hidden}.mw-parser-output .hovers-sweep-to-right:before,.mw-parser-output .hovers-sweep-to-left:before,.mw-parser-output .hovers-sweep-to-bottom:before,.mw-parser-output .hovers-sweep-to-top:before,.mw-parser-output .hovers-radial-out:before,.mw-parser-output .hovers-radial-in:before{content:"";position:absolute;z-index:10;top:0;left:0;right:0;bottom:0;background:inherit;transform:scaleX(0);transition:inherit}.mw-parser-output .hovers-sweep-to-bottom:before,.mw-parser-output .hovers-sweep-to-top:before{transform:scaleY(0)}.mw-parser-output .hovers-radial-out:before,.mw-parser-output .hovers-radial-in:before{border-radius:50%;transform:scale(0)}.mw-parser-output .hovers-radial-in:before{transform:scale(2)}.mw-parser-output .hovers-sweep-to-right:before{transform-origin:0 50%}.mw-parser-output .hovers-sweep-to-left:before{transform-origin:100%50%}.mw-parser-output .hovers-sweep-to-bottom:before{transform-origin:50%0}.mw-parser-output .hovers-sweep-to-top:before{transform-origin:50%100%}.mw-parser-output .hovers-radial-out:hover:before,.mw-parser-output .hovers-radial-out.active:before{transform:scale(2)}.mw-parser-output .hovers-radial-in:hover:before,.mw-parser-output .hovers-radial-in.active:before{transform:scale(0)}.mw-parser-output .hovers-sweep-to-right .hovers-content.center,.mw-parser-output .hovers-sweep-to-left .hovers-content.center,.mw-parser-output .hovers-sweep-to-bottom .hovers-content.center,.mw-parser-output .hovers-sweep-to-top .hovers-content.center,.mw-parser-output .hovers-radial-out .hovers-content.center,.mw-parser-output .hovers-radial-in .hovers-content.center{display:flex;align-items:center;justify-content:center;word-break:break-all}.mw-parser-output .hovers-sweep-to-right:hover:before,.mw-parser-output .hovers-sweep-to-left:hover:before,.mw-parser-output .hovers-sweep-to-bottom:hover:before,.mw-parser-output .hovers-sweep-to-top:hover:before,.mw-parser-output .hovers-sweep-to-right.active:before,.mw-parser-output .hovers-sweep-to-left:hover:before,.mw-parser-output .hovers-sweep-to-bottom:hover:before,.mw-parser-output .hovers-sweep-to-top:hover:before{transform:scaleX(1)}.mw-parser-output .hovers-sweep-to-right .hovers-content,.mw-parser-output .hovers-sweep-to-left .hovers-content,.mw-parser-output .hovers-sweep-to-bottom .hovers-content,.mw-parser-output .hovers-sweep-to-top .hovers-content,.mw-parser-output .hovers-radial-out .hovers-content,.mw-parser-output .hovers-radial-in .hovers-content{width:100%;height:100%;position:absolute;transition-property:all;transition-duration:inherit;top:0;left:0;z-index:11}.mw-parser-output .hovers-sweep-to-right .hovers-content{left:initial;right:100%}.mw-parser-output .hovers-sweep-to-right:hover .hovers-content,.mw-parser-output .hovers-sweep-to-right.active .hovers-content{right:0}.mw-parser-output .hovers-sweep-to-left .hovers-content{left:100%}.mw-parser-output .hovers-sweep-to-left:hover .hovers-content,.mw-parser-output .hovers-sweep-to-left.active .hovers-content{left:0}.mw-parser-output .hovers-sweep-to-bottom .hovers-content{top:initial;bottom:100%}.mw-parser-output .hovers-sweep-to-bottom:hover .hovers-content,.mw-parser-output .hovers-sweep-to-bottom.active .hovers-content{bottom:0}.mw-parser-output .hovers-sweep-to-top .hovers-content{top:100%}.mw-parser-output .hovers-sweep-to-top:hover .hovers-content,.mw-parser-output .hovers-sweep-to-top.active .hovers-content{top:0}.mw-parser-output .hovers-radial-out .hovers-content,.mw-parser-output .hovers-radial-in:hover .hovers-content,.mw-parser-output .hovers-radial-in.active .hovers-content{opacity:0}.mw-parser-output .hovers-radial-in .hovers-content,.mw-parser-output .hovers-radial-out:hover .hovers-content,.mw-parser-output .hovers-radial-out.active .hovers-content{opacity:1}.mw-parser-output .hovers-border,.mw-parser-output .hovers-trim,.mw-parser-output .hovers-ripple-out,.mw-parser-output .hovers-ripple-in,.mw-parser-output .hovers-outline-out,.mw-parser-output .hovers-outline-in,.mw-parser-output .hovers-reveal{font-size:160px;line-height:16px}.mw-parser-output .hovers-border,.mw-parser-output .hovers-trim{position:relative;top:0;left:0;transition:all 0.3s}.mw-parser-output .hovers-border:before{content:"";width:100%;height:100%;position:absolute;top:0;left:0;box-sizing:border-box;transition:inherit;border-width:calc(0.0625em*0.6);border-color:inherit;border-style:solid;border-radius:inherit;opacity:0}.mw-parser-output .hovers-border:hover:before,.mw-parser-output .hovers-border.active:before{opacity:1}.mw-parser-output .hovers-trim:before{content:"";position:absolute;top:calc(0.0625em*0.4);left:calc(0.0625em*0.4);bottom:calc(0.0625em*0.4);right:calc(0.0625em*0.4);transition:inherit;border-width:calc(0.0625em*0.6);border-color:inherit;border-style:solid;opacity:0;border-radius:inherit}.mw-parser-output .hovers-trim:hover:before,.mw-parser-output .hovers-trim.active:before{opacity:1}.mw-parser-output .hovers-ripple-out,.mw-parser-output .hovers-ripple-in,.mw-parser-output .hovers-outline-out,.mw-parser-output .hovers-outline-in,.mw-parser-output .hovers-reveal{animation-duration:0.7s;animation-timing-function:ease-out;transition:all 0.3s}.mw-parser-output .hovers-ripple-out:before,.mw-parser-output .hovers-ripple-in:before,.mw-parser-output .hovers-outline-out:before,.mw-parser-output .hovers-outline-in:before,.mw-parser-output .hovers-reveal:before{content:"";position:absolute;top:0;right:0;bottom:0;left:0;animation:inherit;transition:inherit;border-width:calc(0.0625em*0.6);border-color:inherit;border-style:solid;border-radius:inherit}.mw-parser-output .hovers-ripple-out:before{opacity:0}.mw-parser-output .hovers-ripple-in:before{top:calc(-0.0625em*1.2);right:calc(-0.0625em*1.2);bottom:calc(-0.0625em*1.2);left:calc(-0.0625em*1.2);opacity:0}.mw-parser-output .hovers-outline-out:before{opacity:0}.mw-parser-output .hovers-outline-out:before{top:calc(-0.0625em*1.6);right:calc(-0.0625em*1.6);bottom:calc(-0.0625em*1.6);left:calc(-0.0625em*1.6);opacity:0}.mw-parser-output .hovers-reveal:before{border-width:0;opacity:0}@keyframes ripple-out{50%{opacity:1}100%{top:calc(-0.0625em*1.2);right:calc(-0.0625em*1.2);bottom:calc(-0.0625em*1.2);left:calc(-0.0625em*1.2);opacity:0}}.mw-parser-output .hovers-ripple-out:hover:before,.mw-parser-output .hovers-ripple-out.active:before{animation-name:ripple-out}@keyframes ripple-in{50%{opacity:1}100%{top:0;right:0;bottom:0;left:0;opacity:0}}.mw-parser-output .hovers-ripple-in:hover:before,.mw-parser-output .hovers-ripple-in.active:before{animation-name:ripple-in}.mw-parser-output .hovers-outline-out:hover:before,.mw-parser-output .hovers-outline-in:hover:before,.mw-parser-output .hovers-outline-out.active:before,.mw-parser-output .hovers-outline-in:hover:before{top:calc(-0.0625em*0.8);right:calc(-0.0625em*0.8);bottom:calc(-0.0625em*0.8);left:calc(-0.0625em*0.8);opacity:1}.mw-parser-output .hovers-reveal:hover:before,.mw-parser-output .hovers-reveal.active:before{transform:translateY(0);border-width:calc(0.0625em*0.4);opacity:1}.mw-parser-output .hovers-round-corners{overflow:hidden}.mw-parser-output .hovers-round-corners:hover,.mw-parser-output .hovers-round-corners.active{border-radius:0.0625em}.mw-parser-output .hover-turn{position:relative}.mw-parser-output .hover-turn-before,.mw-parser-output .hover-turn-after{position:absolute;top:0;left:0}@keyframes hover-turn{from{transform:scale(0,1)}50%{transform:scale(1.2)}to{transform:scale(1)}}.mw-parser-output .hover-turn:not(:hover) .hover-turn-before,.mw-parser-output .hover-turn:hover .hover-turn-after{animation:hover-turn 0.5s}.mw-parser-output .hover-turn:hover .hover-turn-before,.mw-parser-output .hover-turn:not(:hover) .hover-turn-after{opacity:0}
+回到方舟主条目
+干员图鉴
+时装图鉴
+家具图鉴
+敌方图鉴
+材料图鉴
+作战地图
+剧情一览
+活动一览
+制作组通讯
+卡池一览
+世界观
+&#160;
+欢迎来到萌娘百科
+「明日方舟」专题！
+本页面所使用游戏文本及数据，仅以介绍为目的引用，
+其著作权属于
+上海鹰角网络科技有限公司
+希望您能一同参与
+建设
+「
+明日方舟
+」系列专题（编辑
+导航
+页面） 
+[ 显示全部 ]
+游戏机制
+干员
+战斗
+基建
+任务
+常驻关卡
+主题曲
+Act initium 觉醒
+序章 黑暗时代 上
+第一章 黑暗时代 下
+第二章 异卵同生
+第三章 二次呼吸
+第四章 急性衰竭
+Act I 幻灭
+第五章 靶向药物
+第六章 局部坏死
+第七章 苦难摇篮
+第八章 怒号光明
+Act II 残阳
+第九章 风暴瞭望
+第十章 破碎日冕
+第十一章 淬火尘霾
+第十二章 惊霆无声
+第十三章 恶兆湍流
+第十四章 慈悲灯塔
+Act III 裂变
+第十五章 离解复合
+第十六章 反常光谱
+第十七章 相变临界
+资源收集
+常态事务
+每周部署
+保全派驻
+悖论模拟
+活动关卡
+SideStory
+（最近三个）
+「泡影苍霆」
+「直到大地变成一颗酸橙」
+「月行水上」
+故事集
+（最近三个）
+「镜中集」
+「十字路口」
+「丛林症结」
+危机合约
+（最近三个）
+#10赛季「尘环行动」
+#11赛季「赝波行动」
+#12赛季「起源行动」
+集成战略
+「刻俄柏的灰蕈迷境」
+「傀影与猩红孤钻」
+「水月与深蓝之树」
+「探索者的银凇止境」
+「萨卡兹的无终奇语」
+「岁的界园志异」
+「沉沦者的黑流树海」
+多维合作
+「罗德岛防御协议」
+引航者试炼
+「引航者试炼」#01
+「引航者试炼」#02
+「引航者试炼」#03
+「引航者试炼」#04
+「引航者试炼」#05
+「引航者试炼」#06
+其他活动
+联锁竞赛「荷谟伊智境」
+生息演算「沙中之火」
+特别行动「尖灭测试作战」
+资料总汇
+世界观
+干员筛选
+干员图鉴
+采购中心
+时装图鉴
+家具图鉴
+敌方图鉴
+材料图鉴
+种族概览
+剧情一览
+活动一览
+卡池一览
+贺图一览
+音乐一览
+光荣之路
+其他杂项
+画师
+配音演员
+制作组通讯
+跨媒体作品
+剧情角色
+饰牌考据
+梗
+回到主页
+.mw-parser-output .container{position:relative;width:100%;max-width:960px;margin:0 auto;padding:0 20px;box-sizing:border-box}.mw-parser-output .div,.mw-parser-output .divs,.mw-parser-output .column,.mw-parser-output .columns{width:100%;float:left;box-sizing:border-box}@media(min-width:400px){.mw-parser-output .container{width:85%;padding:0}}@media(min-width:550px){.mw-parser-output .container{width:80%}.mw-parser-output .div,.mw-parser-output .divs,.mw-parser-output .column,.mw-parser-output .columns{margin-left:.3%}.mw-parser-output .div:first-child,.mw-parser-output .divs:first-child,.mw-parser-output .column:first-child,.mw-parser-output .columns:first-child{margin-left:0}.mw-parser-output .one.div,.mw-parser-output .one.divs{width:100%;margin-left:0}.mw-parser-output .two.divs{width:49.85%}.mw-parser-output .three.divs{width:33.1333333333%}.mw-parser-output .four.divs{width:24.775%}.mw-parser-output .five.divs{width:19.76%}.mw-parser-output .six.divs{width:16.4166666667%}.mw-parser-output .seven.divs{width:14.0285714286%}.mw-parser-output .eight.divs{width:12.2375%}.mw-parser-output .nine.divs{width:10.8444444444%}.mw-parser-output .ten.divs{width:9.73%}.mw-parser-output .eleven.divs{width:8.81818181818%}.mw-parser-output .twelve.divs{width:8.05833333333%}.mw-parser-output .one.column,.mw-parser-output .one.columns{width:8.05833333333%}.mw-parser-output .two.columns{width:16.4166666667%}.mw-parser-output .three.columns{width:24.775%}.mw-parser-output .four.columns{width:33.1333333333%}.mw-parser-output .five.columns{width:41.4916666667%}.mw-parser-output .six.columns{width:49.85%}.mw-parser-output .seven.columns{width:58.2083333333%}.mw-parser-output .eight.columns{width:66.5666666667%}.mw-parser-output .nine.columns{width:74.925%}.mw-parser-output .ten.columns{width:83.2833333333%}.mw-parser-output .eleven.columns{width:91.6416666667%}.mw-parser-output .twelve.columns{width:100%;margin-left:0}.mw-parser-output .one-third.column{width:33.1333333333%}.mw-parser-output .two-thirds.column{width:66.5666666667%}.mw-parser-output .one-half.column{width:49.85%}}.mw-parser-output .ztdh{margin-bottom:3px;margin-top:5px;border:solid 1px var(--border-color-base,#a2a9b1);background-color:var(--background-color-base,#FFF);padding:8px;position:relative}.mw-parser-output .ztdh .ztdhclear{clear:both}.mw-parser-output .ztdh .ztdh-title{border:none;clear:none;margin:0;font-weight:bold;font-size:1.55em}.mw-parser-output .ztdh .logo{float:left;margin-right:5px}.mw-parser-output .ztdh .hint{text-align:right;font-size:12px}.mw-parser-output .ztdh span.menu-title{margin:0;padding:0;text-align:center;cursor:pointer;border:1px solid #a7d7f9;font-size:1.2em;font-weight:bold;line-height:1.8;display:block}.mw-parser-output .ztdh .ztdhmenu{margin-top:5px}.mw-parser-output .menu-popout{position:absolute;background-color:var(--background-color-base,#FFF);margin:0;width:100%;top:-1px}.mw-parser-output .menu-content{position:relative;display:none;z-index:99}.mw-parser-output .ztdh ul{list-style:none!important;margin:0;border:solid #9dd5ff;border-width:2px}.mw-parser-output .ztdh li{padding:4px}.mw-parser-output .ztdh li a:hover{text-decoration:none}.mw-parser-output .ztdh .menu-item:hover>.menu-content{display:block}.mw-parser-output .ztdh.ztdh-showall .menu-item>span.menu-title,.mw-parser-output .ztdh .menu-item:hover>span.menu-title{background-color:#9dd5ff;border:1px solid #9dd5ff}.mw-parser-output .ztdh ul ul{border:none;margin:5px 5px 0px 15px}.mw-parser-output .ztdh-hsctrl{float:right;background:var(--background-color-base,#FFF);padding:0 6px;cursor:pointer}.mw-parser-output .ztdh hr{margin:12px 0}@media(max-width:550px){.mw-parser-output .ztdh .hint{font-size:10px}.mw-parser-output .ztdh .menu-item{margin-bottom:5px}.mw-parser-output .menu-content{position:relative;margin-bottom:5px}.mw-parser-output .menu-popout{position:relative}.mw-parser-output .ztdh hr{margin:.2em 0}.mw-parser-output .ztdh-hsctrl{display:none}}.mw-parser-output .menu-popout>ul{margin-left:0!important}.mw-parser-output .ztdh.ztdh-showall .menu-content{display:block}.mw-parser-output .ztdh.ztdh-showall .menu-content .menu-popout{position:relative}.mw-parser-output .ztdh.ztdh-showall .menu-content ul ul{height:auto}body.skin-moeskin .mw-parser-output .ztdh{border:solid 1px var(--theme-border-color,#a2a9b1);background-color:var(--theme-background-color,white)}body.skin-moeskin .mw-parser-output .menu-popout{background-color:var(--theme-background-color,white)}body.skin-moeskin .mw-parser-output .ztdh-hsctrl{background:var(--theme-background-color,white)}@media screen{html.skin-theme-clientpref-night .mw-parser-output .ztdh span.menu-title,html.dark .mw-parser-output .ztdh span.menu-title{border:1px solid #0068b6}}@media screen and (prefers-color-scheme:dark){html.skin-theme-clientpref-os .mw-parser-output .ztdh span.menu-title{border:1px solid #0068b6}}@media screen{html.skin-theme-clientpref-night .mw-parser-output .ztdh ul,html.dark .mw-parser-output .ztdh ul{border:2px solid #0068b6}}@media screen and (prefers-color-scheme:dark){html.skin-theme-clientpref-os .mw-parser-output .ztdh ul{border:2px solid #0068b6}}@media screen{html.skin-theme-clientpref-night .mw-parser-output .ztdh.ztdh-showall .menu-item>span.menu-title,html.dark .mw-parser-output .ztdh.ztdh-showall .menu-item>span.menu-title,html.skin-theme-clientpref-night .mw-parser-output .ztdh .menu-item:hover>span.menu-title,html.dark .mw-parser-output .ztdh .menu-item:hover>span.menu-title{border:1px solid #0068b6;background-color:#0068b6}}@media screen and (prefers-color-scheme:dark){html.skin-theme-clientpref-os .mw-parser-output .ztdh.ztdh-showall .menu-item>span.menu-title,html.skin-theme-clientpref-os .mw-parser-output .ztdh .menu-item:hover>span.menu-title{border:1px solid #0068b6;background-color:#0068b6}}
+"use strict";
+window.RLQ = window.RLQ || [];
+window.RLQ.push([["jquery", "mediawiki.base", "ext.gadget.LocalObjectStorage"], async () => {
+    await $.ready;
+    if (document.body.clientWidth < 550) {
+        $(".menu-item").on("click", function() {
+            $(this).children(".menu-content").toggle();
+        });
+        return;
+    }
+    const localObjectStorage = new LocalObjectStorage("AnnTools-TopicNavBar");
+    const showall = ($container) => {
+        $container.toggleClass("ztdh-showall");
+        const status = localObjectStorage.getItem("status", {});
+        status[$container.attr("id").trim()] = "show";
+        localObjectStorage.setItem("status", status);
+        $container.find(".ztdh-hsctrl").html("[ 隐藏全部 ]");
+    };
+    const hideall = ($container) => {
+        $container.toggleClass("ztdh-showall");
+        const status = localObjectStorage.getItem("status", {});
+        status[$container.attr("id").trim()] = "hide";
+        localObjectStorage.setItem("status", status);
+        $container.find(".ztdh-hsctrl").html("[ 显示全部 ]");
+    };
+    $(".ztdh-hsctrl").on("click", ({ target }) => {
+        const $target = $(target);
+        const $container = $target.closest(".ztdh");
+        if ($target.text().includes("显示全部")) {
+            showall($container);
+        } else {
+            hideall($container);
+        }
+    });
+    const status = localObjectStorage.getItem("status", {});
+    for (const ele of $(".ztdh")) {
+        const $container = $(ele);
+        const id = ele.id.trim();
+        if (status[id] === "show") {
+            showall($container);
+        } else {
+            status[id] = "hide";
+        }
+    }
+    localObjectStorage.setItem("status", status);
+}]);
+萌娘百科鹰角网络编辑组
+仍在建设中，欢迎有意愿作出贡献的人加入我们。
+查看本专题的「
+编辑指南
+」
+编辑组QQ群：
+720401271
+。入群请注明萌百ID并务必严格遵守
+编辑指南
+和群公告。
+此页面的内容及资料需要长期更新，现存条目中资料未必是最新。
+本条目的
+最后
+更新时间为
+2025年08月11日21:03（UTC+8）
+，点击
+此处编辑更新
+。
+2023.4 愚人号（复刻）
+　◀&#xfe0e;　
+2023.5 孤星
+　▶&#xfe0e;　
+2023.6 空想花庭
+2024.4 巴别塔
+　◀&#xfe0e;　
+2024.5 孤星（复刻）
+　▶&#xfe0e;　
+2024.6 生路
+孤星复刻
+孤星复刻
+孤星
+孤星
+孤星（Lonetrail），为手游《
+明日方舟
+》的第61次活动，活动类型为SideStory。简中版于2023年5月1日开启并于2024年5月24日开启复刻；海外版于2023年11月7日开启。
+主线关卡【未来将至】10关，另有剧情关卡4关，教学关卡2关；挑战关卡【过往未尽】8关（含突袭）；挑战关卡【紧握当下】8关，1关含突袭。
+影像资料
+宽屏模式
+显示视频
+.bilibili-video-container {
+    border: 1px solid rgba(170,170,170,0.37);
+    max-width: 100%;
+}
+.bilibili-video-container.exec {
+    display: table;
+}
+.bilibili-iframe-container,
+.bilibili-video-container {
+    display: none;
+}
+.bilibili-video-container,
+.bilibili-video-container .bilibili-widescreen,
+.bilibili-video-container iframe {
+    max-width: 100%;
+    background-color: #fff!important;
+}
+.bilibili-title {
+    padding: .2em 6.5em .2em 1em;
+    position: relative;
+}
+.bilibili-title a {
+    word-break: break-word;
+}
+.bilibili-widescreen {
+    position: absolute;
+    display: none;
+    width: 1em;
+    right: calc(-2rem - 1px);
+    border: 1px solid rgba(170,170,170,0.37);
+    padding: .25rem .5rem;
+    line-height: 1.5em;
+    top: -2px;
+    user-select: none;
+    cursor: pointer;
+}
+.onshow .bilibili-widescreen{
+    display: block;
+}
+.bilibili-toggle {
+    position: absolute;
+    top: calc(50% - .5em);
+    right: .7em;
+    line-height: 1em;
+    cursor: pointer;
+    padding-left: 1em;
+    background-image: url(/skins/Vector/images/search-ltr.png?39f97);
+    background-image: linear-gradient(transparent,transparent),url(data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2212%22%20height=%2213%22%3E%20%3Cg%20fill=%22none%22%20stroke=%22%2354595d%22%20stroke-width=%222%22%3E%20%3Cpath%20d=%22M11.29%2011.71l-4-4%22/%3E%20%3Ccircle%20cx=%225%22%20cy=%225%22%20r=%224%22/%3E%20%3C/g%3E%20%3C/svg%3E);
+    background-position: left center;
+    background-repeat: no-repeat;
+}
+.bilibili-toggle:hover {
+    color: #36b;
+}
+.bilibili-video-button,
+.bilibili-video-button:visited {
+    display: inline-block;
+    margin: 4px 5px;
+    padding: 10px 25px;
+    font-size: 14px;
+    text-align: center;
+    color: #fff;
+    background: #de698c;
+    border-radius: 4px;
+}
+.bilibili-iframe-container {
+    padding: 6px;
+    position: relative;
+    border: 0 solid rgba(170,170,170,0.37);
+    border-top-width: 1px;
+}
+.bilibili-video-container:not([data-max-width]) .bilibili-iframe-container {
+    max-width: calc(100% - 12px)!important;
+}
+.bilibili-video-container:not([data-max-width]).onshow .bilibili-iframe-container {
+    max-height: calc(100% - 27px)!important;
+}
+.bilibili-video-container textarea {
+    background: white;
+    color: black;
+    width: 80%;
+    margin: auto;
+}
+.bilibili-iframe-overlay {
+    width: 0;
+    height: 0;
+    padding-top: 30%;
+    text-align: center;
+    box-sizing: border-box;
+    background: rgb(167, 215, 249);
+    position: absolute;
+    top: 3px;
+    left: 6px;
+    z-index: 2;
+}
+.bilibili-iframe-retry-link {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: none;
+    background: white;
+    padding: 0 0.5em;
+}
+html > body > .navpopup .bilibili-video-container > * {
+    display: none !important;
+}
+html > body > .navpopup .bilibili-video-container::before {
+    content: "请不要在注释里使用 BilibiliVideo 模板";
+    font-style: italic;
+}
+"use strict";
+(window.RLQ ||= []).push([
+    [
+        "mediawiki.base",
+        "jquery",
+    ],
+    async () => {
+        const errMsg = {
+            id: '此处填写的id有误，请参考
+模板文档
+修正……',
+            error: "执行出现问题，请复制以下内容并在提问求助区处粘贴寻求帮助：$$$",
+            attr: '下方填写的参数 $$$ 有误，请参考
+模板文档
+修正……',
+        };
+        await $.ready;
+        const ifNamespaceAllow = [0, 4, 10, 12].includes(mw.config.get("wgNamespaceNumber"));
+        const sanNode = $(`
+`);
+        const genErr = (type, msg = "") => Reflect.has(errMsg, type) ? `
+BilibiliVideo模板：${errMsg[type].replace("$$$", sanNode.text(msg).html())}
+` : "";
+        const injectErrMsgBefore = ($ele, type, msg = "") => $ele.before(genErr(type, msg));
+        const getErrorType = (code) => {
+            switch (code) {
+                case 62003: {
+                    return false;
+                }
+                case -403: {
+                    return "forbidden";
+                }
+                default: {
+                    return "failed";
+                }
+            }
+        };
+        /**
+     * @param { string } id
+     */
+        const idCorrector = (id) => {
+            let type = false;
+            // 1. 有明确的 av 前缀且符合 aid 规则
+            if (/^av[1-9]\d*$/i.test(id)) {
+                type = "av";
+            }
+            // 2. 有明确的 bv 前缀且符合 bvid 规则
+            else if (/^[bB][vV]1[FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf]{9}$/.test(id)) {
+                type = "bv";
+            }
+            // 3. 没有明确的前缀，但符合 aid 规则
+            else if (/^[1-9]\d*$/.test(id)) {
+                type = "av";
+            }
+            // 4. 没有明确的前缀，但符合 bvid 规则且不符合 aid 规则
+            else if (/^1?[FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf]{9}$/.test(id)) {
+                type = "bv";
+            }
+            // 5. 无法判断
+            if (type === "av") {
+                return {
+                    id: id.replace(/^av/i, ""),
+                    prefix: {
+                        href: "av",
+                        iframe: "aid",
+                    },
+                };
+            }
+            if (type === "bv") {
+                return {
+                    id: id.replace(/^.*([FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf]{9})$/i, "1$1"),
+                    prefix: {
+                        href: "BV",
+                        iframe: "bvid",
+                    },
+                };
+            }
+            return false;
+        };
+        try {
+            const isNaN = Number.isNaN || window.isNaN;
+            const cssLengthUnitValidator = (length, defaultValue, callback, paramName, $ele) => {
+                if (typeof length !== "string" || length.length === 0) {
+                    callback(false);
+                    return defaultValue;
+                }
+                const parsedNumber = parseFloat(length.replace(/[a-z]+/i, ""));
+                if (isNaN(parsedNumber) || parsedNumber <= 0) {
+                    callback(false);
+                    injectErrMsgBefore($ele, "attr", paramName);
+                    return defaultValue;
+                }
+                if (/^(?:\d+|\d*\.\d+)(?:em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|Q|in|pc|pt|px|%)$/.test(length)) {
+                    callback(true);
+                    return length;
+                }
+                if (/^(?:\d+|\d*\.\d+)$/.test(length)) {
+                    callback(true);
+                    return `${length}px`;
+                }
+                callback(false);
+                injectErrMsgBefore($ele, "attr", paramName);
+                return defaultValue;
+            };
+            const fixedNumber = (number) => `${+number < 10 ? "0" : ""}${number}`;
+            const secondsParser = (seconds) => `${Math.floor(+seconds / 60)}:${fixedNumber(+seconds % 60)}`;
+            const submit = (ids) => {
+                if (!ifNamespaceAllow) {
+                    return;
+                }
+                if (--ids.pending > 0) {
+                    return;
+                }
+                let changed = false;
+                if (ids.failed.aid.size + ids.failed.bvid.size > 0 && !mw.config.get("wgCategories").includes("带有失效视频的条目")) {
+                    changed = true;
+                }
+                if (ids.forbidden.aid.size + ids.forbidden.bvid.size > 0 && !mw.config.get("wgCategories").includes("带有受限视频的条目")) {
+                    changed = true;
+                }
+                if (ids.failed.aid.size + ids.failed.bvid.size === 0 && mw.config.get("wgCategories").includes("带有失效视频的条目")) {
+                    changed = true;
+                }
+                if (ids.forbidden.aid.size + ids.forbidden.bvid.size === 0 && mw.config.get("wgCategories").includes("带有受限视频的条目")) {
+                    changed = true;
+                }
+                if (changed) {
+                    const url = new URL("https://moegirlpedia.annangela.cn/bilibiliCollector/videoCheck");
+                    url.searchParams.set("pageid", mw.config.get("wgArticleId"));
+                    $.get(`${url}`);
+                }
+            };
+            const global_element = $("#mw-content-text");
+            const placeholderToggle = (iframe) => {
+                if (iframe.data("displayFlag")) {
+                    iframe.data("displayFlag", false);
+                    iframe.data("placeholder").fadeOut(370);
+                }
+            };
+            let lazyLoadObserver;
+            if (Reflect.has(window, "IntersectionObserver") &&
+                Reflect.has(window, "IntersectionObserverEntry") &&
+                Reflect.has(window.IntersectionObserverEntry.prototype, "intersectionRatio") &&
+                Reflect.has(window.IntersectionObserverEntry.prototype, "isIntersecting")) {
+                lazyLoadObserver = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.src = entry.target.dataset.src;
+                            setTimeout(() => {
+                                placeholderToggle($(entry.target));
+                            }, 13070);
+                            lazyLoadObserver.unobserve(entry.target);
+                        }
+                    });
+                });
+            } else {
+                lazyLoadObserver = {
+                    observe: (target) => {
+                        target.src = target.dataset.src;
+                        setTimeout(() => {
+                            placeholderToggle($(target));
+                        }, 13070);
+                    },
+                };
+            }
+            const iframe_href_base = "https://www.bilibili.com/blackboard/newplayer.html?playlist=true&playlist_order=sequential&musth5=1&noEndPanel=1&crossDomain=1&autoplay=0&";
+            const EPSILON = 2.220446049250313e-16,
+                rememberWH = (ele) => {
+                    ele.data({ width: ele.width(), height: ele.height() });
+                },
+                setTureHeight = (ele) => {
+                    const barHeight = ele.data("height") - ele.data("width") * 9 / 16; //计算标题和播放器控制栏高度
+                    ele.height(ele.width() * 9 / 16 + barHeight);
+                },
+                setWH = (ele) => {
+                    ele.css({ width: "100%", height: "100%" });
+                },
+                recallWH = (ele) => {
+                    ele.width(ele.data("width")).height(ele.data("height"));
+                },
+                setMaxHeight = (container, target) => {
+                    const h = container.outerHeight(true);
+                    let t = 0;
+                    container.children().each((_, ele) => {
+                        t += $(ele).outerHeight(true);
+                    });
+                    target.css("max-height", `calc(100% - ${parseInt(t - h + 2 - (Number.EPSILON || EPSILON))}px)`);
+                };
+            const run = () => {
+                const ids = {
+                    failed: {
+                        aid: new Set(),
+                        bvid: new Set(),
+                    },
+                    forbidden: {
+                        aid: new Set(),
+                        bvid: new Set(),
+                    },
+                    pending: 0,
+                };
+                const targets = $(".bilibili-video-container:not(.exec)");
+                ids.pending = targets.length;
+                targets.addClass("exec").each((_, ele) => {
+                    const { dataset } = ele;
+                    const _id = dataset.id;
+                    const selfbox = $(ele);
+                    const toggleButton = selfbox.find(".bilibili-toggle");
+                    const widescreenButton = selfbox.find(".bilibili-widescreen");
+                    const validation = idCorrector(_id);
+                    if (!validation) {
+                        ele.outerHTML = genErr("id");
+                        return;
+                    }
+                    const { id, prefix } = validation;
+                    let page = parseInt(+(dataset.page || 1));
+                    if (isNaN(page) || page < 1) {
+                        page = 1;
+                        if (typeof dataset.page === "string" && dataset.page !== "") {
+                            injectErrMsgBefore(selfbox, "attr", "page");
+                        }
+                    }
+                    const { pagename, title } = dataset;
+                    const height = cssLengthUnitValidator(dataset.height, "441px", (isValidated) => isValidated || selfbox.removeAttr("data-height"), "height", selfbox);
+                    const width = cssLengthUnitValidator(dataset.width, "665px", (isValidated) => isValidated || selfbox.removeAttr("data-width"), "width", selfbox);
+                    const maxHeight = cssLengthUnitValidator(dataset.maxHeight, "100vh", (isValidated) => isValidated || selfbox.removeAttr("data-max-height"), "maxHeight", selfbox);
+                    const maxWidth = cssLengthUnitValidator(dataset.maxWidth, "100%", (isValidated) => isValidated || selfbox.removeAttr("data-max-width"), "maxWidth", selfbox);
+                    const subtitle = !!(dataset.subtitle === "true");
+                    const t = parseInt(dataset.t);
+                    const tIsInvalid = isNaN(t) || t <= 0;
+                    const iframeContainer = selfbox.find(".bilibili-iframe-container");
+                    const title_text = $("
+").attr("rel", "nofollow noreferrer noopener").addClass("external text").attr({
+                        href: `https://www.bilibili.com/video/${prefix.href}${id}?p=${page}${tIsInvalid ? "" : `&t=${t}`}`,
+                        target: "_blank",
+                    }).prependTo(selfbox.find(".bilibili-title"));
+                    const iframe = $("
+").attr({
+                        allow: "fullscreen",
+                        allowfullscreen: true,
+                        frameborder: 0,
+                        scrolling: "no",
+                        src: "",
+                        "class": "bilibili-iframe",
+                    }).css({
+                        width: width,
+                        height: height,
+                        "max-width": maxWidth,
+                        "max-height": maxHeight,
+                    });
+                    if (!tIsInvalid) {
+                        selfbox.removeAttr("data-auto-expand");
+                    } else if (typeof dataset.t === "string" && dataset.t !== "") {
+                        injectErrMsgBefore(selfbox, "attr", "t");
+                    }
+                    const time = secondsParser(t);
+                    title_text.text(`${(title || prefix.href + id) + ([0, 1].includes(page) ? "" : ` (P${page})`) + (tIsInvalid ? "" : `[视频从${time}开始播放]`)}【视频信息加载中……】`);
+                    iframeContainer.css({
+                        width: width,
+                        height: height,
+                        "max-width": maxWidth,
+                        "max-height": maxHeight,
+                    });
+                    iframe.appendTo(iframeContainer);
+                    const div = $("
+");
+                    div.css({
+                        position: "absolute",
+                        top: "0",
+                        left: "0",
+                        bottom: "0",
+                        right: "0",
+                        "z-index": "99",
+                        display: "flex",
+                        "align-items": "center",
+                        background: "rgba(255, 255, 255, .37)",
+                    });
+                    const text = $("
+");
+                    text.css({
+                        "text-align": "center",
+                        width: "100%",
+                    }).text("正在加载中，若长时间空白则说明是网络问题……");
+                    div.append(text).appendTo(iframeContainer);
+                    iframe.data({
+                        placeholder: div,
+                        displayFlag: true,
+                    });
+                    iframe[0].addEventListener("load", () => {
+                        placeholderToggle(iframe);
+                    });
+                    $.ajax({
+                        url: `https://api.bilibili.com/x/web-interface/view?${prefix.iframe}=${id}&jsonp=jsonp`,
+                        type: "GET",
+                        dataType: "jsonp",
+                        timeout: 10000,
+                        success: ({ code, message, data }) => {
+                            if (code !== 0) {
+                                title_text.text((title || prefix.href + id) + ([0, 1].includes(page) ? "" : ` (P${page})`) + (tIsInvalid ? "" : `[视频从${time}开始播放]`));
+                                iframe.attr("data-src", `${iframe_href_base + prefix.iframe}=${id}&page=${page}${tIsInvalid ? "" : `&t=${t}`}`);
+                                lazyLoadObserver.observe(iframe[0]);
+                                console.info("Widget:BilibiliVideo", `${prefix.href}${id}`, code, message);
+                                const errorType = getErrorType(code);
+                                if (errorType) {
+                                    ids[errorType][prefix.iframe].add(id);
+                                }
+                                return;
+                            }
+                            const list = data.pages;
+                            let _page = 1;
+                            const name = title || (data.title || prefix.href + id);
+                            let index;
+                            let length;
+                            if (pagename) {
+                                for (index = 0, length = list.length; index < length; index++) {
+                                    if (list[index].part !== pagename) { continue; }
+                                    _page = list[index].page;
+                                    break;
+                                }
+                            } else { _page = page; }
+                            index = _page - 1;
+                            const href = title_text.attr("href");
+                            if (list[index] !== undefined && list[index].cid !== undefined) {
+                                iframe.attr("data-src", `${iframe_href_base}${prefix.iframe}=${id}&cid=${list[index].cid}&page=${_page}${tIsInvalid ? "" : `&t=${t}`}`);
+                                title_text.attr("href", href.replace(new RegExp(`\\?p=${page}`, "g"), `?p=${_page}`));
+                                title_text.text(`${name} [${_page}/${list.length}]${tIsInvalid ? "" : `[视频从${time}开始播放]`}`);
+                                if (subtitle) { title_text.append(`
+（${_page}、${list[index].part}）`); }
+                            } else {
+                                title_text.text(name + (tIsInvalid ? "" : `[视频从${time}开始播放]`));
+                                iframe.attr("data-src", `${iframe_href_base + prefix.iframe}=${id}&page=${_page}${tIsInvalid ? "" : `&t=${t}`}`);
+                            }
+                            lazyLoadObserver.observe(iframe[0]);
+                        },
+                        error: () => {
+                            title_text.text((title || prefix.href + id) + ([0, 1].includes(page) ? "" : ` (P${page})`) + (tIsInvalid ? "" : `[视频从${time}开始播放]`));
+                            iframe.attr("data-src", `${iframe_href_base + prefix.iframe}=${id}&page=${page}${tIsInvalid ? "" : `&t=${t}`}`);
+                            lazyLoadObserver.observe(iframe[0]);
+                        },
+                        complete: () => {
+                            if (selfbox.is('[data-auto-expand="true"]')) {
+                                selfbox.addClass("onshow");
+                                iframeContainer.show();
+                                toggleButton.text("隐藏视频");
+                                selfbox.removeAttr("style");
+                            }
+                            submit(ids);
+                        },
+                    });
+                    //toggle
+                    toggleButton.on("click", () => {
+                        selfbox.width(iframeContainer.outerWidth(true));
+                        selfbox.toggleClass("onshow");
+                        iframeContainer.toggle();
+                        if (toggleButton.text() === "显示视频") {
+                            toggleButton.text("隐藏视频");
+                            $(window).resize();
+                        } else {
+                            toggleButton.text("显示视频");
+                            selfbox.removeAttr("style");
+                        }
+                    });
+                    widescreenButton.on("click", () => {
+                        if (selfbox.is(":not(.onshow)")) { return; }
+                        if (selfbox.is(".widescreen")) {
+                            selfbox.removeClass("widescreen");
+                            widescreenButton.text("显示宽屏");
+                            recallWH(iframeContainer);
+                            recallWH(iframe);
+                            recallWH(selfbox);
+                        } else {
+                            selfbox.addClass("widescreen");
+                            widescreenButton.text("退出宽屏");
+                            rememberWH(selfbox);
+                            selfbox.css("width", selfbox.parent().width() > Math.min(911, global_element.width()) ? "73%" : "100%"); //可以看见按钮的最小宽度 665 的 1/0.73 倍
+                            setTureHeight(selfbox);
+                            rememberWH(iframe);
+                            rememberWH(iframeContainer);
+                            setWH(iframe);
+                            setWH(iframeContainer);
+                            iframeContainer.height(selfbox.height() - title_text.parent().height());
+                            setMaxHeight(selfbox, iframeContainer);
+                        }
+                    });
+                });
+            };
+            $(run);
+            mw.hook("wikipage.content").add(run);
+            $(window).on("load", run);
+            $(window).on("resize", () => {
+                $(".bilibili-video-container.onshow.widescreen").each((_, ele) => {
+                    const selfbox = $(ele);
+                    selfbox.css("width", selfbox.parent().width() > Math.min(911, global_element.width()) ? "73%" : "100%");
+                    setTureHeight(selfbox);
+                    setMaxHeight(selfbox, selfbox.find(".bilibili-iframe-container"));
+                });
+            });
+        } catch (e) {
+            /* eslint-disable */
+            var msg = genErr("error", navigator.userAgent + " : " + e + " " + e.stack.split("\n")[1].trim());
+            $(".bilibili-video-container").each(function (_, ele) {
+                ele.outerHTML = msg;
+            });
+            /* eslint-enable */
+        }
+    }
+]);
+宽屏模式
+显示视频
+活动剧情
+预告
+“
+在特里蒙这座科技之城中，有着十多个特别地块—— 
+无数个科研项目在紧锣密鼓地进行中，
+诸多生活的“未来式”正在那里酝酿、发生、被验证……
+而在半个月后，我们将公布其中最为伟大的一项成果。
+天空看似澄澈，但绝非净土。
+从来没有人质疑日升月落，也没有人质疑万物生长。
+理想
+偏执
+她是个奢侈的天才。
+好奇
+这些星辰自古以来就在泰拉的天顶闪耀。
+曾经，对于这片大地，抬头仰望没有意义。
+进取
+我们特殊至此吗？
+我们究竟生活在怎样的一片土地上？
+我们将前往何处？
+“突破”，这是一个中性的描述，
+但你的潜意识认为“天空”是不应当有限制的。
+这座环形的实验室诞生之初，就准备好了颠覆人们的认知。
+我无法再容忍自己待在你的羽翼之下。
+“夜风是她的车辇，星辰是她的舞伴。”
+我希望……克丽斯腾希望，这会成为一个伟大的讯号。
+这能开启下一个时代。
+”
+序言
+“
+所有人都知道，359号基地只是一个开始，却没有人料到，克丽斯腾的行动来得如此迅速。
+从天而降的“流星”，不知去向的递质，急迫的军方，别有所图的梅兰德，凯尔希与意料之外的访客......一切都预示着有什么即将发生。
+没有人看得清，在迷雾的背后究竟隐藏着怎样的秘密，正如没有人料得到，未来离我们如此之近。
+试着抬头吧，答案近在眼前。
+”
+官方介绍
+“
+克丽斯腾的失踪牵动了所有人的思绪。
+军方和梅兰德基金会齐聚特里蒙，
+凯尔希选择主动介入。
+乌云密布，暴雨将至。
+是阴谋，是闹剧，还是独醒？
+往昔的恩怨于此地交会，过去与未来在此地碰撞。
+这一夜，无人入眠。
+”
+主条目：
+明日方舟/剧情/孤星
+活动关卡
+主条目：
+明日方舟/孤星/活动关卡
+新机制
+重力控制按钮
+重量等级在3或以上的敌人或者阻挡数为1或以上的我方干员可以踩动重力感应机关，控制全场重力分力方向，在一个机关踩住的时候另一个机关不会生效。
+敌方单位在向重力相同方向移动时移速提升，反之降低，且对越重的敌人效果越明显；我方干员朝重力方向部署时攻击速度提升，反之降低
+行星碎屑
+“行星碎屑”只会在轨道上移动且会由于重力始终处于轨道底端。
+我方干员在相邻位置攻击行星碎屑可为其充能，一定次数后可以将其朝干员部署方向推动。如果干员为“行星碎屑”施加足够的推力则可以直接推动“行星碎屑”
+“行星碎屑”在静止时可以堵住敌人前进路线，移动时会对经过的所有单位造成高额物理伤害
+活动系统
+专项调查
+解锁专项调查后，每日4:00可以获得2个（复刻为6个）授权调查许可；最多可同时拥有4个（复刻为12个）授权调查许可，超出上限的授权调查许可将无法获得。每次启动调查需要消耗1授权调查许可。完成专项调查任务后可解锁“
+综合调查数据库
+”中的内容。（本页面仅列出指令面板的内容）在完成所有专项调查之后，不再获得授权调查许可
+区域与任务-首次
+能量井
+初始解锁
+“弧光一号”计划的一环，通称——能量井。
+作用为聚集能量，并将之发射至位于上方的聚焦发生器。它能够储存足够维持一个国家所有移动城市相当一段时间消耗的能源。
+任务描述
+任务奖励
+以三星评价通关1次CW-3
+10000
+以三星评价通关1次CW-5
+10
+1
+以三星评价通关1次CW-7
+3
+超重·α
+1
+以三星评价通关1次CW-7，且“行星碎屑”至少撞击过15次敌人
+10
+通关活动关卡5次（不含教学关、剧情关与秘密区块）
+1
+超重·β
+1
+奖励合计
+10000
+10
+1
+3
+超重·α
+1
+10
+1
+超重·β
+1
+克丽斯腾用它对准天空，而我们应该用它对准谁？
+聚焦发生器
+通关CW-ST-2后解锁
+“弧光一号”计划的一环，通称——聚焦发生器。
+作用为吸收地面发射而来的能量，在锁定目标后发射。它的打击范围广得超越多数泰拉人的想象。
+任务描述
+任务奖励
+以三星评价通关1次CW-4
+10000
+以三星评价通关1次CW-4，且成功阻止弧光突击队起飞
+10
+1
+以三星评价通关1次CW-6
+3
+重力认知·α
+1
+通关活动关卡5次（不含教学关、剧情关与秘密区块）
+5
+以三星评价通关1次CW-EX-1，且“行星碎屑”至少撞击过20次敌人
+1
+重力认知·β
+1
+奖励合计
+10000
+10
+1
+3
+重力认知·α
+1
+5
+1
+重力认知·β
+1
+迈向群星的第一步，是征服天空，我们已经走在了这条道路上。
+万星园
+通关CW-7解锁
+克丽斯腾·莱特出于个人喜好设计的观星间。
+中央的星象仪采用了最先端的技术，精度极高。只是，那似乎并非泰拉人熟知的群星轨迹。
+任务描述
+任务奖励
+以三星评价通关1次CW-8
+10000
+以三星评价通关1次CW-8，且“行星碎屑”至少撞击过20次敌人
+10
+1
+以三星评价通关1次CW-9，且重力方向改变最多2次
+3
+失重·α
+1
+以三星评价通关1次CW-EX-3，且没有我方干员被“行星碎屑”击杀过
+5
+以三星评价通关1次CW-EX-5，且重力方向改变最多3次
+1
+失重·β
+1
+奖励合计
+10000
+10
+1
+3
+失重·α
+1
+5
+1
+失重·β
+1
+我们向往星星已有千万年，现在，是时候向它们伸出手了。
+静滞所
+通关CW-9后解锁
+方形堆砌的群山，冰冷色彩的墓园。
+无法理解这里发生了什么。
+任务描述
+任务奖励
+以三星评价通关1次CW-10
+10000
+以三星评价通关1次CW-10，且克丽斯腾夺取的“行星碎屑”数量最多5个
+10
+1
+以三星评价通关1次CW-EX-2，且成功阻止弧光突击队起飞
+3
+初速度·α
+1
+以三星评价通关1次CW-EX-4，且重力方向改变至少5次
+1
+以三星评价通关1次CW-EX-6，且重力方向改变最多3次
+1
+初速度·β
+1
+奖励合计
+10000
+10
+1
+3
+初速度·α
+1
+1
+1
+初速度·β
+1
+我们终有一天会探明这座墓园的秘密，但或许到了那时，它已不再重要。
+区域与任务-复刻
+注：复刻时4个区域全部改为初始解锁，且所有区域的调查进度归零
+能量井
+“弧光一号”计划的一环，通称——能量井。
+作用为聚集能量，并将之发射至位于上方的聚焦发生器。它能够储存足够维持一个国家所有移动城市相当一段时间消耗的能源。
+任务描述
+任务奖励
+以三星评价通关1次CW-3
+10000
+1
+以三星评价通关1次CW-5
+10
+以三星评价通关1次CW-7，且“行星碎屑”至少撞击过10次敌人
+3
+奖励合计
+10000
+10
+1
+3
+克丽斯腾用它对准天空，而我们应该用它对准谁？
+聚焦发生器
+“弧光一号”计划的一环，通称——聚焦发生器。
+作用为吸收地面发射而来的能量，在锁定目标后发射。它的打击范围广得超越多数泰拉人的想象。
+任务描述
+任务奖励
+以三星评价通关1次CW-4，且起飞的弧光突击队不超过6人
+10000
+1
+以三星评价通关1次CW-6
+10
+通关活动关卡5次（不含教学关、剧情关与秘密区块）
+3
+奖励合计
+10000
+10
+1
+3
+迈向群星的第一步，是征服天空，我们已经走在了这条道路上。
+万星园
+克丽斯腾·莱特出于个人喜好设计的观星间。
+中央的星象仪采用了最先端的技术，精度极高。只是，那似乎并非泰拉人熟知的群星轨迹。
+任务描述
+任务奖励
+以三星评价通关1次CW-8
+10000
+1
+以三星评价通关1次CW-8，且“行星碎屑”至少撞击过16次敌人
+10
+以三星评价通关1次CW-9，且重力方向改变最多3次
+3
+奖励合计
+10000
+10
+1
+3
+我们向往星星已有千万年，现在，是时候向它们伸出手了。
+静滞所
+方形堆砌的群山，冰冷色彩的墓园。
+无法理解这里发生了什么。
+任务描述
+任务奖励
+以三星评价通关1次CW-10
+10000
+1
+以三星评价通关1次CW-10，且克丽斯腾夺取的“行星碎屑”数量最多6个
+10
+通关活动关卡5次（不含教学关、剧情关与秘密区块）
+3
+奖励合计
+10000
+10
+1
+3
+我们终有一天会探明这座墓园的秘密，但或许到了那时，它已不再重要。
+指令面板
+以下内容在解锁后自动装配/升级，且不可卸下/降级（复刻时无需解锁，所有指令全部直接升至β级）
+代理作战会保存完成代理时的指令配置，并且仅在运行代理作战时使用
+以下内容无法在教学关卡（CW-TR-1~2），秘密区块的2个关卡（CW-P-1~2）生效
+图片
+名称
+描述
+超重·α
+“行星碎屑”对敌人伤害增加，附带眩晕
+超重·β
+“行星碎屑”对敌人伤害进一步增加，附带眩晕加长
+重力认知·α
+“行星碎屑”对敌人推力增加，对我方伤害降低
+重力认知·β
+“行星碎屑”对敌人推力进一步增加，对我方伤害进一步降低
+失重·α
+“行星碎屑”移动所需攻击次数减少
+失重·β
+“行星碎屑”移动所需攻击次数进一步减少
+初速度·α
+推动“行星碎屑”所需推力减轻，逆重力移动距离增加
+初速度·β
+推动“行星碎屑”所需推力进一步减轻，逆重力移动距离进一步增加
+技术转化
+调查区域解锁后，将会自动进行技术转化工作：每隔一段时间将会生成并暂存一个【技术调查补给】，打开【技术调查补给】可获得随机一个T3级别的材料。
+通过解锁专项调查系统和提升调查进度，第二天4:00后可以提升技术转化效率。
+初始转化率为0%，且解锁专项调查系统将立即提升100%转化效率，故解锁当日不会执行任何转化。
+在100%效率下，每12小时生成一个补给；每个完成的调查委托可提升15%（复刻为25%）转化效率。
+暂存上限16个，达到暂存上限后将暂停转化。
+调查解锁新的区域后可立即获得2个【技术调查补给】，访问专项调查页面可立即领取所有暂存的补给至仓库。
+当活动进入作战结束阶段时，技术转化工作将自动停止。
+当期干员
+活动内信赖获取提升50%
+.mw-parser-output .akIll{height:240px;width:115px;position:relative;display:inline-block}.mw-parser-output .akIll>span{position:absolute}.mw-parser-output .akIll a{color:#FFF!important}.mw-parser-output .akIllLayer1{z-index:0;left:14.5px;top:18px}.mw-parser-output .akIllLayer2{z-index:1;left:14.5px;top:21px}.mw-parser-output .akIllLayer3{z-index:2;left:1px;top:15px}.mw-parser-output .akIllLayer4{z-index:3;left:17px;top:16px}.mw-parser-output .akIllLayer5{z-index:3;left:20px;top:195px}.mw-parser-output .akIllLayer6{z-index:3;left:15px;top:150px}.mw-parser-output .akIllLayer7{z-index:3;right:0;bottom:1px;color:white;font-size:13px}.mw-parser-output .akIllLayer8{z-index:3;right:0;bottom:18px;color:white;font-size:10px}
+缪尔赛思
+Muelsyse
+霍尔海雅
+Ho'olheyak
+淬羽赫默
+Silence the Paradigmatic
+玫拉
+Melanite
+蚀刻章套组
+记录特里蒙天空被撕裂的那一夜的蚀刻章套组。
+“星荚”如母亲的怀抱般温暖，但终归有人不愿在无知中入眠。
+真理之影映于特里蒙上空。
+查看套组
+window.RLQ = window.RLQ || [];
+window.RLQ.push(["jquery", () => {
+    $(".hover").each(function() {
+        var height = 0,
+            width = 0;
+        $(this).children().each(function() {
+            $(this).height() > height && (height = $(this).height());
+            $(this).width() > width && (width = $(this).width());
+        });
+        /width\s*:\s*\d+[a-z]+/.test($(this).attr("style")) || $(this).width(width);
+        /height\s*:\s*\d+[a-z]+/.test($(this).attr("style")) || $(this).height(height);
+    });
+}]);
+.mw-parser-output .hover{position:relative}.mw-parser-output .hoverbefore,.mw-parser-output .hoverafter{position:absolute;transition:.37s all linear;top:0;left:0}.mw-parser-output .hoverafter,.mw-parser-output .hover:hover .hoverbefore,.mw-parser-output .hover:focus .hoverbefore,.mw-parser-output .hover:active .hoverbefore{opacity:0}.mw-parser-output .hover:hover .hoverafter,.mw-parser-output .hover:focus .hoverafter,.mw-parser-output .hover:active .hoverafter{opacity:1}.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="none"]:hover .hoverbefore,.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="none"]:focus .hoverbefore,.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="none"]:active .hoverbefore,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="none"]:hover .hoverafter,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="none"]:focus .hoverafter,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="none"]:active .hoverafter{display:none!important}.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="inline-block"]:hover .hoverbefore,.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="inline-block"]:focus .hoverbefore,.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="inline-block"]:active .hoverbefore,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="inline-block"]:hover .hoverafter,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="inline-block"]:focus .hoverafter,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="inline-block"]:active .hoverafter{display:inline-block!important}.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="block"]:hover .hoverbefore,.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="block"]:focus .hoverbefore,.mw-parser-output .hover[data-HoverBeforeDisplayOnHover="block"]:active .hoverbefore,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="block"]:hover .hoverafter,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="block"]:focus .hoverafter,.mw-parser-output .hover[data-HoverAfterDisplayOnHover="block"]:active .hoverafter{display:block!important}
+.mw-parser-output div.tright,.mw-parser-output div.floatright,.mw-parser-output table.floatright{float:right;clear:right}.mw-parser-output div.tleft,.mw-parser-output div.floatleft,.mw-parser-output table.floatleft{float:left;clear:left}.mw-parser-output div.floatright,.mw-parser-output table.floatright{margin:0 0 0.5em 0.5em}.mw-parser-output div.floatleft,.mw-parser-output table.floatleft{margin:0 0.5em 0.5em 0}.mw-parser-output div.thumb{width:auto;background-color:transparent;margin-bottom:0.5em}.mw-parser-output div.tleft{margin:0.5em 1.4em 1.3em 0}.mw-parser-output div.tright{margin:0.5em 0 1.3em 1.4em}.mw-parser-output .thumbcaption{text-align:left;line-height:1.4em;padding:3px}.mw-parser-output div.thumbinner{padding:3px;text-align:center;overflow:hidden}@media screen{.mw-parser-output div.thumbinner{border:1px solid var(--theme-card-border-color,#ccc);background-color:var(--theme-card-background-color,#f9f9f9);font-size:94%}.mw-parser-output .thumbcaption{border:0;font-size:94%}.mw-parser-output .thumbborder{border:1px solid #eaecf0}.mw-parser-output .magnify{float:right;margin-left:3px}.mw-parser-output .magnify a{display:block;white-space:nowrap;overflow:hidden;width:15px;height:11px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.mw-parser-output .plainlinks a.external{background:none!important;padding:0!important}.mw-parser-output .center{width:100%;text-align:center}.mw-parser-output *.center *{margin-left:auto;margin-right:auto}}body.skin-moeskin .mw-parser-output div.thumb{border-radius:.25rem;box-sizing:content-box}
+“晚安，泰拉”
+您见到了真正的星空。
+太阳照常升起，愿星光永存于您的心间。
+获得方式
+－获得
+“继往开来”
+当她再次出现在您的面前时，她的眼神判若两人。
+有人沉溺于过去，有人沉迷于未来，而她选择成为他们中间的桥梁。
+获得方式
+－《孤星》活动期间，获得干员淬羽赫默
+专案后勤奖章
+专案联络处对您的工作给予高度评价。
+只要您有工作的意愿，哥伦比亚总是能给出让您满意的报酬。
+获得方式
+－《孤星》活动期间，在[专案联络处]中消耗4000个飞行数据记录芯片
+“未来。”
+唯一注定的意义和生命最终的索求。
+获得方式
+－完成[未来将至]内的全部关卡（包含教学关与剧情关）
+“最佳特工”
+您顺利完成了所有的任务。
+梅兰德基金会已经注意到了您的能力，哥伦比亚需要您这样的人才。
+获得方式
+－完成[指令目录]中全部内容，并领取奖励
+“重力专家”
+您已经完全掌握了重力的运用方法。
+莱茵生命的娜斯提主任对您很感兴趣，她正在等待您的拜访。
+获得方式
+－完成两个秘密区块
+重力工程奖章
+您已经习惯了改变重力的感觉。
+这是一件好事，在未来，您总有用上这些经验的一天。
+获得方式
+－《孤星》活动期间，总计通关关卡时触发重力变化次数至少30次
+“公民团结奖”
+锡人感谢您的暗中协助，并送上这枚奖章。
+梅兰德基金会与国防部的冲突已成过去，未来属于哥伦比亚。
+获得方式
+－完成[过往未尽]中全部关卡的突袭模式
+“自由羽翼”奖章
+您顺利通过了所有的特种作战，国防部特别为您颁发了这枚奖章。
+您注意到，战争的样貌已经悄然发生改变，您需要做好准备。
+获得方式
+－完成[紧握当下]中的突袭模式且以3星评价通关全部关卡
+“汇聚”
+您明白了，那并不只是克丽斯腾的个人行为。
+在她的背后，是一点又一点的思绪，是一个又一个的梦想。
+获得方式
+－完成[专项调查]中任意两个区域的调查，并领取奖励
+镀层方式
+－完成[专项调查]中所有区域的调查，并领取奖励
+window.RLQ = window.RLQ || [];
+window.RLQ.push([["jquery", "mediawiki.base"], async () => {
+    $(window).on('load', function() {
+        $('.mw-customtoggle > span > a > img').on('click', function(){
+            $(this).closest('span').click();
+            return false;
+        });
+    });
+    await $.ready;
+    $(".toggle-template-container").each(function() {
+        const $ele = $(this);
+        const isParent = $ele.data("customParent") === true; // for Template:Toggle 内联按钮
+        const isLeft = $ele.data("customLeft") === true; // for Template:ToggleInline
+        const id = $ele.data("customId") || crypto.randomUUID();
+        $ele.addClass(`mw-customtoggle-${id}`);
+        let $startNode = isParent ? $ele.parent() : $ele;
+        let $target = isLeft ? $startNode.prev() : $startNode.next();
+        while ($target.length) {
+            if ($target.hasClass("mw-collapsible") && $target.hasClass("toggle-template-button")) {
+                $target.attr("id", `mw-customcollapsible-${id}`);
+                break;
+            }
+            $target = isLeft ? $target.prev() : $target.next();
+        }
+    });
+}]);
+html.client-js .mw-customcollapsible-body {
+    display: none;
+}
+主题家具
+莱茵科技生态园
+根据缪尔赛思描述和现场参考而复现的莱茵生态科技园。这里是她的实验室，也是她的家。
+图片
+家具名
+套件
+简介
+“枝丫”
+千奇百怪
+用来摆放各类文件的架子，由工程科设计，在莱茵生命的大楼中随处可见。
+缪尔赛思只会用来放一些不太重要的文件，理由很简单：纸质文件总是会不小心被水浸湿。
+能够用来装扮宿舍，提高宿舍的氛围。
+“收纳盒”
+千奇百怪
+收集了来自大地各个角落的生态标本的储存罐。
+缪尔赛思对每一个罐子都了如指掌，并给它们做了标签。她不会搞错口红的色号，也不会搞错罐子里的标本。
+能够用来装扮宿舍，提高宿舍的氛围。
+“羽兽窝”
+千奇百怪
+这些培养架上培养着一些生命力较为旺盛的植物。
+不知从什么时候开始，有些羽兽在其中筑巢，缪尔赛思对此乐见其成，偶尔还会给它们喂食。
+能够用来装扮宿舍，提高宿舍的氛围。
+“林荫之光”
+山野林间
+散发着柔和光线的立灯组。缪尔赛思不无自得地介绍过它的设计理念——
+“想象一下天气晴朗的下午，你在树林之间散步，阳光透过树叶间的缝隙洒在你的身上。”
+能够用来装扮宿舍，提高宿舍的氛围。
+“故乡”
+山野林间
+并没有任何特别之处的一棵树干。
+没有人知道她为什么要在实验室里摆这样一棵树干，我们只知道，她偶尔会坐在这棵树干边安静地睡觉。
+能够用来装扮宿舍，提高宿舍的氛围。
+“后山”
+山野林间
+青草由她亲自种植，而长凳也是她亲手雕刻的。
+虽然环顾四周会意识到自己身处建筑之中，但是踏上这片草坡时，总有种漫步林间的感觉。
+能够用来装扮宿舍，提高宿舍的氛围。
+“闹钟”
+山野林间
+能够精准检测室内温度、湿度等各项指标，并在数值出现问题时发出警报的装置。
+从科考科那边“借”过来的，初衷是觉得风向标很可爱。
+能够用来装扮宿舍，提高宿舍的氛围。
+“萤火”
+流水潺潺
+在一些沮丧的夜晚，缪尔赛思会把自己关在生态园里。
+她会关上灯，从这里取出应急提灯，在漆黑的房间中漫步。她脚步轻盈，像是在黑暗中舞蹈。
+能够用来装扮宿舍，提高宿舍的氛围。
+“展柜”
+流水潺潺
+既是装饰，也是培养装置。
+缪尔赛思会定期替换其中的植物，不过有的时候，她也会心血来潮放些别的东西进去。
+能够用来装扮宿舍，提高宿舍的氛围。
+“书架”
+流水潺潺
+摆放着众多植物标本的挂架。
+对缪尔赛思来说，每一个标本都是一本书，她能从中读到光，读到水，读到自然。
+能够用来装扮宿舍，提高宿舍的氛围。
+“路灯的角落”
+流水潺潺
+漆黑的夜晚，路灯如同往常一样发出光亮。
+路灯并不在乎自己的光会洒到何处，但是，被它的光照到的，躲在角落之中的花朵，对它总是心存感谢。
+能够用来装扮宿舍，提高宿舍的氛围。
+“足迹”
+流水潺潺
+每个箱子中都装了采集自不同地区的水源和生长在其中的动植物。
+它们代表着缪尔赛思的足迹，寻找同族、寻找家乡、寻找未来的归所。
+能够用来装扮宿舍，提高宿舍的氛围。
+“浮游”
+波光潋滟
+缪尔赛思的得意之作。只要对水稍作调整，就可以改变光的亮度和方向，有趣而美观。
+缺点则是，只能由她操作，以及当她心情不好的时候，室内可能忽明忽暗。
+能够用来装扮宿舍，提高宿舍的氛围。
+“蔓延”
+波光潋滟
+据本人描述，原本似乎并不应该是这种随意形状的草毯。
+“但是它既然变成了这样，那也挺可爱的嘛。”某种意义上代表了本人性格的作品。
+能够用来装扮宿舍，提高宿舍的氛围。
+“电视”
+波光潋滟
+工程科特别研发，能够监视室内各种植物生长状况的装置。
+缪尔赛思对每一块屏幕的每一项数据都了如指掌，她侃侃而谈的时候，是最能证明她是莱茵生命生态科主任的时刻。
+能够用来装扮宿舍，提高宿舍的氛围。
+“莱茵时代”
+波光潋滟
+莱茵生命的代表色。
+或许有一天，这种颜色能代表更多内容。
+能够用来装扮宿舍，提高宿舍的氛围。
+“银色天空”
+波光潋滟
+地面倒映着天空的颜色。
+特里蒙的天空，是钢筋水泥的银色。
+能够用来装扮宿舍，提高宿舍的氛围。
+料理研究中心
+罗德岛内部用于研发前卫菜品的研究中心。科技在进步，制作食物的方式也在进步。
+图片
+家具名
+套件
+简介
+共享长椅
+品尝
+供研究人员休息与用餐的宽敞长椅，时常会被参加料理课的孩子们光顾。
+料理不仅是个人技巧的艺术，料理更应是分享共荣的艺术。
+能够用来装扮宿舍，提高宿舍的氛围。
+常用香料盆栽
+品尝
+栽培了常用天然香料的盆栽，长势很旺盛。
+在我们能从分子层面重构食材前，再先进的烹饪手法也得使用最原始的材料。
+能够用来装扮宿舍，提高宿舍的氛围。
+水成法试验机
+品尝
+实践新式制菜方案的实验设备，开封时总是伴随着溶液的香味。
+一些炎国出身的干员对于这样做出来的食物总是抱有一种混合了熟悉、惊讶、疑惑的复杂情感。
+能够用来装扮宿舍，提高宿舍的氛围。
+可食用餐桌
+品尝
+供研究人员休息与用餐的简易餐桌，很少有人知道整个餐桌都是用食材制作的，可以食用。
+有些研究在本质上就是只创新不实用，但你总不能说它就是毫无价值。
+能够用来装扮宿舍，提高宿舍的氛围。
+轻薄自净地毯
+品尝
+材质柔软的圆形地毯，污渍几乎不会吸附在表面。
+科学是有共性的，不然你怎么向别人解释这块地毯的工艺优化源自烹调方式的创新升级呢？
+能够用来装扮宿舍，提高宿舍的氛围。
+低矮灰色长椅
+品尝
+工程部量产长椅中的尾货，料理研究中心的负责人通过关系拿了一个过来。
+经费要用在刀刃上，有些地方自然是能省则省。
+能够用来装扮宿舍，提高宿舍的氛围。
+创意菜品展示柜
+等待
+被做成盆栽样式的菜品，很美味。外形与真正的盆栽几乎没有不同。
+将原料“还原”成“原料”，足可见人类那潜藏在创造下的作祟心态。但话又说回来，这种成就感与快乐，正是创造的原动力之一。
+能够用来装扮宿舍，提高宿舍的氛围。
+实验饮品吧台
+等待
+摆放着多种创新饮品的吧台，品尝完后可以去大料理台索要便签写下感受与改进意见。
+如果不看原料表和卖相的话，这些饮品都很好喝。
+能够用来装扮宿舍，提高宿舍的氛围。
+一体式转椅
+等待
+不能伸缩的金属椅子，转起来倒是很轻快，高度也控制得恰到好处。
+每当报废的厨具到达一定数量，便会被打包送去工坊，熔一个椅子出来。
+能够用来装扮宿舍，提高宿舍的氛围。
+大料理台顶棚
+制作
+料理烹饪研究一体化处理终端——俗称“大料理台”的顶部结构，主要用于记录信息，以传统和科技的形式。
+料理研究中心的研究人员平常都在罗德岛公共食堂担任厨师，负责制作供给大部分干员的美食。
+能够用来装扮宿舍，提高宿舍的氛围。
+大料理台底座
+制作
+料理烹饪研究一体化处理终端——俗称“大料理台”的底部结构，主要供研究人员操作与研发。
+无论顶着“厨师”还是“科研人员”的名头，他们的最终目的都是让好吃、营养、便捷达成平衡。
+能够用来装扮宿舍，提高宿舍的氛围。
+大理石储柜
+制作
+用来存放食材与研究人员私人物品的大理石壁柜。
+制作食物也有机密！而机密就藏在这个柜子的——某个地方？
+能够用来装扮宿舍，提高宿舍的氛围。
+大料理台用转椅
+制作
+可调整伸缩的转椅，同样来自工程部的“馈赠”。
+大多数研究人员都习惯站着工作，久而久之，这些转椅便从料理台内部拿到了外面。
+能够用来装扮宿舍，提高宿舍的氛围。
+实验吊灯组
+回味
+悬挂在料理研究中心的玻璃艺术吊灯，会让人联想到实验室中使用的锥形瓶和试管。
+将口感与菜品体验精准量化需要的是科研般的严谨与日复一日的重复实验。万幸的是，实验失败留下的菜品大多数都进了研究人员的肚子。
+能够用来装扮宿舍，提高宿舍的氛围。
+宣传用招牌
+回味
+悬挂式的卷轴招牌，本部门的标识显而易见。
+每当招牌上的螺旋结构被涂满，料理研究中心就会推出新菜品，而研究人员们也要接受新一轮考核。
+能够用来装扮宿舍，提高宿舍的氛围。
+菜单立牌
+回味
+放置在大料理台前的菜单立牌，翻开来就能看到菜品和价格。
+在这里用餐不需要预约，但会不会做这一餐也看研究人员的心情。总而言之，一切随缘。
+能够用来装扮宿舍，提高宿舍的氛围。
+显示屏吊顶
+回味
+为了使室内空间感官上更加宽阔而架设的吊顶显示屏，上面只会显示蓝天白云。
+美食研究也需要灵感，而遥不可及的那一点闪光，或许就在百看不厌的天空中。
+能够用来装扮宿舍，提高宿舍的氛围。
+全景显示屏（都市）
+回味
+展现现代都市风情的全景显示屏。
+吃穿住行，科技发展影响着一切。
+能够用来装扮宿舍，提高宿舍的氛围。
+大理石防尘地砖
+回味
+标准规格的大理石地砖，总是干干净净。
+有些原始技术算不上糟粕，有些尖端科技也没人们想象的那么万能。
+能够用来装扮宿舍，提高宿舍的氛围。
+活动奖励
+指令目录
+指令目录
+特工，立刻开始行动。克丽斯腾的秘密必须掌握在哥伦比亚手中。
+任务描述
+任务奖励
+通关CW-1
+50
+通关CW-2
+50
+通关CW-3
+50
+通关CW-4
+80
+通关CW-5
+80
+通关CW-6
+80
+以3星评价完成CW-6
+1
+通关CW-7
+100
+以3星评价完成CW-7
+×2
+通关CW-8
+120
+以3星评价完成CW-8
+通关CW-9
+120
+以3星评价完成CW-9
+通关CW-10
+120
+以3星评价完成CW-10
+1
+通关CW-EX-1
+40
+通关CW-EX-2
+40
+通关CW-EX-3
+60
+通关CW-EX-4
+60
+通关CW-EX-5
+60
+通关CW-EX-6
+60
+通关CW-EX-7
+80
+通关CW-EX-8
+80
+通关CW-EX-8突袭模式
+以3星评价完成CW-S-1-A
+40
+以3星评价完成CW-S-1-B
+40
+以3星评价完成CW-S-2-A
+60
+以3星评价完成CW-S-2-B
+60
+以3星评价完成CW-S-3-A
+80
+以3星评价完成CW-S-3-B
+80
+以3星评价完成CW-S-4
+100
+通关活动关卡15次，不含教学关
+80
+通关活动关卡45次，不含教学关
+100
+通关活动关卡85次，不含教学关
+120
+奖励合计
+2090
+2
+×2
+专案联络处
+首次
+.mw-parser-output .dropdown{position:relative;display:inline-block;border-bottom:1px solid #FFF}.mw-parser-output .dropdown-content{display:none;position:absolute;height:auto;width:200%;background-color:#88BBD1;color:#ffffff;font-weight:bold;border-radius:0.6em;padding:5px;box-shadow:0px 8px 16px 0px rgba(0,0,0,0.2);z-index:1}.mw-parser-output .dropdown:hover .dropdown-content{display:block}.mw-parser-output .akshop .mw-collapsible-text{color:#6CF}
+专案联络处
+记录了各种高度与环境下飞行数据的芯片。收集一定数量可以在专案联络处换取必要物资。
+除了被娜斯提掩藏在各地的数据，在国家的支持下，新的数据也在不断产生。哥伦比亚逐渐意识到了克丽斯腾这项研究的价值。
+飞行数据记录芯片
+开放时间
+2023年05月01日 16:00
+至
+2023年05月29日 03:59
+商品
+价格
+商品
+价格
+商品
+价格
+商品
+价格
+阶段二
+数据增补仪 
+1
+15
+数据增补条 
+1
+5
+固源岩组
+1
+7
+全新装置
+1
+15
+库存 
+10 
+库存 
+60 
+库存 
+15 
+库存 
+15 
+阶段一
+淬羽赫默的信物 
+1
+1750
+阶段一&#8195;250
+阶段二&#8195;300
+阶段三&#8195;350
+阶段四&#8195;400
+阶段五&#8195;450
+寻访凭证 
+1
+150
+模组数据块
+1
+75
+双极纳米片
+1
+100
+1 – 5
+库存 
+3 
+库存 
+3 
+库存 
+5 
+RMA70-12 
+1
+10
+化合切削液 
+1
+12
+龙门币
+5000
+7
+高级作战记录
+2
+5
+库存 
+15 
+库存 
+15 
+库存 
+120 
+库存 
+30 
+阶段三
+固源岩 
+1
+2
+糖 
+1
+3
+聚酸酯
+1
+3
+异铁
+1
+3
+库存 
+40 
+库存 
+30 
+库存 
+30 
+库存 
+25 
+酮阵列 
+1
+35
+白马醇 
+1
+30
+精炼溶剂
+1
+35
+转质盐聚块
+1
+30
+库存 
+10 
+库存 
+10 
+库存 
+10 
+库存 
+10 
+龙门币 
+20
+1
+库存 
+∞ 
+“林荫之光” 
+100
+“后山” 
+150
+“故乡”
+200
+库存 
+1 
+库存 
+1 
+库存 
+1 
+中级作战记录 
+2
+3
+初级作战记录 
+2
+1
+技巧概要·卷3
+1
+4
+技巧概要·卷2
+1
+2
+库存 
+50 
+库存 
+150 
+库存 
+25 
+库存 
+50 
+酮凝集 
+1
+3
+装置 
+1
+4
+辅助芯片
+1
+6
+家具零件
+10
+2
+库存 
+25 
+库存 
+20 
+库存 
+5 
+库存 
+200 
+“收纳盒” 
+60
+“闹钟” 
+60
+“枝丫”
+80
+“羽兽窝”
+100
+库存 
+1 
+库存 
+1 
+库存 
+1 
+库存 
+1 
+总计需要
+8495
+复刻
+专案联络处
+记录了各种高度与环境下飞行数据的芯片。收集一定数量可以在专案联络处换取必要物资。
+除了被娜斯提掩藏在各地的数据，在国家的支持下，新的数据也在不断产生。哥伦比亚逐渐意识到了克丽斯腾这项研究的价值。
+飞行数据记录芯片
+开放时间
+2024年05月24日 16:00
+至
+2024年06月07日 03:59
+商品
+价格
+商品
+价格
+商品
+价格
+商品
+价格
+阶段二
+异铁组 
+1
+10
+晶体元件 
+1
+10
+龙门币
+5000
+7
+高级作战记录
+2
+5
+库存 
+5 
+库存 
+5 
+库存 
+20 
+库存 
+5 
+“故乡” 
+200
+库存 
+1 
+龙门币 
+20
+1
+库存 
+∞ 
+阶段三
+糖 
+1
+3
+聚酸酯 
+1
+3
+酮凝集
+1
+3
+辅助芯片
+1
+6
+库存 
+8 
+库存 
+8 
+库存 
+8 
+库存 
+5 
+阶段一
+淬羽赫默的信物 
+1
+1750
+阶段一&#8195;250
+阶段二&#8195;300
+阶段三&#8195;350
+阶段四&#8195;400
+阶段五&#8195;450
+寻访凭证 
+1
+150
+双极纳米片
+1
+100
+异铁块
+1
+40
+1 – 5
+库存 
+3 
+库存 
+1 
+库存 
+3 
+中级作战记录 
+2
+3
+初级作战记录 
+2
+1
+技巧概要·卷3
+1
+4
+技巧概要·卷2
+1
+2
+库存 
+10 
+库存 
+20 
+库存 
+10 
+库存 
+20 
+白马醇 
+1
+30
+切削原液 
+1
+35
+“收纳盒”
+60
+“闹钟”
+60
+库存 
+3 
+库存 
+3 
+库存 
+1 
+库存 
+1 
+“枝丫” 
+80
+“羽兽窝” 
+100
+“林荫之光”
+100
+“后山”
+150
+库存 
+1 
+库存 
+1 
+库存 
+1 
+库存 
+1 
+总计需要
+3862
+情报凭证转换表
+可兑换商品详见
+明日方舟/采购中心#情报凭证区
+。
+原限定奖励
+“浮游”
+×2
+“枝丫”
+“收纳盒”
+“羽兽窝”
+“林荫之光”
+转换获得
+50
+×2
+105
+85
+135
+125
+原限定奖励
+“故乡”
+“后山”
+“闹钟”
+“莱茵时代”
+“银色天空”
+转换获得
+470
+225
+85
+140
+140
+原限定奖励
+饰牌《陨落》
+转换获得
+150
+最大可获取情报凭证数
+1760
+&#160;
+查
+&#160;·&#160;
+论
+&#160;·&#160;
+编
+&#160;
+/////
+干
+员
+Vanguard
+先锋
+尖兵
+CONFESS-47
+ • 
+夜刀
+ • 
+预备干员-近战
+△
+ • 
+香草
+ • 
+芬
+ • 
+清道夫
+ • 
+讯使
+ • 
+预备干员-先锋
+△
+ • 
+凛冬
+ • 
+德克萨斯
+ • 
+贾维
+ • 
+郁金香
+△
+ • 
+青枳
+ • 
+红隼
+ • 
+推进之王
+ • 
+嵯峨
+ • 
+焰尾
+ • 
+忍冬
+ • 
+郁金香
+△
+冲锋手
+翎羽
+ • 
+红豆
+ • 
+格拉尼
+ • 
+苇草
+ • 
+野鬃
+ • 
+历阵锐枪芬
+ • 
+风笛
+战术家
+罗德岛隐秘队
+ • 
+豆苗
+ • 
+夜半
+ • 
+渡桥
+ • 
+伺夜
+ • 
+缪尔赛思
+ • 
+可露希尔
+执旗手
+桃金娘
+ • 
+极境
+ • 
+万顷
+ • 
+嘉辛塔
+ • 
+琴柳
+情报官
+冬时
+ • 
+晓歌
+ • 
+谜图
+ • 
+齐尔查克
+ • 
+寻澜
+ • 
+伊内丝
+策士
+松桐
+ • 
+凛御银灰
+Guard
+近卫
+强攻手
+泡普卡
+ • 
+艾丝黛尔
+ • 
+暴行
+ • 
+幽灵鲨
+ • 
+布洛卡
+ • 
+导火索
+ • 
+摆渡人
+ • 
+煌
+ • 
+百炼嘉维尔
+斗士
+猎蜂
+ • 
+杰克
+ • 
+因陀罗
+ • 
+燧石
+ • 
+达格达
+ • 
+山
+ • 
+重岳
+ • 
+贝洛内
+术战者
+慕斯
+ • 
+星极
+ • 
+铸铁
+ • 
+阿米娅（升变）
+ • 
+史尔特尔
+ • 
+薇薇安娜
+ • 
+维娜·维多利亚
+ • 
+赤刃明霄陈
+教官
+杜宾
+ • 
+诗怀雅
+ • 
+鞭刃
+ • 
+苍苔
+ • 
+医生
+ • 
+帕拉斯
+领主
+月见夜
+ • 
+霜叶
+ • 
+芳汀
+ • 
+罗小黑
+ • 
+拉普兰德
+ • 
+断崖
+ • 
+烈夏
+ • 
+银灰
+ • 
+棘刺
+ • 
+仇白
+ • 
+丰川祥子
+剑豪
+虎狼丸
+ • 
+刻刀
+ • 
+柏喙
+ • 
+战车
+ • 
+陈
+ • 
+艾丽妮
+ • 
+锏
+武者
+宴
+ • 
+赤冬
+ • 
+火龙S黑角
+ • 
+赫拉格
+ • 
+左乐
+无畏者
+Castle-3
+ • 
+玫兰莎
+ • 
+缠丸
+ • 
+断罪者
+ • 
+预备干员-近卫
+△
+ • 
+芙兰卡
+ • 
+炎客
+ • 
+锋刃
+△
+ • 
+摩根
+ • 
+莱欧斯
+ • 
+斯卡蒂
+ • 
+耀骑士临光
+ • 
+止颂
+ • 
+锋刃
+△
+收割者
+休谟斯
+ • 
+羽毛笔
+ • 
+海沫
+ • 
+圣约送葬人
+ • 
+隐德来希
+解放者
+骋风
+ • 
+龙舌兰
+ • 
+玛恩纳
+ • 
+司霆惊蛰
+重剑手
+石英
+ • 
+铎铃
+ • 
+赫德雷
+ • 
+乌尔比安
+撼地者
+奥达
+ • 
+祐天寺若麦
+ • 
+佩佩
+ • 
+怒潮凛冬
+本源近卫
+聆音
+佣兵
+哈蒂娅
+ • 
+雷狼龙S空爆
+Defender
+重装
+铁卫
+Friston-3
+ • 
+黑角
+ • 
+卡缇
+ • 
+米格鲁
+ • 
+预备干员-重装
+△
+ • 
+蛇屠箱
+ • 
+角峰
+ • 
+泡泡
+ • 
+预备干员-重装
+△
+ • 
+可颂
+ • 
+拜松
+ • 
+暴雨
+ • 
+星熊
+ • 
+年
+ • 
+机械师
+△
+守护者
+斑点
+ • 
+古米
+ • 
+临光
+ • 
+吽
+ • 
+深律
+ • 
+森西
+ • 
+塞雷娅
+ • 
+瑕光
+ • 
+黍
+不屈者
+露托
+ • 
+火神
+ • 
+折桠
+ • 
+泥岩
+ • 
+斥罪
+驭法铁卫
+坚雷
+ • 
+石棉
+ • 
+暮落
+ • 
+车尔尼
+ • 
+斩业星熊
+决战者
+极光
+ • 
+洋灰
+ • 
+森蚺
+要塞
+灰毫
+ • 
+火哨
+ • 
+号角
+哨戒铁卫
+雷蛇
+ • 
+闪击
+ • 
+深巡
+ • 
+涤火杰西卡
+ • 
+信仰搅拌机
+ • 
+机械师
+本源铁卫
+菲莱
+ • 
+响石
+ • 
+裂响
+ • 
+余
+ • 
+珊比
+Sniper
+狙击
+速射手
+正义骑士号
+ • 
+巡林者
+ • 
+克洛丝
+ • 
+安德切尔
+ • 
+预备干员-狙击
+△
+ • 
+杰西卡
+ • 
+流星
+ • 
+红云
+ • 
+梅
+ • 
+预备干员-狙击
+△
+ • 
+白金
+ • 
+蓝毒
+ • 
+灰喉
+ • 
+四月
+ • 
+寒芒克洛丝
+ • 
+风暴眼
+△
+ • 
+隐现
+ • 
+能天使
+ • 
+空弦
+ • 
+灰烬
+ • 
+风暴眼
+△
+重射手
+酸糖
+ • 
+普罗旺斯
+ • 
+玫拉
+ • 
+黑
+ • 
+鸿雪
+ • 
+焰狐龙梓兰
+炮手
+空爆
+ • 
+白雪
+ • 
+陨星
+ • 
+慑砂
+ • 
+截云
+ • 
+W
+ • 
+菲亚梅塔
+神射手
+安比尔
+ • 
+守林人
+ • 
+安哲拉
+ • 
+子月
+ • 
+远牙
+ • 
+蕾缪安
+散射手
+松果
+ • 
+送葬人
+ • 
+奥斯塔
+ • 
+吉星
+ • 
+假日威龙陈
+攻城手
+铅踝
+ • 
+熔泉
+ • 
+埃拉托
+ • 
+矩
+ • 
+早露
+ • 
+提丰
+投掷手
+泰拉大陆调查团
+ • 
+承曦格雷伊
+ • 
+迷迭香
+ • 
+维什戴尔
+猎手
+冰酿
+ • 
+雪猎
+ • 
+莱伊
+回环射手
+跃跃
+ • 
+水灯心
+ • 
+娜仁图亚
+裂空炮手
+天空盒
+ • 
+埃癸斯
+Caster
+术师
+中坚术师
+GALLUS²
+ • 
+杜林
+ • 
+史都华德
+ • 
+预备干员-术师
+△
+ • 
+夜烟
+ • 
+预备干员-术师
+△
+ • 
+阿米娅
+ • 
+夜魔
+ • 
+苦艾
+ • 
+特米米
+ • 
+雪绒
+ • 
+艾雅法拉
+ • 
+刻俄柏
+ • 
+霍尔海雅
+ • 
+逻各斯
+扩散术师
+12F
+ • 
+炎熔
+ • 
+远山
+ • 
+格雷伊
+ • 
+天火
+ • 
+莱恩哈特
+ • 
+术髓
+△
+ • 
+炎狱炎熔
+ • 
+寒檀
+ • 
+复奏
+ • 
+莫斯提马
+ • 
+夕
+ • 
+玛露西尔
+ • 
+术髓
+△
+驭械术师
+卡达
+ • 
+耶拉
+ • 
+洛洛
+ • 
+至简
+ • 
+时隙
+ • 
+澄闪
+ • 
+荒芜拉普兰德
+阵法术师
+蜜蜡
+ • 
+薄绿
+ • 
+卡涅利安
+ • 
+林
+ • 
+圣聆初雪
+秘术师
+深靛
+ • 
+爱丽丝
+ • 
+和弦
+ • 
+戴菲恩
+ • 
+黑键
+ • 
+维伊
+链术师
+布丁
+ • 
+惊蛰
+ • 
+星源
+ • 
+异客
+轰击术师
+协律
+ • 
+蚀清
+ • 
+阿罗玛
+ • 
+伊芙利特
+ • 
+谬因
+本源术师
+折光
+ • 
+温米
+ • 
+Miss.Christine
+ • 
+妮芙
+ • 
+烛煌
+ • 
+真言
+塑灵术师
+特克诺
+ • 
+死芒
+Medic
+医疗
+医师
+Lancet-2
+ • 
+安赛尔
+ • 
+芙蓉
+ • 
+预备干员-后勤
+△
+ • 
+嘉维尔
+ • 
+末药
+ • 
+苏苏洛
+ • 
+预备干员-医疗
+△
+ • 
+华法琳
+ • 
+赫默
+ • 
+亚叶
+ • 
+触痕
+△
+ • 
+图耶
+ • 
+录武官
+ • 
+闪灵
+ • 
+凯尔希
+ • 
+触痕
+△
+群愈师
+调香师
+ • 
+白面鸮
+ • 
+微风
+ • 
+瑰盐
+ • 
+夜莺
+疗养师
+清流
+ • 
+絮雨
+ • 
+锡兰
+ • 
+诺威尔
+ • 
+流明
+行医
+褐果
+ • 
+桑葚
+ • 
+蜜莓
+ • 
+哈洛德
+ • 
+纯烬艾雅法拉
+咒愈师
+濯尘芙蓉
+ • 
+刺玫
+ • 
+阿米娅（升变）
+ • 
+焰影苇草
+ • 
+缇缇
+链愈师
+明椒
+ • 
+莎草
+ • 
+乌啾
+ • 
+Mon3tr
+守望者
+风絮
+ • 
+凯尔希·思衡托
+Supporter
+辅助
+凝滞师
+梓兰
+ • 
+地灵
+ • 
+波登可
+ • 
+预备干员-辅助
+△
+ • 
+真理
+ • 
+格劳克斯
+ • 
+但书
+ • 
+小满
+ • 
+安洁莉娜
+ • 
+铃兰
+ • 
+电弧
+△
+ • 
+溯光星源
+削弱者
+初雪
+ • 
+巫恋
+ • 
+海霓
+ • 
+灵知
+吟游者
+U-Official
+ • 
+空
+ • 
+海蒂
+ • 
+三角初华
+ • 
+浊心斯卡蒂
+ • 
+魔王
+护佑者
+月禾
+ • 
+九色鹿
+ • 
+夏栎
+ • 
+行箸
+ • 
+撷英调香师
+ • 
+淬羽赫默
+ • 
+遥
+召唤师
+深海色
+ • 
+梅尔
+ • 
+稀音
+ • 
+衡沙
+ • 
+麦哲伦
+ • 
+令
+ • 
+电弧
+工匠
+罗比菈塔
+ • 
+掠风
+ • 
+凯瑟琳
+ • 
+阿兰娜
+ • 
+白铁
+ • 
+娜斯提
+巫役
+PhonoR-0
+ • 
+凛视
+ • 
+波卜
+ • 
+伯塔尼
+ • 
+塑心
+ • 
+酒神
+游击手
+佩德洛
+ • 
+岳羽由加莉
+Specialist
+特种
+处决者
+THRM-EX
+ • 
+砾
+ • 
+预备干员-特种
+△
+ • 
+红
+ • 
+槐琥
+ • 
+卡夫卡
+ • 
+傀影
+ • 
+缄默德克萨斯
+ • 
+麒麟R夜刀
+ • 
+弑君者
+ • 
+Misery
+△
+推击手
+阿消
+ • 
+食铁兽
+ • 
+见行者
+ • 
+温蒂
+伏击客
+伊桑
+ • 
+狮蝎
+ • 
+绮良
+ • 
+八幡海铃
+ • 
+水月
+ • 
+阿斯卡纶
+钩索师
+暗索
+ • 
+崖心
+ • 
+雪雉
+ • 
+杏仁
+ • 
+歌蕾蒂娅
+怪杰
+空构
+ • 
+阿
+ • 
+新约能天使
+行商
+孑
+ • 
+乌有
+ • 
+裁度
+ • 
+老鲤
+ • 
+琳琅诗怀雅
+陷阱师
+罗宾
+ • 
+霜华
+ • 
+钼铅
+ • 
+多萝西
+ • 
+艾拉
+ • 
+望
+傀儡师
+维荻
+ • 
+贝娜
+ • 
+风丸
+ • 
+双月
+ • 
+若叶睦
+ • 
+归溟幽灵鲨
+ • 
+结城理
+炼金师
+锡人
+ • 
+引星棘刺
+巡空者
+云迹
+ • 
+蒂比
+ • 
+予愿安洁莉娜
+标有“△”的干员仅在部分模式中登场。
+&#160;
+/////
+敌
+方
+Normal
+普通
+详见
+敌方图鉴
+精英
+Elite
+精英
+“塑料”瑟奇亚克
+ • 
+“锈铜”奥尔默·英格拉
+ • 
+“左手”泰特斯·白杨
+ • 
+首言者
+ • 
+青金，莫妮克
+ • 
+青金，罗伊
+ • 
+烛骑士薇薇安娜
+ • 
+“最后的怯薛”，拓拉
+ • 
+万国信使，奥伦
+ • 
+格特鲁德女士
+ • 
+多萝西
+ • 
+阿格尼尔神父
+ • 
+“校官”
+ • 
+“灰礼帽”/“见习灰礼帽”
+ • 
+堕天使福尔图娜
+ • 
+指挥官厄尔苏拉
+ • 
+米奥，热烈的考验者
+ • 
+“帝国的甲胄”
+ • 
+“牧首”
+ • 
+澪
+ • 
+喀兰圣女
+ • 
+“执白者”
+ • 
+椿
+ • 
+格罗莫夫
+ • 
+乌萨斯战争术师
+ • 
+信使安洁莉娜
+ • 
+鸭爵
+ • 
+高普尼克
+ • 
+流泪小子
+ • 
+圆仔
+ • 
+抗拒之火炎熔
+ • 其他详见
+敌方图鉴
+领袖
+Leader
+领袖
+主题曲
+弑君者
+ • 
+W
+ • 
+碎骨
+ • 
+萨卡兹百夫长
+ • 
+霜星
+ • 
+梅菲斯特
+ • 
+浮士德
+ • 
+霜星，“冬痕”
+ • 
+爱国者
+ • 
+斗士塔露拉
+ • 
+“皇帝的利刃”
+ • 
+梅菲斯特，“歌者”
+ • 
+塔露拉
+ • 
+“不死的黑蛇”
+ • 
+蔓德拉
+ • 
+曼弗雷德
+ • 
+特雷西斯
+ • 
+“最后的蒸汽骑士”
+ • 
+爱布拉娜
+ • 
+“变形者集群”
+ • 
+杜卡雷，“君主之红”
+ • 
+孽茨雷，“食腐者之王”
+ • 
+引火的死魂灵
+ • 
+特蕾西娅
+ • 
+“阿斯卡纶”
+ • 
+PRTS，“源代码”
+ • 
+拟态机械
+ • 
+“皇帝的利刃”，折戟者
+ • 狂躁异质裂兽 • 
+圣愚
+ • 
+AMa-10
+ • 
+AMa-10异构体
+ • 
+“终始”
+SideStory
+大鲍勃
+ • 
+大亚当
+ • 
+“庞贝”
+ • 
+“鼠王”
+ • 
+泥岩
+ • 
+“巨大的丑东西”
+（
+第一形态
+ • 
+大祭司形态
+） • 
+腐败骑士
+ • 
+凋零骑士
+ • 
+杰斯顿·威廉姆斯
+ • 
+“自在”
+ • 
+“进化的本质”
+ • 
+“皇帝的利刃”，追猎者
+ • 
+盐风主教昆图斯
+ • 
+潘乔·萨拉斯
+ • 
+血骑士狄开俄波利斯
+ • 
+锏
+ • 
+岁相
+ • 
+“殉道者”，安多恩
+ • 
+屠谕者，大群意志
+ • 
+白垩，“尘世遗骸”
+ • 
+“唤醒”
+ • 
+“物欲拮抗者”
+ • 
+扎罗，“狼之主”
+ • 
+“领袖”
+ • 
+“睚”
+ • 
+火龙
+ • 
+克丽斯腾
+ • 
+“花匠”
+ • 
+多利，“羊之主”
+ • 
+“桥夹”克里夫
+ • 
+赫尔昏佐伦，“巫王”
+ • 
+哈洛德·克雷加文
+ • 
+“祟”
+ • 
+马特奥上尉
+ • 
+特蕾西娅，“魔王”
+ • 
+“阿米娅”
+ • 
+玛利图斯，“海嗣”
+ • 
+祖巴伊达姆，从往昔来
+ • 
+“三头犬”
+ • 
+阿利斯泰尔，帝国余晖
+ • 
+“狂欢之主”
+ • 
+安纳斯塔西奥，赎罪者
+ • 
+无餍
+ • 
+“万火归一”
+ • 
+“圣徒”
+ • 
+“酒神”
+ • 
+三船光平
+ • 
+莫菲丝
+ • 
+披挂冰雪的少女
+ • 
+耶拉冈德
+ • 
+女妖河谷的拂哀菈
+ • 
+赞索斯，复仇者
+ • 
+“无数的伊萨科斯”
+ • 
+岁
+ • 
+岁·左爪
+ • 
+岁·右爪
+ • 
+岁·尾
+ • 
+巴普洛维奇，枢密官
+ • 
+“异兽”熔火蜗
+ • 
+“雷之主”
+ • 
+“酣睡飞行员”
+ • 
+“死志的凝结”
+危机合约
+“复仇者”
+集成战略
+迷路的巨像 • 喷气人 • “遗弃者” • 锈锤战士 • “寒灾” • “墓碑” • 漂泊颂偶 • “雪牝” • “霜牡” • 
+卢西恩，“猩红血钻”
+ • 伤心的大锁 • 
+“剧团喉舌”
+ • 
+“剧作家”
+ • 
+圣徒卡门/圣徒伊比利亚
+ • 接潮主教 • 接潮蔑死体/接潮斥亡体 • 塑路者/延命塑路者 • 
+“偏执泡影”
+ • 
+最后的骑士
+ • 
+伊莎玛拉，腐化之心
+ • 
+伊祖米克，生态泉源
+ • 
+坎诺特
+ • 
+“邪魔的利刃” /“邪魔的利刃” ，游荡者
+ • 陷落雪祀/空洞雪祀 • 纠缠藤蔓/古老藤蔓 • 
+“萨米的意志”
+ • 
+“木裂”埃克提尔尼尔
+ • 无垠回荡克雷松 • 
+哈兰杜汗，大地之鞭
+ • 
+路加萨尔古斯，历法之王
+ • 
+菈玛莲/编织泪水的术师
+ • 歌利亚/遗忘创伤的战士 • 
+凯尔希/预见末日的贤人
+ • 
+Mon2tr/迭代的怪物
+ • 
+弗莱蒙特，诸思之解答
+ • 
+特雷西斯，黑冠尊主
+ • 
+博卓卡斯替，圣卫铳骑
+ • 
+古德因纳夫先生
+ • 
+奎隆，摩诃萨埵权化
+ • 
+“阿米娅”，炉芯终曲
+ • 
+坎某人
+ • 夕娥/双月共主 • 玉双剑/昭烈君 • 枣大刀/文衡君 • 炭长矛/桓君 • 师祖/太公 • 
+易
+ • 
+“岁”
+ • 
+“望”
+ • 
+后兽
+ • 
+矩兽
+ • 
+朔壳
+ • 
+身形
+ • 
+妄躯
+ • 
+汉科/“大总统”汉科
+ • 德莱昂/“征服者”德莱昂 • 埃尔伯特/“异端”埃尔伯特 • 
+卡德霍，黑流之源
+ • 
+痛楚化身
+ • 
+洛伦茨，扰动之谬
+ • 
+源阶方
+ • 
+玻利瓦尔，症结之核
+ • 
+未名的荒原
+ • 
+坎诺特
+保全派驻
+“米兰” • 圆岩巨像 • “漫游小屋” • “暴食之果” • “年轻人”桑德尔 • “自然的妥协” • 老妈的“逆女” • “毒瘤” • “超甜微笑” • 干渴者 • “无根之怨” • “烈酒金刚” • “贪婪捕手” • “织郁伯爵” • 怨恨祭坛 • 飞檐客-叶无轻 • “高亢群歌” • “晨音” • “绝对安保”试做型 • 冰滚兽 • “枯槁者”维奇科
+生息演算
+“不朽之人” • 巨翼兽 • 无阻冲锋官 • “召毁者” • “搭档” • 翠梦祭司 • 行脚艺人 • 时光守卫 • 晶玲兽 • 晶珑兽 • 浮袭者 • 纵尘者 • 湮灭者 • 香草翼兽 • 游砂兽 • 巨型拟树虫 • 遗落的巨型岩石像 • 狂噪鳞 • 震风虫 • 流浪驯兽师 • 被通缉的研究员 • 冰翼兽
+纷争演绎
+熔戈者，护王余火
+矢量突破
+“迷迭香”，虚实之握
+ • 
+“Mechanist”，机械之心
+ • 
+结构性原理
+ • 
+“Misery”，静默之刃
+次生预案
+“徘徊者” • 恩慈祷者 • 斑斓虫 • “老尖牙”
+卫戍协议
+假想敌：胄
+ • 
+假想敌：铳
+ • 
+假想敌：管
+&#160;
+/////
+剧
+情
+角
+色
+阿戈尔
+阿维图斯 • 布兰都斯 • 克莱门莎 • 赫拉提娅 • 深海教会（卡西娅 • 西塞罗） • 图利娅
+玻利瓦尔
+迪亚兹·冈萨雷斯 • 
+坎黛拉·桑切斯
+ • 
+帕尤卡卡
+东
+柏生明 • 柏生义冈 • 反町哲也 • 
+更纱
+ • 利藤裕 • 
+铃兰的父亲/忍冬的丈夫
+ • 泷居未来 • 泷居应 • 铁斋 • 须佐
+杜林
+黛柯绮·银币
+ • 芬奇·画布 • 卡奇·叙光 • 
+克罗绮·砖石
+ • 耶奇·地心
+哥伦比亚
+奥克里 • 布莱克 • 
+杜玛
+ • 
+弗朗索瓦·乌比卡
+ • 古斯塔夫 • 
+黑钢国际
+（珍妮特·朗费罗） • 康拉德·杰克逊 • 
+莱茵生命
+（阿伦茨·帕尔维斯 • 安德涅特·马里亚姆 • 斐尔迪南·克鲁尼 • 小贾斯汀·菲茨罗伊 • 雅拉·布克·威尔森） • 里昂·特雷门 • 洛肯·威廉姆斯 • 
+马克·麦克斯
+ • 玛丽·班纳 • 梅希亚·塞勒涅 • 
+莫伊拉
+ • 桑尼·罗马诺 • 史密斯·西蒙 • 斯凯·杰格 • 伍德洛·比安奇 • 西尔维娅 • 雅斯彭
+卡西米尔
+大嘴莫布 • 弗格瓦尔德/老骑士 • 科瓦尔/老工匠 • 盖克斯基 • 光头马丁 • 监正会（莱姆 • 
+切斯柏
+ • 伊奥莱塔·罗素） • 
+可萝尔
+ • 雷内尔·科瓦尔斯基 • 米沃什 • 商业联合会（
+马克维茨
+ • 麦基 • 恰尔内） • 托兰·卡什 • 托希娅 • 无胄盟（“玄铁”） • 
+银枪天马
+卡兹戴尔
+/
+巴别塔
+疤眼 • 加尔森 • 奎隆 • 
+奎萨图什塔
+ • 娜汀 • 
+萨卢斯
+ • 巫妖王庭（
+埃芒加德
+） • 尤莉叶 • 弥尔顿
+拉特兰
+阿摩斯 • 
+奥罗拉
+ • 保罗·兰登 • 
+梵里妮
+ • 菲利切·高丢 • 赫曼 • 
+吉阿达
+ • 卡拉 • 杰拉尔德 • 莱蒙德 • 
+帕蒂亚
+ • 潘格尼尼 • 珀拉 • 
+裘里奥
+ • 
+塞茜莉亚
+ • 斯特凡诺·托雷格罗萨 • 薇尔丽芙 • 
+伊万杰利斯塔十一世
+ • 
+伊蒂达
+莱塔尼亚
+别格勒 • 毕德曼 • 布兰特·赖纳  • 弗里达·希曼 • 格哈德·霍夫曼 • 霍恩洛厄伯爵 • 珂拉·洛文斯坦 • 塞弗林 • 双子女皇（
+莉泽洛特·伊维格娜德
+ • 
+希尔德加德·赫琳玛特
+） • 塔佳娜 • 托尔瓦尔德 • 沃尔纳·冯·霍赫贝格 • 乌尔苏拉
+雷姆必拓
+联络员
+ • 
+乌露露
+罗德岛
+Dijkstra
+ • 
+Guard
+ • 
+Medic
+ • 安托 • 奥克芬 • 碧银 • 
+博士
+ • 
+达莉娅
+ • 迪伦 • 格瑞斯 • 哈默妮 • 海帕提娅 • 精英干员（
+Ace
+ • 
+Outcast
+ • 
+Scout
+ • 
+Whitesmith
+） • 巨枭 • 行板
+米诺斯
+阿斯帕齐亚
+ • 赫卡德墨 • 卡珊卓拉 • 里底娅·阿苏普欧洛 • 吕刻伊昂 • 梅里塔 • 佩里安德洛斯 • 西妮斯卡
+萨尔贡
+阿雅吉 • 阿雅妮 • 贝赫努 • 德鲁奇 • 老伊辛 • 
+米亚罗
+ • 皮加尔 • 
+依娜姆
+萨米
+橡杯
+维多利亚
+埃德加·埃弗里特·埃里克森
+ • 艾尔希 • 艾莉诺 • 黛安·韦伯 • 朵拉 • 高多汀公爵 • 高文 • 
+格拉斯哥帮
+（贝尔德 • 卡铎尔） • 开斯特公爵 • 
+伦蒂尼姆市民自救军
+（阿勒黛·坎伯兰 • 戈尔丁 • 
+克洛维希娅
+） • 莫兰 • 茉莉 • 
+涅梅丝
+ • 诺曼底公爵 • 塞尔蒙 • 威灵顿公爵 • 温德米尔公爵 • 文森特伯爵 • 沃里克伯爵 • 席勒少尉 • 
+希尔达
+乌萨斯
+阿洛伊泽
+ • 阿纳托利 • 艾丽塔·瓦卢耶娃 • 安托沙 • 奥尔佳·达尼洛夫娜·特里波列娃 • 法杰伊 • 
+费奥多尔·弗拉基米罗维奇
+ • 
+科西切
+ • 雷尔金 • 莉莉娅 • 克利姆·瓦卢耶夫 • 马特维 • 
+米拉娜
+ • 
+米莎
+ • 奈音 • 斯韦特兰纳 • 塔季娅娜 • 
+塔季扬娜·叶甫盖尼耶夫娜·拉里娜
+ • 瓦西里·戈尔奇科夫 • 万尼亚大公 • 薇卡 • 沃伦佐娃夫人 • 
+西尔卡
+ • 叶甫根尼·库涅兹佐夫 • 叶莉萨维塔·康斯坦丁诺夫娜·拉齐萨拉 • 伊斯拉姆·维特
+汐斯塔
+阿黛尔·凯勒 • 
+伯德
+ • 
+赫尔曼·道尔科斯
+ • 卡恩 • 
+克洛宁
+ • 科斯达 • 佩利佩·布朗
+谢拉格
+布朗陶家族（
+菈塔托丝
+ • 
+休露丝
+ • 
+尤卡坦
+） • 大长老 • 古罗 • 
+莫希
+ • 佩尔罗契家族（
+阿克托斯
+ • 老修士） • 切斯特 • 瓦莱丝
+叙拉古
+阿尔贝托·萨卢佐 • 贝纳尔多·贝洛内 • 丹布朗·莱奥帕尔迪 • 迪伦马特 • 
+甘比诺·里奇
+ • 卡拉奇 • 
+卡彭
+ • 狼之主（恺撒 • 瓦古） • 
+卢比奥
+ • 露彼娜 • 诺埃米 • 
+乔万娜·罗塞蒂
+ • 索默尔 • 瓦拉赫 • 威尼斯家族（安东尼奥·威尼斯 • 法布里齐奥·威尼斯） • 文 • 翁贝托·德蒙塔诺 • 
+西西里夫人
+ • 伊雷妮·拉瓦萨
+锈锤
+加勒斯 • 依拉
+炎/龙门
+阿发
+ • 阿然 • 巴特勒/管家 • 
+朝山
+ • 陈昭芊 • 董阿伯 • 
+杜遥夜
+ • 方小石 • 
+顾筌
+ • 
+槐天裴
+ • 
+禁军小教头
+ • 老姜 • 
+老天师
+ • 黎 • 廉子虚 • 
+梁洵
+ • 
+柳千秋
+ • 猫帮老大 • 梦 • 孟铁衣 • 莫佚 • 
+宁辞秋
+ • 
+欧厄尔·彼得斯
+ • 
+企鹅物流
+（
+皇帝/大帝
+ • 
+伊斯
+） • 荣晚晴 • 
+阮薇薇
+ • 尚冢 • 韶 • 
+慎楼
+ • 神农 • 
+岁兽代理人
+（方、
+绩
+、
+颉
+、
+均
+） • 
+太傅
+ • 太合 • 
+太尉
+ • 万勤城 • 
+魏彦吾
+ • 
+文月
+ • 解真 • 亚当斯·施怀雅 • 炎礼 • 
+影卫
+ • 郑清钺 • 周顺 • 竹小姐 • 
+左宣辽
+伊比利亚
+阿玛雅
+ • 阿方索 • 安妮塔 • 奥卢斯 • 白炽  • 
+达里奥
+ • 蒂亚戈 • 加西亚 • 佩特拉 • 
+胡安娜
+ • 蒂奇 • 哈维尔 • 鲁斯 • 西尔弗
+整合运动
+Guard
+ • 
+阿丽娜
+ • 艾尔瓦 • 毕恩 • 
+九
+ • 
+雷德
+ • 珀茜瓦尔 • 杨格 • 伊万
+艺人
+D.D.D.
+ • 
+日落即逝乐队
+（
+Alty
+ • Aya • Dan • Frost）
+联动角色
+罗小黑战记
+（
+小白
+ • 
+阿根
+ • 
+比丢
+）• 
+BanG Dream! Ave Mujica
+（丰川瑞穗 • 丰川清告）• 
+女神异闻录3 Reload
+（
+天田乾
+ • 
+山岸风花
+）
+其他角色
+Recorder
+ • 
+少女
+部分尚未建立条目的角色详见
+明日方舟/剧情角色
+，不包括敌人角色。
+&#160;
+/////
+世
+界
+观
+整体世界
+泰拉大陆
+ • 
+前文明
+国家和地区
+阿戈尔
+ • 
+玻利瓦尔
+ • 
+东
+ • 
+杜林
+ • 
+高卢
+ • 
+哥伦比亚
+ • 
+卡西米尔
+ • 
+卡兹戴尔
+ • 
+拉特兰
+ • 
+莱塔尼亚
+ • 
+雷姆必拓
+ • 
+米诺斯
+ • 
+萨尔贡
+ • 
+萨米
+ • 
+维多利亚
+ • 
+乌萨斯
+ • 
+汐斯塔
+ • 
+谢拉格
+ • 
+叙拉古
+ • 
+炎
+ • 
+伊比利亚
+种族
+常规种族
+阿达克利斯
+ • 
+阿戈尔
+ • 
+阿纳萨
+ • 
+阿纳缇
+ • 
+阿斯兰
+ • 
+埃拉菲亚
+ • 
+安努拉
+ • 
+德拉克
+ • 
+杜林
+ • 
+斐迪亚
+ • 
+菲林
+ • 
+丰蹄
+ • 
+鬼
+ • 
+精灵
+ • 
+卡普里尼
+ • 
+卡特斯
+ • 
+库兰塔
+ • 
+黎博利
+ • 
+龙
+ • 
+鲁珀
+ • 
+曼提柯
+ • 
+佩洛
+ • 
+皮洛萨
+ • 
+匹特拉姆
+ • 
+麒麟
+ • 
+瑞柏巴
+ • 
+萨弗拉
+ • 
+萨卡兹
+ • 
+萨科塔
+ • 
+塞拉托
+ • 
+瓦伊凡
+ • 
+沃尔珀
+ • 
+乌萨斯
+ • 
+依特拉
+ • 
+札拉克
+特殊种族
+奇美拉
+ • 
+“人类”
+ • 
+“海嗣”
+ • 
+“神”/“巨兽”
+ • 
+“邪魔”
+ • 
+“兽主”
+ • 
+机器人
+ • 
+化物
+ • 
+其他
+组织
+跨区域组织
+罗德岛
+（
+S.W.E.E.P.
+） • 
+日落即逝乐队
+ • 深海教会 • 
+使徒
+ • 锈锤 • 
+整合运动
+区域性组织
+&#160;
+阿戈尔
+&#160;
+深海猎人
+&#160;
+哥伦比亚
+&#160;
+莱茵生命
+ • 
+黑钢国际
+ • 
+雷神工业
+&#160;
+卡西米尔
+&#160;
+红松骑士团
+ • 监正会 • 商业联合会 • 无胄盟 • 
+银枪天马
+&#160;
+卡兹戴尔
+&#160;
+巴别塔
+ • 
+卡兹戴尔军事委员会
+ • 赦罪师 
+&#160;
+拉特兰
+&#160;
+ 中庭公证所 • 寻路者 • 
+教宗骑士
+&#160;
+莱塔尼亚
+&#160;
+金律法卫
+ • 
+女皇之声
+&#160;
+维多利亚
+&#160;
+格拉斯哥帮
+ • 
+伦蒂尼姆市民自救军
+ • 
+深池
+ • 
+猩红剧团
+ • 
+蒸汽骑士
+ • 
+灰礼帽
+ • 
+典范军
+&#160;
+乌萨斯
+&#160;
+乌萨斯学生自治团
+ • 
+皇帝内卫
+&#160;
+谢拉格
+&#160;
+喀兰贸易
+&#160;
+叙拉古
+&#160;
+ 十二家族 • 贾维团伙 • 狼之主 
+&#160;
+炎/龙门
+&#160;
+龙门近卫局
+ • 
+鲤氏侦探事务所
+ • 
+企鹅物流
+ • 
+影卫
+ • 山海众 • 
+岁
+ • 
+禁军
+&#160;
+伊比利亚
+&#160;
+ 审判庭 
+&#160;
+玻利瓦尔
+&#160;
+ 辛嘉斯王朝 • 联合政府 • 真正玻利瓦尔人
+概念
+感染监控装置
+ • 天灾 • 移动城市 • 
+矿石病
+ • 
+源石
+事件
+大静谧
+ • 
+四国战争
+ • 玻利瓦尔内战 • 第十次乌卡战争 • 东国南北朝战争 • 
+切尔诺伯格-龙门事件
+ • 
+伦蒂尼姆战争
+大事年表
+&#160;
+/////
+关
+卡
+与
+剧
+情
+主题曲
+觉醒
+序章「黑暗时代 上」
+剧情
+ • 
+第一章「黑暗时代 下」
+剧情
+ • 
+第二章「异卵同生」
+剧情
+ • 
+第三章「二次呼吸」
+剧情
+幻灭
+第四章「急性衰竭」
+剧情
+ • 
+第五章「靶向药物」
+剧情
+ • 
+第六章「局部坏死」
+剧情
+ • 
+第七章「苦难摇篮」
+剧情
+ • 
+第八章「怒号光明」
+剧情
+残阳
+第九章「风暴瞭望」
+剧情
+ • 
+第十章「破碎日冕」
+剧情
+ • 
+笔记本
+ • 
+第十一章「淬火尘霾」
+剧情
+ • 
+书
+ • 
+第十二章「惊霆无声」
+剧情
+ • 
+第十三章「恶兆湍流」
+剧情
+ • 
+第十四章「慈悲灯塔」
+剧情
+裂变
+第十五章「离解复合」
+剧情
+ • 
+第十六章「反常光谱」
+剧情
+ • 
+第十七章「相变临界」
+剧情
+常驻关卡
+物资筹备
+战术演习
+ • 
+粉碎防御
+ • 
+资源保障
+ • 
+空中威胁
+ • 
+货物运送
+芯片搜索
+摧枯拉朽
+ • 
+身先士卒
+ • 
+固若金汤
+ • 
+势不可挡
+剿灭作战
+长期剿灭委托
+ • 
+剿灭委托
+ • 
+剿灭战模拟/假定作战目标
+其他
+悖论模拟
+ • 
+危机合约
+ • 
+集成战略
+ • 
+保全派驻
+ • 
+生息演算
+SideStory&故事集
+1
+方舟
+SideStory「生于黑夜」
+剧情
+ • 
+SideStory「遗尘漫步」
+剧情
+ • 
+故事集「如我所见」
+剧情
+ • 
+SideStory「巴别塔」
+剧情
+ • 
+SideStory「追迹日落以西」
+剧情
+ • 
+故事集「我们明日见」
+剧情
+燎原
+故事集「乌萨斯的孩子们」
+剧情
+ • 
+SideStory「人们，我们」
+剧情
+那被祝福的
+SideStory「吾导先路」
+剧情
+ • 
+SideStory「空想花庭」
+剧情
+ • 
+SideStory「众生行记」
+剧情
+山雪与银铁
+SideStory「风雪过境」
+剧情
+ • 
+SideStory「银心湖列车」
+剧情
+ • 
+SideStory「雪山降临1101」
+剧情
+七丘的新芽
+SideStory「叙拉古人」
+剧情
+ • 
+SideStory「揭幕者们」
+剧情
+ • 
+故事集「十字路口」
+剧情
+霓虹之下
+SideStory「玛莉娅·临光」
+剧情
+ • 
+故事集「红松林」
+剧情
+ • 
+SideStory「长夜临光」
+剧情
+ • 
+信息端口
+ • 
+故事集「日暮寻路」
+剧情
+岁岁今朝
+故事集「洪炉示岁」
+剧情
+ • 
+SideStory「画中人」
+剧情
+ • 
+SideStory「将进酒」
+剧情
+ • 
+SideStory「登临意」
+剧情
+ • 
+故事集「春分」
+剧情
+ • 
+SideStory「怀黍离」
+剧情
+ • 
+SideStory「相见欢」
+剧情
+ • 
+故事集「镜中集」
+剧情
+ • 
+SideStory「辞岁行」
+剧情
+摘取未来之人
+SideStory「孤岛风云」
+剧情
+ • 
+SideStory「绿野幻梦」
+剧情
+ • 
+SideStory「孤星」
+剧情
+ • 
+SideStory「未许之地」
+剧情
+自海渊的一瞥
+SideStory「骑兵与猎人」
+剧情
+ • 
+SideStory「覆潮之下」
+剧情
+ • 
+SideStory「愚人号」
+剧情
+ • 
+SideStory「生路」
+剧情
+ • 
+SideStory「出苍白海」
+剧情
+高塔迷影
+SideStory「沃伦姆德的薄暮」
+剧情
+ • 
+SideStory「尘影余音」
+剧情
+ • 
+SideStory「崔林特尔梅之金」
+剧情
+薪火重燃
+SideStory「照我以火」
+剧情
+ • 
+SideStory「挽歌燃烧殆尽」
+剧情
+夏日律动
+SideStory「火蓝之心」
+剧情
+ • 
+SideStory「密林悍将归来」
+剧情
+ • 
+SideStory「多索雷斯假日」
+剧情
+ • 
+标志物
+ • 
+SideStory「理想城：长夏狂欢季」
+剧情
+ • 
+SideStory「火山旅梦」
+剧情
+ • 
+SideStory「太阳甩在身后」
+剧情
+ • 
+SideStory「墟」
+剧情
+ • 
+SideStory「直到大地变成一颗酸橙」
+剧情
+泰拉奇谈
+故事集「战地秘闻」
+剧情
+ • 
+故事集「午间逸话」
+剧情
+• 
+故事集「踏寻往昔之风」
+剧情
+ • 
+故事集「此地之外」
+剧情
+ • 
+SideStory「喧闹法则」
+剧情
+ • 
+故事集「灯火序曲」
+剧情
+ • 
+故事集「阴云火花」
+剧情
+ • 
+故事集「未尽篇章」
+剧情
+ • 
+故事集「去咧嘴谷」
+剧情
+ • 
+故事集「熔炉“还魂”记」
+剧情
+ • 
+SideStory「不义之财」
+剧情
+ • 
+SideStory「红丝绒」
+剧情
+ • 
+故事集「眠于树影之中」
+剧情
+ • 
+SideStory「雅赛努斯复仇记」
+剧情
+  • 
+故事集「丛林症结」
+剧情
+联动
+2
+SideStory「源石尘行动」
+剧情
+ • 
+故事集「好久不见」
+剧情
+ • 
+SideStory「落叶逐火」
+剧情
+ • 
+SideStory「水晶箭行动」
+剧情
+ • 
+SideStory「泰拉饭」
+剧情
+ • 
+SideStory「无忧梦呓」
+剧情
+ • 
+SideStory「泡影苍霆」
+剧情
+ • 
+SideStory「月行水上」
+剧情
+危机合约
+第一阶段
+危机合约β
+剧情
+ • 
+#0赛季「荒芜行动」
+剧情
+ • 
+#1赛季「黄铁行动」
+ • 
+#2赛季「利刃行动」
+ • 
+#3赛季「燃灰行动」
+ • 
+#4赛季「铅封行动」
+ • 
+#5赛季「光谱行动」
+ • 
+#6赛季「蛮鳞行动」
+ • 
+#7赛季「松烟行动」
+ • 
+#8赛季「寻昼行动」
+ • 
+#9赛季「渊默行动」
+ • 
+#10赛季「尘环行动」
+ • 
+#11赛季「赝波行动」
+ • 
+#12赛季「起源行动」
+第二阶段
+特别行动「尖灭测试作战」
+ • 
+#1赛季「浊燃作战」
+ • 
+#2赛季「潮曦作战」
+ • 
+#3赛季「净罪作战」
+ • 
+#4赛季「弧光作战」
+ • 
+#5赛季「涤墨作战」
+测试
+危机合约β
+剧情
+ • 
+特别行动「尖灭测试作战」
+统计
+危机合约统计
+集成战略
+刻俄柏的灰蕈迷境
+剧情
+ • 
+收藏品
+ • 
+傀影与猩红孤钻
+剧情
+ • 
+收藏品
+ • 
+剧目
+ • 
+水月与深蓝之树
+剧情
+ • 
+收藏品
+ • 
+探索者的银凇止境
+剧情
+ • 
+收藏品
+ • 
+萨卡兹的无终奇语
+剧情
+ • 
+收藏品
+ • 
+岁的界园志异
+剧情
+ • 
+收藏品
+ • 
+沉沦者的黑流树海
+剧情
+ • 
+收藏品
+多维合作
+罗德岛防御协议
+剧情
+引航者试炼
+#01
+ • 
+#02
+ • 
+#03
+ • 
+#04
+ • 
+#05
+ • 
+#06
+生息演算
+沙中之火
+ • 
+沙洲遗闻
+ • 
+重启锚点
+促融共竞
+「罗德岛促融共竞」
+ • 
+#1
+ • 
+#2
+矢量突破
+「矢量突破」
+ • 
+#1「无机物」
+ • 
+#2「巫术之夜」
+ • 
+#3「拟生态」
+卫戍协议
+「卫戍协议」
+ • 
+「卫戍协议：盟约」
+其他活动
+联锁竞赛「荷谟伊智境」
+剧情
+ • 
+「纷争演绎」
+ • 
+「视相博物馆」
+ • 
+「次生预案」
+ • 
+「阵地足球锦标」
+ • 
+「逐影集趣」
+四月辑录
+3
+断罪者的挑战状
+ •  
+泰拉 说唱之夜！
+剧情
+ •  
+狂弹要塞！罗德大兵集结
+剧情
+ •  
+主播U：全能系美少女
+剧情
+ •  
+好得不能再好了！泰拉投资大师课
+剧情
+ •  
+ARKnoNIGHTS
+剧情
+ •  
+Rhodes Island Epic 黑色博士坠落
+剧情
+其他剧情
+教程剧情
+ •  
+干员密录
+1. 自主题曲第十五章开始，活动关卡以“曲谱和乐章”代替此前的“插曲和别传”分类，并与故事集整合。其中SideStory固定复刻，且在复刻结束或首次开放结束后固定常驻；故事集无常驻或复刻计划。2. 不收录于“曲谱和乐章”中，且暂无常驻计划，可能复刻。3. 历年愚人节特别活动和剧情。
+注：主线“惊霆无声”之后的活动剧情会被引导至
+PRTS
+相关页面
+&#160;
+/////
+跨
+媒
+体
+作
+品
+出版物
+同人志
+1
+CURFEW
+ • 
+CRAVE
+设定集
+明日方舟官方美术设定集Vol.1 • 明日方舟官方美术设定集Vol.2 • 明日方舟官方美术设定集Vol.3 • 明日方舟官方美术设定集Vol.4 • 大地巡旅：《明日方舟》官方世界观设定集 • 明日方舟主线动画原画设定集Vol.1
+画集
+明日方舟纪念插画集Vol.1 • 明日方舟纪念插画集Vol.2 • 明日方舟纪念插画集Vol.3 • 明日方舟纪念插画集Vol.4 • 塞壬唱片共振典藏画集VOL.1 • 
+アークナイツ1stアニバーサリー記念イラスト集
+漫画
+明日方舟纪念短篇漫画集/
+アークナイツ コミックアンソロジー
+ • 
+アークナイツ OPERATORS!
+ • 罗德岛源石记事（
+黑钢
+ • 
+莱茵生命
+） • 
+罗德岛相簿
+ • 
+罗德岛闲逛部
+ • 朝陇山趣事记录 • 
+123罗德岛！？
+ • 
+A1行动预备组
+ • 
+罗德厨房——回甘
+ • 
+信使安洁莉娜漫游手记
+ • 序言组曲（
+无拘奏音
+ • 
+利锏银锋
+ • 
+旧创
+） • 
+塞茜莉亚的安魂寻旅
+映画
+概念PV
+The Prelude • The Overture • The Echo
+动画短片
+Holy Knight Light
+ • 罗德幼儿园 • 
+鲤氏侦探事务所 Home Service
+ • 
+小刻的画图写话 磐蟹与螺
+ • 拾刀者
+网络动画
+可露希尔的秘密档案
+ • 
+鲤氏侦探事务所
+ • 
+小刻的画图写话
+ • 
+U探泰拉
+电视动画
+明日方舟：黎明前奏
+ • 
+明日方舟：冬隐归路
+ • 
+明日方舟：焰烬曙明
+网络节目
+关于明日方舟的推荐
+音乐
+EP
+2
+独立单曲
+Speed of Light
+ • 
+Boiling Blood
+ • 
+Renegade
+ • 
+Requiem
+ • 
+从那高地上远眺
+ • 
+Everything's Alright
+ • 
+ALIVE
+ • 
+秋绪
+ • 
+Lullabye
+ • 
+Rock the Night Away
+ • 
+冬涤
+ • 
+Daydaydream
+ • 
+Loyal to the beat
+ • 
+Hold Onto The Light
+ • 
+Feels
+ • 
+Immutable
+ • 
+Across the wind
+ • 
+Towards Her Light
+ • 
+Radiant
+ • 
+Heal the World
+ • 
+Melting White
+ • 
+Silver Lining
+ • 
+随意随意呀
+ • 
+Spark for Dream
+ • 
+Прощание
+ • 
+Eternal Flame
+ • 
+March On!
+ • 
+Awaken
+ • 
+Bluish Light
+ • 
+Your Star
+ • 
+Ständchen
+ • 
+Magic Theorem
+ • 
+A Long Vacation
+ • 
+All hail Savior!
+ • 
+Undertopia
+ • 
+Ensheath
+ • 
+A Sweet Rendez-vous
+ • 
+Stainless Heart
+ • 
+Rekindle
+ • 
+Thorns In You
+ • 
+Sentenced
+ • 
+Go My Way
+ • 
+Flame Shadow
+ • 
+Snowy Night
+ • 
+A Cold Call
+ • 
+兔兔在哪里？
+ • 
+Squad Unknown
+ • 
+Morning Dew
+ • 
+Dormant Craving
+ • 
+The Cure
+ • 
+Stained
+ • 
+Before Summer
+ • 
+Before & After
+ • 
+Mortal Eye
+ • 
+Miss You
+ • 
+Missy
+ • 
+Beautiful & Lovely
+ • 
+Water Quench
+ • 
+Settle Into Ash
+ • 
+Revealing
+ • 
+Illuminate
+ • 
+Lessing
+ • 
+Blade Catcher
+ • 
+Snow Parade
+ • 
+(Believed Believes) Believing
+ • 
+Winged Step
+ • 
+浸春芜
+ • 
+Yanking
+ • 
+ONE BY ONE
+ • 
+Arsonist
+ • 
+Whistle Stop
+ • 
+Echoism
+ • 
+I Will Touch the Sky
+ • 
+Vows of the Sea
+ • 
+Chase the Light
+ • 
+Warm and Small Light
+ • 
+Mystic Light Quest
+ • 
+Nightmare's Descent
+ • 
+Reforge
+ • 
+Unmask
+ • 
+Bloodstained Oath
+ • 
+Figure It Out
+ • 
+Sailing For
+ • 
+滋味常
+ • 
+Final Embrace
+ • 
+Skeletal Wings
+ • 
+From Ash to Fire
+ • 
+Heavenly Me
+ • 
+Sanctuary Inside
+ • 
+Still the Same
+ • 
+The After
+ • 
+Grow on My Time
+ • 
+Mare Natus
+ • 
+惊蛰时
+ • 
+Follow Your Heart
+ • 
+Summer Fizz Pop
+ • 
+Undaunted
+ • 
+Little Wish
+ • 
+in your blue eyes
+ • 
+Sealed
+ • 
+Paper Boat
+ • 
+The Walk
+ • 
+Follow Your Heart
+ • 
+Stardust on Me
+ • 
+Secret Escape
+ • 
+Just Another Inch Higher
+ • 
+Slowly Flow, Hearthlight Glow
+ • 
+Wanna Know Me? (Too Bad)
+ • 
+铁花飞
+ • 
+无名策
+ • 
+花街迎春
+ • 
+Oath
+ • 
+One Fight
+ • 
+In Due Time
+ • 
+Innocence
+ • 
+All by My Design
+ • 
+Don't Miss It
+ • 
+夏日远去之后
+ • 
+悖反构成
+ • 
+What an Electromagnetic Night
+ • 
+女士的游戏
+ • 
+酸橙色信笺
+ • 
+Every Road is a Yes
+ • 
+Summer Calling
+ • 
+其他EP
+英文版单曲
+Save Us From Ourselves
+ • 
+Survive
+ • 
+After It All
+ • 
+Last of Me
+ • 
+Come to Light
+ • 
+End Like This
+ • 
+Never Give Up
+ • 
+Lean On
+ • 
+I Believe In Us
+ • 
+Two Feet On The Ground
+ • 
+Ain't Seen Nothing Like This
+ • 
+Wildfire
+ • 
+Keep Holding On
+ • 
+We Will Rise
+ • 
+Day By Day
+ • 
+Unbreakable
+ • 
+Ripples
+日文版单曲
+はにーふぁにーでいず
+ • 
+えがおの花束
+ • 
+長い夜は明ける
+ • 
+ミナモト
+ • 
+Laters
+ • 
+本懐ノ雫
+ • 
+金色のマーチ
+ • 
+緑雨の言葉
+ • 
+Steamlight
+ • 
+明日へのパレード
+ • 
+Unchanging wish
+ • 
+アマイロ
+ • 
+焦がれるひととき
+ • 
+Peaceful days
+ • 
+Just got emo!
+ • 
+Faraway Holiday
+韩文版单曲
+CRACK IN THE ARK
+ • 
+A faraway star
+印象曲
+Crystallize
+ • 
+Heart Forest
+ • 
+Proof of being alive
+ • 
+Running In The Dark
+ • 
+Ashen
+ • 
+Grown-up's Paradise
+ •  
+Eclipse
+动画相关音乐
+Alive
+（黎明前奏OP）• 
+BE ME
+（黎明前奏ED）• 
+ACHE in PULSE
+（冬隐归路OP）• 
+R.I.P.
+（冬隐归路ED1） • 
+Fleeting Wish
+（冬隐归路ED2） • 
+Lullabye
+（冬隐归路插曲）• 
+End of Days
+（焰烬曙明OP）• 
+Truth
+（焰烬曙明ED）
+EP合集
+音律联觉原声EP
+（
+CanNot Wait For
+ • 
+ManiFesto:
+） • 
+音律联觉-灯下定影原声EP
+（
+梦源之地
+ • 
+象限解构者
+ • 
+零号特工
+） • 
+音律联觉-愚夜密函原声EP
+（
+愚夜密函
+ • 
+踏沙寻影
+ • 
+缉速狂飙
+） • 
+音律联觉-不觅浪尘原声EP
+（
+行者
+ • 
+遗君
+ • 
+FIVE超新星☆全能live时刻！
+ • 
+空王冠
+ • 
+魔王
+） • 
+音律联觉-熠曲丰碑原声EP
+（
+Muse
+ • 
+镜花水月
+ • 
+雾色秘访
+ • 
+时序花圃
+ • 
+熠曲丰碑
+）
+OST
+主题曲
+OST1
+ • 
+OST2
+ • 
+OST3
+（
+Wrathful Cerulean Flame
+ • 
+双龙
+） • 
+OST4
+（
+Summum Voti
+ • 
+Quench
+） • 
+慈悲灯塔OST
+（
+Broken Sun
+） • 
+OST5
+ • 
+反常光谱OST
+ • 
+相变临界OST
+SideStory/故事集
+火蓝之心原声带
+ • 
+源石尘行动OST
+ • Rewinding Breeze • Under Tides • 将进酒 • 
+愚人号OST
+（
+愚人曲
+ • 
+Hunter's Song
+） • 
+尘影余音OST
+ • 
+绿野幻梦OST
+ • 
+多索雷斯假日OST
+ • 
+理想城：长夏狂欢季OST
+ • 
+长夜临光OST
+ • 
+叙拉古人OST
+（
+狼之主
+） • 
+风雪过境OST
+ • 
+照我以火OST
+ • 
+画中人OST
+ • 
+将进酒OST
+（
+浊杯照影
+） • 
+登临意OST
+ • 春分OST • 
+吾导先路OST
+ • 日暮寻路OST • 未尽篇章OST • 阴云火花OST • 
+红松林OST
+ • 
+覆潮之下OST
+ • 
+遗尘漫步OST
+ • 
+孤岛风云OST
+ • 
+玛莉娅·临光OST
+ • 
+密林悍将归来OST
+ • 
+沃伦姆德的薄暮OST
+ • 
+生于黑夜OST
+ • 喧闹法则OST • 骑兵与猎人OST • 
+孤星OST
+（
+Blues with you
+）• 
+空想花庭OST
+ • 
+火山旅梦OST
+（
+Misty Memory
+） • 
+不义之财OST
+ • 
+崔林特尔梅之金OST
+ • 
+银心湖列车OST
+ • 
+去咧嘴谷OST
+ • 
+怀黍离OST
+ • 
+巴别塔OST
+ • 
+生路OST
+ • 
+太阳甩在身后OST
+ • 
+泰拉饭OST
+ • 
+揭幕者们OST
+（
+Ambiguous Morality
+） • 
+出苍白海OST
+ • 
+相见欢OST
+ • 我们明日见OST • 
+挽歌燃烧殆尽OST
+ • 
+众生行记OST
+（
+Touch of the Law
+ • 
+Somniomancer null set
+） • 
+红丝绒OST
+ • 镜中集OST • 
+墟OST
+ • 
+无忧梦呓OST
+ • 
+雪山降临1101OST
+ • 
+未许之地OST
+ • 
+雅赛努斯复仇记OST
+ • 
+辞岁行OST
+ • 十字路口OST • 
+人们，我们OST
+ • 丛林症结OST • 
+直到大地变成一颗酸橙OST
+（
+直到大地变成一颗酸橙
+）
+危机合约
+危机合约 黄铁·利刃·燃灰OST
+（
+Operation Pyrite
+ • 
+Operation Blade
+ • 
+Operation Cinder
+） • 
+危机合约 铅封·光谱·蛮鳞OST
+（
+Operation Lead Seal
+ • 
+Operation Spectrum
+ • 
+Operation Wild Scales
+） • 
+危机合约松烟行动OST
+（
+Operation Pine Soot
+） • 
+危机合约寻昼行动OST
+（
+Operation Dawnseeker
+） • 
+危机合约渊默行动OST
+（
+Operation Deepness
+） • 
+危机合约尘环行动OST
+（
+Operation Ashring
+） • 
+危机合约赝波行动OST
+（
+Operation Fake Waves
+） • 
+危机合约起源行动OST
+（
+Operation Basepoint
+） • 
+危机合约浊燃作战OST
+（
+Battleplan Pyrolysis
+）• 
+危机合约潮曦作战OST
+（
+Battleplan Underdawn
+）• 
+危机合约净罪作战OST
+ (
+Battleplan Extinguished Sins
+）• 
+危机合约弧光作战OST
+ (
+Battleplan Acrlight
+）• 
+危机合约涤墨作战OST
+ (
+Battleplan Obliteration
+）
+集成战略/生息演算
+傀影与猩红孤钻OST
+ • 
+沙中之火OST
+ • 
+水月与深蓝之树OST
+ • 
+刻俄柏的灰蕈迷境OST
+ • 
+探索者的银凇止境OST
+ • 
+萨卡兹的无终奇语OST
+ • 
+岁的界园志异OST
+电视动画
+明日方舟：黎明前奏OST
+ • 
+鲤氏侦探事务所OST
+（
+A Day in Lungmen
+） • 
+明日方舟：冬隐归路OST
+ • 
+小刻的画图写话OST
+（
+刻俄柏号，出发！
+）
+其他
+狂弹要塞！罗德大兵集结 • 最后的全能系美少女！主播U的每日泰拉分享 (真没跑路) • 好得不能再好了！泰拉投资大师课（
+ALL!!!
+） • 
+ARKnoNIGHTS
+ • 
+矢量突破OST
+ • 
+卫戍协议OST
+ • 
+促融共竞#1OST
+ • 争锋频道：青草城OST • 矢量突破无机物OST • 
+次生预案OST
+ • 
+促融共竞#2OST
+ • 
+卫戍协议：盟约OST
+ • 矢量突破巫术之夜OST • Rhodes Island Epic 黑色博士坠落 • 奇象巡展OST
+实体
+龙门EP
+ • 
+回响
+ • 
+DRIFTING POEMS
+ • 
+WANDERING BEATS
+ • 
+SEASONS
+PV用曲
+Monster
+ •  
+Unbecoming
+ •  
+Untitled world
+ •  
+INFECTED
+ •  
+Proof of being alive
+ •  
+Telescope
+唱片公司
+塞壬唱片
+线下活动
+音律联觉（
+音律联觉2021
+ • 
+音律联觉2022：灯下定影
+ • 
+音律联觉2023：愚夜密函
+ • 
+音律联觉2024：不觅浪尘
+ • 
+音律联觉2025：熠曲丰碑
+ • 
+音律联觉2026：昔时我见
+） •  
+明日方舟嘉年华
+ •  
+アークナイツ Anniversary Fes.
+桌游
+游城拓荒系列
+（游城拓荒：筑基者 • 游城拓荒：感染者）
+广播剧CD
+乌萨斯的孩子们
+ •  
+罗德岛源石记事——黑钢
+ •  
+风雪过境
+ •  
+真实故事
+ •  
+尘影余音
+朗读剧
+阴云火花 the Reader's Theater
+1. 暂仅收录由
+鹰角网络
+入职画师绘制有关
+明日方舟
+主线相关内容的作品。2. 暂不收录纯音乐。3. 部分曲目本身缺少足够信息，无法成立条目。
+&#160;
+/////
+其
+他
+游戏机制
+干员
+ • 
+战斗
+ • 
+基建
+ • 
+任务
+ • 
+采购中心
+组合包
+图鉴一览
+干员筛选
+  •  
+干员图鉴
+实装日期
+  •  
+时装回廊
+实装顺序
+  • 
+材料图鉴
+ • 
+家具图鉴
+ • 
+敌方图鉴
+ • 
+活动一览
+ • 
+卡池一览
+海外版
+ • 
+繁中版
+ • 
+贺图一览
+ • 
+音乐一览
+ • 
+光荣之路
+愚人节干员
+皇帝/大帝
+ • 
+热泵通道
+其他
+画师
+ • 
+配音演员
+ • 
+制作组通讯
+ • 
+梗
+ • 
+典故
+ • 
+饰牌原型
+ • 
+公开招募标签组合
+ • 
+干员编号一览
+玩家社群相关
+明日方舟新春会
+ • 
+明日方舟生日创作派对
+ • 比赛（
+明日方舟仙术杯
+ • 
+通天国际联赛
+） • 
+泰拉探索协会
+开发/运营
+海猫络合物
+（制作人）• 
+鹰角网络
+鹰小姐
+（制作/简中版运营）• 
+Bilibili
+（简中版运营）• 
+Yostar
+（日/韩/英文版代理）
+官方链接
+官方网站
+ • 
+官方微博
+ • 
+官方B站
+ • 
+塞壬唱片官网
+ • 
+塞壬唱片网易云
+ • 
+塞壬唱片QQ音乐
+ • 
+塞壬唱片Spotify
+ • 
+泰拉记事社官网
+ • 
+泰拉记事社微博
+ • 
+日文版官网
+ • 
+韩文版官网
+ • 
+英文版官网
+ • 
+繁中版官网
+ • 
+日文版推特
+ • 
+韩文版推特
+ • 
+英文版推特
+ • 
+日文版YouTube
+ • 
+韩文版YouTube
+ • 
+英文版YouTube
+ • 
+繁中版YouTube
+ • 
+韩文版脸书
+ • 
+英文版脸书
+ • 
+繁中版脸书
+相关游戏
+明日方舟：终末地
+[+]
+同人音乐
+保卫罗德岛
+ • 
+霜叶之歌
+ • 
+日常方舟
+ • 
+蚀痕拓印
+ • 
+Cursed night
+ • 
+方舟Alien
+ • 
+华尔兹
+ • 
+余灰尽晓
+ • 
+浴血盛放
+ • 
+杀死那个维多利亚人
+ • 
+晨辉
+ • 
+光赐于苦
+ • 
+酒吧里，骑士遇上红酒报
+ • 
+晴空
+ • 
+敢归云间宿
+ • 
+孤星
+ • 
+嘉平歌
+We are heading east.
+@keyframes show{from{opacity:0}}@keyframes shrink{from{transform:scale(1.15)}}@keyframes clear{from{filter:blur(5px)}}@keyframes appear{from{opacity:0;transform:scale(1.3)}}@keyframes look-top{from{width:150%;height:150%;object-position:center bottom}50%{object-position:center top}}@keyframes look-bottom{from{width:150%;height:150%;object-position:center top}50%{object-position:center bottom}}.mw-parser-output #toc{background:rgba(250,250,250,0.7)}.mw-parser-output .infoBoxContent{background:rgba(251,251,251,0.6)}.mw-parser-output .wikitable{background-color:rgba(251,251,251,0.6)}body.theme-dark .mw-parser-output #toc{background:rgba(35,39,46,0.75)}body.theme-dark .mw-parser-output .infoBoxContent{background:rgba(35,39,46,0.75)}body.theme-dark .mw-parser-output .wikitable{background-color:rgba(35,39,46,0.75)}
+window.RLQ = window.RLQ || [];
+window.RLQ.push(["jquery", function () {
+    var logoData = $("#wglogo")[0].dataset,
+    logo = $("#p-logo a.mw-wiki-logo"),
+    styleSheet = {
+        "background-image": "url(" + logoData.backgroundImage + ")",
+        "background-color": "rgba(255,255,255,0.73)"
+    };
+    if (logoData.backgroundSize !== '' && logoData.backgroundSize !== "false") styleSheet["background-size"] = logoData.backgroundSize;
+    if (/-?\d+px -?\d+px/.test(logoData.backgroundPosition)) styleSheet["background-position"] = logoData.backgroundPosition;
+    logo.css(styleSheet);
+}]);
+<!-- 
+NewPP limit report
+Cached time: 20260916212719
+Cache expiry: 2592000
+Reduced expiry: false
+Complications: [show‐toc]
+CPU time usage: 1.990 seconds
+Real time usage: 2.267 seconds
+Preprocessor visited node count: 27891/1000000
+Post‐expand include size: 1947561/2097152 bytes
+Template argument size: 54898/2097152 bytes
+Highest expansion depth: 11/100
+Expensive parser function count: 1/50
+Unstrip recursion depth: 1/20
+Unstrip post‐expand size: 62240/5000000 bytes
+Lua time usage: 0.359/7.000 seconds
+Lua memory usage: 3343770/52428800 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  746.836      1 -total
+ 27.03%  201.838    289 Template:Akitem
+ 23.64%  176.542      2 Template:Akshop
+ 22.56%  168.476      1 Template:明日方舟:导航
+ 18.42%  137.582      1 Template:明日方舟
+ 18.19%  135.853      9 Template:Akmission
+ 13.62%  101.746      1 Template:AK传送门
+ 11.92%   89.004      1 Template:Hovers
+  7.77%   58.011      1 Template:Toggle
+  4.97%   37.155      1 Template:专题导航
+-->
+<!-- Saved in parser cache with key zhmoegirl:pcache:idhash:562712-0!userlang=zh-cn!zh-cn and timestamp 20260916212719 and revision id 8108712. Rendering was triggered because: page-view
+ -->
+{"title":"
+明日方舟\/孤星
+","pagetitle":"明日方舟\/孤星 - 萌娘百科 万物皆可萌的百科全书","thispage":"明日方舟\/孤星","titleprefixeddbkey":"明日方舟\/孤星","titletext":"明日方舟\/孤星","articleid":562712,"isarticle":true,"subtitle":"
+&lt; 
+明日方舟
+","undelete":null,"feeds":false,"mimetype":"text\/html","charset":"UTF-8","wgScript":"\/index.php","skinname":"moeskin","printable":false,"handheld":false,"notspecialpage":true,"searchaction":"\/Special:%E6%90%9C%E7%B4%A2","searchtitle":"Special:搜索","search":"","stylepath":"\/skins","articlepath":"\/$1","scriptpath":"","serverurl":"https:\/\/mzh.moegirl.org.cn","sitename":"萌娘百科","lang":"zh-Hans-CN","dir":"ltr","rtl":false,"logopath":"https:\/\/storage.moegirl.org.cn\/moegirl\/logo\/zhMoegirl15.2.png","showjumplinks":true,"specialpageattributes":"","logo":"
+","copyright":"
+\n
+\n
+关注萌百
+\n
+bilibili
+\n
+微博
+\n
+微信：萌娘百科
+\n
+\n \n
+\n
+联系帮助
+\n
+创建条目
+\n
+测试沙盒
+\n
+合作事项&汇报Bug
+\n
+\n \n
+\n
+人员招募
+\n
+管理员
+\n
+维护姬
+\n
+技术编辑员
+\n
+\n\n
+\n
+移动应用
+\n
+下载页面
+\n
+\n\n\n
+本站全部内容禁止商业使用。文本内容除另有声明外，均在
+知识共享 署名-非商业性使用-相同方式共享 4.0（CC BY-NC-SA 4.0）许可协议
+下提供，附加条款亦可能应用，详细信息参见
+萌娘百科:著作权信息
+。
+\n其他类型作品著作权归属于其著作权人，如有授权遵照授权协议使用。
+\n萌娘百科®、Moegirlpedia®是注册商标。\n
+\n
+","viewcount":false,"lastmod":" 此页面最后编辑于2025年8月11日 (星期一) 21:03。","credits":false,"numberofwatchingusers":false,"disclaimer":false,"indicators":{"noteTA-1ed35ba9":"
+"},"printfooter":"检索自“
+https:\/\/mzh.moegirl.org.cn\/index.php?title=明日方舟\/孤星&oldid=8108712
+”","language_urls":false,"content_navigation":{"namespaces":{"main":{"class":"selected","text":"页面","href":"\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","exists":true,"primary":true,"context":"subject","id":"ca-nstab-main","title":"查看内容页面​[c]","accesskey":"c"},"talk":{"class":"new","text":"讨论","href":"\/index.php?title=Talk:%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F&action=edit&redlink=1","exists":false,"primary":true,"link-class":"new","context":"talk","rel":"discussion","id":"ca-talk","title":"有关内容页面的讨论​[t]","accesskey":"t"}},"views":{"view":{"class":"selected","text":"阅读","href":"\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","exists":true,"primary":true,"redundant":true,"id":"ca-view"},"viewsource":{"class":false,"text":"查看源代码","href":"\/index.php?title=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F&action=edit","primary":true,"id":"ca-viewsource","title":"本页面受到保护。\n您可以查看其源代码​[e]","accesskey":"e"},"history":{"class":false,"text":"查看历史","href":"\/index.php?title=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F&action=history","id":"ca-history","title":"该页面过去的修订​[h]","accesskey":"h"}},"actions":[],"variants":[{"class":" ca-variants-zh","text":"关闭转换","href":"\/zh\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh","hreflang":"zh","id":"ca-varlang-0"},{"class":" ca-variants-zh-Hans","text":"简体","href":"\/zh-hans\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hans","hreflang":"zh-Hans","id":"ca-varlang-1"},{"class":" ca-variants-zh-Hant","text":"繁體","href":"\/zh-hant\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hant","hreflang":"zh-Hant","id":"ca-varlang-2"},{"class":"selected ca-variants-zh-Hans-CN","text":"简体（中国）","href":"\/zh-cn\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hans-CN","hreflang":"zh-Hans-CN","id":"ca-varlang-3"},{"class":" ca-variants-zh-Hant-HK","text":"繁體（中國香港）","href":"\/zh-hk\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hant-HK","hreflang":"zh-Hant-HK","id":"ca-varlang-4"},{"class":" ca-variants-zh-Hant-TW","text":"繁體（中國臺灣）","href":"\/zh-tw\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hant-TW","hreflang":"zh-Hant-TW","id":"ca-varlang-5"}]},"content_actions":{"nstab-main":{"class":"selected","text":"页面","href":"\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","exists":true,"primary":true,"context":"subject","id":"ca-nstab-main","title":"查看内容页面​[c]","accesskey":"c"},"talk":{"class":"new","text":"讨论","href":"\/index.php?title=Talk:%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F&action=edit&redlink=1","exists":false,"primary":true,"link-class":"new","context":"talk","rel":"discussion","id":"ca-talk","title":"有关内容页面的讨论​[t]","accesskey":"t"},"viewsource":{"class":false,"text":"查看源代码","href":"\/index.php?title=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F&action=edit","primary":true,"id":"ca-viewsource","title":"本页面受到保护。\n您可以查看其源代码​[e]","accesskey":"e"},"history":{"class":false,"text":"查看历史","href":"\/index.php?title=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F&action=history","id":"ca-history","title":"该页面过去的修订​[h]","accesskey":"h"},"varlang-0":{"class":" ca-variants-zh","text":"关闭转换","href":"\/zh\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh","hreflang":"zh","id":"ca-varlang-0"},"varlang-1":{"class":" ca-variants-zh-Hans","text":"简体","href":"\/zh-hans\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hans","hreflang":"zh-Hans","id":"ca-varlang-1"},"varlang-2":{"class":" ca-variants-zh-Hant","text":"繁體","href":"\/zh-hant\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hant","hreflang":"zh-Hant","id":"ca-varlang-2"},"varlang-3":{"class":"selected ca-variants-zh-Hans-CN","text":"简体（中国）","href":"\/zh-cn\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hans-CN","hreflang":"zh-Hans-CN","id":"ca-varlang-3"},"varlang-4":{"class":" ca-variants-zh-Hant-HK","text":"繁體（中國香港）","href":"\/zh-hk\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hant-HK","hreflang":"zh-Hant-HK","id":"ca-varlang-4"},"varlang-5":{"class":" ca-variants-zh-Hant-TW","text":"繁體（中國臺灣）","href":"\/zh-tw\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","lang":"zh-Hant-TW","hreflang":"zh-Hant-TW","id":"ca-varlang-5"}},"nav_urls":{"mainpage":{"href":"\/","text":"Mainpage"},"upload":{"href":"https:\/\/commons.moegirl.org.cn\/Special:%E4%B8%8A%E4%BC%A0%E6%96%87%E4%BB%B6","text":"上传文件","title":"上传文件​[u]","accesskey":"u"},"specialpages":{"href":"\/Special:%E7%89%B9%E6%AE%8A%E9%A1%B5%E9%9D%A2","text":"特殊页面","title":"所有特殊页面的列表​[q]","accesskey":"q"},"print":{"text":"打印版本","href":"javascript:print();","title":"本页面的可打印版本​[p]","accesskey":"p"},"permalink":{"icon":"link","text":"固定链接","href":"\/index.php?title=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F&oldid=8108712","title":"此页面该修订版本的固定链接"},"info":{"icon":"infoFilled","text":"页面信息","href":"\/index.php?title=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F&action=info","title":"关于此页面的更多信息"},"whatlinkshere":{"href":"\/Special:%E9%93%BE%E5%85%A5%E9%A1%B5%E9%9D%A2\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","text":"链入页面","title":"所有链接至本页面的wiki页面列表​[j]","accesskey":"j"},"recentchangeslinked":{"href":"\/Special:%E9%93%BE%E5%87%BA%E6%9B%B4%E6%94%B9\/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F\/%E5%AD%A4%E6%98%9F","text":"相关更改","title":"链自本页的页面的最近更改​[k]","accesskey":"k"},"contributions":false,"log":false,"blockip":false,"changeblockip":false,"unblockip":false,"mute":false,"emailuser":false,"userrights":false},"debug":"","debughtml":{},"dataAfterContent":"
+\n\t
+\n
+\n","moeskin_header_logo_url":"https:\/\/storage.moegirl.org.cn\/logos\/MoegirlPedia-Title.svg","moeskin_avatar_url":"https:\/\/storage.moegirl.org.cn\/moegirl\/avatars\/$userid\/latest.png","is_mainpage":false,"mainpage_title":"Mainpage","category_data":{"normal":[{"text":"明日方舟","href":"\/Category:%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F","title":"Category:明日方舟","exists":true}],"hidden":[{"text":"含有萌娘百科作品页的页面","href":"\/Category:%E5%90%AB%E6%9C%89%E8%90%8C%E5%A8%98%E7%99%BE%E7%A7%91%E4%BD%9C%E5%93%81%E9%A1%B5%E7%9A%84%E9%A1%B5%E9%9D%A2","title":"Category:含有萌娘百科作品页的页面","exists":true},{"text":"需要长期关注及更新的条目","href":"\/Category:%E9%9C%80%E8%A6%81%E9%95%BF%E6%9C%9F%E5%85%B3%E6%B3%A8%E5%8F%8A%E6%9B%B4%E6%96%B0%E7%9A%84%E6%9D%A1%E7%9B%AE","title":"Category:需要长期关注及更新的条目","exists":true},{"text":"含有受损文件链接的页面","href":"\/Category:%E5%90%AB%E6%9C%89%E5%8F%97%E6%8D%9F%E6%96%87%E4%BB%B6%E9%93%BE%E6%8E%A5%E7%9A%84%E9%A1%B5%E9%9D%A2","title":"Category:含有受损文件链接的页面","exists":true}],"show_hidden":false,"total":4},"subject_page_link":"","latest_contributors":{"total":5,"limit":10,"users":[{"userName":"Bhsd-bot","userId":751520},{"userName":"夜刀神真香","userId":485096,"displayName":"NostalgicTomorrow#4896"},{"userName":"Inari1209","userId":1036500},{"userName":"Takeuchi","userId":720720},{"userName":"鬼影233","userId":655121}]}}
+{"__lang__":"zh-Hans-CN","moeskin-search-input-placeholder":"搜索萌娘百科 (Ctrl+K)","moeskin-search-input-placeholder-focus":"输入搜索内容……","moeskin-editor-central":"編輯中心","moeskin-header-download-app-button":"下载最新版APP，体验条目角色扮演！","toolbox":"工具","moeskin-userlink-aboutme":"我的","moeskin-userlink-sitenotice":"公告","moeskin-userlink-mycontris":"贡献","moeskin-userlink-watchlist":"监视","moeskin-userlink-echo-alert":"提醒","moeskin-userlink-echo-notice":"通知","tagline":"萌娘百科，万物皆可萌的百科全书！转载请标注来源页面的网页链接，并声明引自萌娘百科。内容不可商用。","moeskin-subtitle-back-to-subject":"回到页面","creditspage":"页面编辑名单","moeskin-page-contributors":"贡献者：","moeskin-page-contributors-more":"以及另外 $1 位贡献者","watch":"监视","watching":"正在监视...","unwatch":"取消监视","unwatching":"正在取消监视...","moeskin-pagetool-show-sidenav":"显示侧栏","moeskin-pagetool-hide-sidenav":"折叠侧栏","moeskin-pagetool-backtotop":"回到顶部","moredotdotdot":"更多…","moeskin-advancedsearch-kbd-tips":"提示：用$1$2选择，(ctrl+)$3进入，$4关闭。","moeskin-advancedsearch-noinput":"请输入关键词来搜索","moeskin-advancedsearch-noresult":"没有找到相关内容","moeskin-advancedsearch-error":"搜索时遇到问题","moeskin-advancedsearch-loading":"正在搜索中……","moeskin-advancedsearch-totalhits":"第$1~$2条结果，共$3条搜索结果","moeskin-advancedsearch-getmore":"更多有关“$1”的搜索结果","moeskin-advancedsearch-itemstats":"共$1字 \/ 最后编辑于$2","moeskin-advancedsearch-subpages-more":"还有 $1 个相关页面","moeskin-sitenotice-button":"查看公告","moeskin-sitenotice-title":"全站公告","moeskin-sitenotice-dismiss":"我知道了","moeskin-sitenotice-new-unread":"有新的未读公告","toc":"目录","categories":"分类","hidden-categories":"$1 个隐藏分类","pagecategories":"$1 个分类","pagecategorieslink":"Special:Categories","moeskin-comments-comment":"评论","moeskin-comments-reply":"回复","moeskin-comments-expression-like":"推荐","moeskin-comments-expression-dislike":"不推荐","moeskin-comments-expression-x-total":"$1人评价","moeskin-comments-expression-x-likes":"$1人推荐","moeskin-comments-show-all":"查看全部评论","moeskin-comments-add-comment":"发布评论","moeskin-comments-reply-to":"回复 $1 的评论","moeskin-comments-rules-title":"评论区指引","moeskin-comments-rules-body":"🎉 亲爱的小伙伴，欢迎踊跃参与评论！在这里，您可以围绕条目所介绍的内容积极展开讨论，分享您独到的见解与评价。\n🤫 评论内容会在审核后展示。请严格遵守相关法律法规，文明发言，让我们的交流环境始终保持积极、健康。\n👊 若违反规定，我们将对违规评论进行删除处理，严重违规者会被封禁账号。情节特别严重的，将依法移交公安机关处理。\n✏️ 此外，若您在条目中发现错误，欢迎提交编辑，让我们共同完善内容，提升阅读体验！","moeskin-comments-rules-show":"查看评论区指引","moeskin-comments-submit-shortcut-hint":"提示：Ctrl(⌘) + Enter 可以快速提交评论","moeskin-editor-create-button":"创建","moeskin-editor-create-wiki-page":"wiki 条目","moeskin-editor-create-upload-file":"上传文件","moeskin-editor-create-create-post":"帖子·文章","moeskin-comment-input-login-prefix":"请先","moeskin-comment-input-bind-phone":"绑定手机","moeskin-comment-input-login":"登录","moeskin-comment-input-login-suffix":"后发表评论~","moeskin-comment-input-switch-editor":"切换编辑器 ($1)","moeskin-comment-input-submit":"提交","moeskin-comment-input-placeholder":"咕噜咕噜……","moeskin-comment-input-warning-login-first":"请先登录","moeskin-comment-input-success-published":"评论发表成功","moeskin-comment-input-info-review":"评论将在审核通过后显示","moeskin-comment-input-error-bind-phone":"请先绑定手机","moeskin-comment-input-error-failed":"评论发表失败：$1","moeskin-comment-input-warning-empty":"评论不能为空","moeskin-comment-input-insert-image-title":"插入图片","moeskin-comment-input-insert-image-placeholder":"只能插入moegirl.org.cn的图片","moeskin-comment-input-insert-image-confirm":"插入","moeskin-comment-input-warning-only-moegirl-image":"只能插入萌百图片","moeskin-comment-input-warning-too-long":"评论过长，请精简后再提交","moeskin-rating-level-few":"评价较少","moeskin-rating-level-overwhelmingly-positive":"好评如潮","moeskin-rating-level-very-positive":"特别好评","moeskin-rating-level-mostly-positive":"多半好评","moeskin-rating-level-mixed":"褒贬不一","moeskin-rating-level-mostly-negative":"多半差评","moeskin-rating-level-overwhelmingly-negative":"差评如潮","moeskin-rating-level-very-negative":"特别差评","moeskin-grandpa-subscription-title":"萌娘百科会员订阅","moeskin-grandpa-subscription-text":"会员","moeskin-comments-autoload-error":"评论加载失败","moeskin-comments-autoload-retry":"重试","moeskin-artwork-header-title":"作品讨论","moeskin-artwork-header-loading":"Loading...","moeskin-artwork-score-unit":"分","moeskin-artwork-tab-description":"简介","moeskin-artwork-tab-reviews":"短评","moeskin-artwork-open-in-app":"打开App查看更多","moeskin-artwork-type-book-label":"书籍","moeskin-artwork-type-book-want":"想读","moeskin-artwork-type-book-already":"读过","moeskin-artwork-type-music-label":"音乐","moeskin-artwork-type-music-want":"想听","moeskin-artwork-type-music-already":"听过","moeskin-artwork-type-game-label":"游戏","moeskin-artwork-type-game-want":"想玩","moeskin-artwork-type-game-already":"玩过","moeskin-artwork-type-video-label":"动画","moeskin-artwork-type-video-want":"想看","moeskin-artwork-type-video-already":"看过","moeskin-float-open-in-app":"在APP内打开，体验条目角色扮演","moeskin-mobile-gate-button":"打开 App 继续阅读","moeskin-mobile-gate-heading":"在 APP 里，接着看吧","moeskin-mobile-gate-not-installed":"还没安装？","moeskin-mobile-gate-download":"下载 APP","createacct-benefit-heading":"萌娘百科是由像您一样的爱好者构筑的。","createaccount":"创建账号","echo-overlay-link":"所有通知","echo-mark-all-as-read":"标记全部通知为已读","echo-notification-markasread":"标记为已读","echo-notification-markasunread":"标记为未读","moeskin-footer-top":"
+\n
+\n
+\n
+萌娘百科
+\n
+关于我们
+\n
+联系我们
+\n
+合作事项&汇报Bug
+\n
+意见反馈
+\n
+\n
+\n
+招贤纳士
+\n
+管理员
+\n
+维护姬
+\n
+技术编辑员
+\n
+\n
+\n
+帮助
+\n
+创建条目
+\n
+测试沙盒
+\n
+商务合作
+\n
+广告投放&宣传推广咨询和合作
+yunying
+moegirl.org
+\n
+\n
+\n
+关注我们
+\n
+不要错过更多有趣的ACGN内容☆～
+\n
+\n
+&lt;img src=\"https:\/\/storage.moegirl.org.cn\/moegirl\/commons\/5\/51\/Mgp_qrcode_bilibili.png\"&gt;
+bilibili
+\n
+&lt;img src=\"https:\/\/storage.moegirl.org.cn\/moegirl\/commons\/9\/94\/Mgp_qrcode_weibo.png\"&gt;
+微博
+\n
+&lt;img src=\"
+\"&gt;
+公众号
+\n
+\n
+\n
+\n
+","moeskin-footer-copyright":"
+\n
+\n
+\n
+\n
+帮助
+商务合作
+下载App
+\n
+\n
+本站全部内容禁止商业使用。文本内容除另有声明外，均在
+知识共享 署名-非商业性使用-相同方式共享 4.0（CC BY-NC-SA 4.0）许可协议
+下提供，附加条款亦可能应用，详细信息参见
+萌娘百科:著作权信息
+。其他类型作品著作权归属于其著作权人，如有授权遵照授权协议使用。
+\n
+\n
+\n
+萌娘百科®、Moegirlpedia®是注册商标
+\n
+隐私权政策
+ | 
+关于萌娘百科
+ | 
+免责声明
+\n
+\n
+","moeskin-footer-app-copyright":"&#169; 2026 萌娘百科 (
+Modify this text
+)","moeskin-topbar":"
+|导航\n
+Mainpage|首页
+\n
+Special:随机页面|随机页面
+\n
+Special:最近更改|最近更改
+\n
+https:\/\/commons.moegirl.org.cn\/Special:%E6%96%B0%E5%BB%BA%E6%96%87%E4%BB%B6|最新文件
+\n
+|讨论版\n
+萌娘百科_talk:讨论版|目录
+\n
+萌娘百科_talk:讨论版\/技术实现|技术实现
+\n
+萌娘百科_talk:讨论版\/权限变更|权限变更
+\n
+萌娘百科_talk:讨论版\/操作申请|操作申请
+\n
+萌娘百科_talk:讨论版\/方针政策|方针政策
+\n
+萌娘百科_talk:讨论版\/页面相关|页面相关
+\n
+萌娘百科_talk:讨论版\/提问求助|提问求助
+\n
+萌娘百科_talk:讨论版\/群组信息|群组信息
+\n
+萌娘百科_talk:提案|提案
+\n
+|分类索引\n
+Category:作品|作品
+\n
+Category:人物|人物
+\n
+Category:组织|组织
+\n
+Category:概念用语|概念用语
+\n
+Category:设定|设定
+\n
+Category:软件|软件
+\n
+Category:活动|活动
+\n
+|帮助\n
+Category:帮助|帮助
+\n
+Draft:沙盒|沙盒
+\n
+Help:Wiki入门|Wiki入门
+\n
+Help:萌百编辑简明指南\/欢迎|编辑教程
+\n
+萌娘百科:编辑规范|编辑规范
+\n
+Template:萌娘百科政策文件|萌娘百科政策
+\n
+Help:创建新条目|创建新条目
+\n
+萌娘百科:条目创建请求|请求创建条目
+\n
+萌娘百科:常见问题与解答|常见问题集
+\n
+|关注我们\n
+哔哩哔哩
+微博
+公众号
+\n
+萌娘百科:官方群组|聊天群
+\n
+https:\/\/item.taobao.com\/item.htm?id=829392312809&utm_source=moeskin_topbar|官方淘宝店
+","moeskin-sitenotice":"
+\n
+\n
+编辑页面前请先阅读 
+Wiki入门使用指南
+、
+萌百编辑教程
+ 以及 
+萌百编辑规范
+\n
+有任何意见、建议、求助
+都可以在 
+提问求助区
+ 提出！
+\n
+欢迎
+订阅
+萌娘百科月报
+，
+掌握萌百每月大事！
+\n
+编辑保存出错？
+先点浏览器的返回按钮，尝试再保存，
+如果还出错请在 
+提问求助区
+ 提出！
+\n
+欢迎加入 
+萌娘百科官方QQ群
+加入时请写明【自己的萌百用户名】
+\n
+欢迎关注 
+萌娘百科各大平台官方账号
+ ～
+\n
+觉得萌娘百科有趣的话，请推荐给朋友哦～
+\n
+\n
+","moeskin-anonnotice":"
+\n
+你好～！欢迎来到萌娘百科！
+如果您是第一次来到这里，
+点这里
+加入萌娘百科!
+\n
+欢迎具有翻译能力的同学～
+有意者请点→
+Category:需要翻译的条目
+←
+\n
+如果您在萌百上发现某些内容
+错误\/空缺
+，
+请
+勇于
+修正\/添加！
+编辑萌娘百科其实很容易！
+\n
+欢迎关注 
+萌娘百科各大平台官方账号
+ ～
+\n
+觉得萌娘百科有趣的话，请推荐给朋友哦～
+\n
+萌娘百科新人\/游客群
+119170500欢迎加入，
+加入时请写明
+萌百用户名
+或
+拟反馈内容
+～
+\n
+","moeskin-allnotice":"
+公告
+\n
+评论区功能与管理FAQ
+\n
+关于萌娘百科著作权协议升级更新的公告
+\n
+\n
+\n
+ ","moeskin-topbanner":""}
+{"loggedin":false,"name":"","displayName":"","rawUserName":"","id":0,"lang":"zh-cn","userpage":null,"userpageurl":null,"groups":["*"],"blocked":false,"registration_time":null,"avatar_url":"https:\/\/storage.moegirl.org.cn\/moegirl\/avatars\/0\/latest.png","newtalk":"","personal_urls":{"createaccount":{"single-id":"pt-createaccount","text":"创建账号","href":"\/index.php?title=Special:%E5%88%9B%E5%BB%BA%E8%B4%A6%E6%88%B7&returnto=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F%2F%E5%AD%A4%E6%98%9F","active":false,"icon":"userAdd","id":"ca-createaccount"},"login":{"single-id":"pt-login","text":"登录","href":"\/index.php?title=Special:%E7%94%A8%E6%88%B7%E7%99%BB%E5%BD%95&returnto=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F%2F%E5%AD%A4%E6%98%9F","active":false,"icon":"logIn","id":"ca-login"}}}
+(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":924,"wgPageParseReport":{"limitreport":{"cputime":"1.990","walltime":"2.267","ppvisitednodes":{"value":27891,"limit":1000000},"postexpandincludesize":{"value":1947561,"limit":2097152},"templateargumentsize":{"value":54898,"limit":2097152},"expansiondepth":{"value":11,"limit":100},"expensivefunctioncount":{"value":1,"limit":50},"unstrip-depth":{"value":1,"limit":20},"unstrip-size":{"value":62240,"limit":5000000},"timingprofile":["100.00%  746.836      1 -total"," 27.03%  201.838    289 Template:Akitem"," 23.64%  176.542      2 Template:Akshop"," 22.56%  168.476      1 Template:明日方舟:导航"," 18.42%  137.582      1 Template:明日方舟"," 18.19%  135.853      9 Template:Akmission"," 13.62%  101.746      1 Template:AK传送门"," 11.92%   89.004      1 Template:Hovers","  7.77%   58.011      1 Template:Toggle","  4.97%   37.155      1 Template:专题导航"]},"scribunto":{"limitreport-timeusage":{"value":"0.359","limit":"7.000"},"limitreport-memusage":{"value":3343770,"limit":52428800}},"cachereport":{"timestamp":"20260916212719","ttl":2592000,"transientcontent":false}}});});
+;(window.RLQ ||= []).push([
+  'mediawiki.base',
+  () => {
+    mw.hook('wikipage.content').add(() => {
+      const editLinks = document.querySelectorAll('a#ca-edit, #ca-edit a')
+      if (!editLinks.length) {
+        return
+      }
+      editLinks.forEach((i) => {
+        const url = new URL(i.href)
+        url.searchParams.delete('oldid')
+        i.href = url.href
+      })
+    })
+  },
+])
+(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e0411979af5d5c',t:'MTc4OTkwMTI2OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();

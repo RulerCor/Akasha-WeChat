@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="/favicon.ico" />
+<title>Arknights Asset Storage</title>
+<meta name="description" content="Arknights Asset Storage" />
+<script type="module" crossorigin src="/fe/index-CkuPGORl.js"></script>
+<link rel="modulepreload" crossorigin href="/fe/runtime-core.esm-bundler-C5SNxidq.js">
+<link rel="modulepreload" crossorigin href="/fe/browser-kAfK2Z11.js">
+<link rel="modulepreload" crossorigin href="/fe/useApi-CROJJdhE-BOzMH0OW.js">
+<link rel="modulepreload" crossorigin href="/fe/preload-helper-Czpn1I53.js">
+<link rel="modulepreload" crossorigin href="/fe/Scrollbar-AkNLfshM.js">
+<link rel="modulepreload" crossorigin href="/fe/light-ChAg1wOP.js">
+<link rel="modulepreload" crossorigin href="/fe/fade-in-scale-up.cssr-BkKMowZC.js">
+<link rel="modulepreload" crossorigin href="/fe/use-compitable-BJuVlTWL.js">
+<link rel="modulepreload" crossorigin href="/fe/light-Cjo16ugH.js">
+<link rel="modulepreload" crossorigin href="/fe/use-lock-html-scroll-rET0veB3.js">
+<link rel="modulepreload" crossorigin href="/fe/Button-YKEhCCjv.js">
+<link rel="modulepreload" crossorigin href="/fe/Card-zTB2l9B7.js">
+<link rel="modulepreload" crossorigin href="/fe/Modal-BsK9MkPG.js">
+<link rel="modulepreload" crossorigin href="/fe/Dropdown-DDCzL8k0.js">
+<link rel="modulepreload" crossorigin href="/fe/light-CL_O_Azp.js">
+<link rel="modulepreload" crossorigin href="/fe/light-Bed4zSEb.js">
+<link rel="modulepreload" crossorigin href="/fe/light-C_YWEsSM.js">
+<link rel="modulepreload" crossorigin href="/fe/context-ByzZ3MNw.js">
+<link rel="modulepreload" crossorigin href="/fe/light-CfmWNz1O.js">
+<link rel="modulepreload" crossorigin href="/fe/light-BeiXldRQ.js">
+<link rel="modulepreload" crossorigin href="/fe/light-DZVWdJFo.js">
+<link rel="modulepreload" crossorigin href="/fe/_common-BnUKsVpJ.js">
+<link rel="modulepreload" crossorigin href="/fe/dist-Cav3MqhT.js">
+<link rel="modulepreload" crossorigin href="/fe/dist-CUdd0Bt7.js">
+<link rel="stylesheet" crossorigin href="/fe/index-CSyHK38v.css">
+</head>
+<body class="font-sans dark:text-white dark:bg-hex-121212">
+<div id="app"></div>
+<noscript>
+<div>Please enable JavaScript to use this application.</div>
+</noscript>
+<script>(function () {const prefersDark =window.matchMedia &&window.matchMedia("(prefers-color-scheme: dark)").matches;const setting =localStorage.getItem("color-schema") ||"auto";if (setting ==="dark" ||(prefersDark &&setting !=="light"))
+document.documentElement.classList.toggle("dark",true);})();</script>
+</body>
+</html>

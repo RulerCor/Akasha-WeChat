@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+    <title>百度百科</title>
+    <script>
+        window.__PARIS_CHALLENGE_START__ = (function () {
+            var perf = window.performance;
+            if (perf && perf.timing && perf.timing.navigationStart) {
+                return perf.timing.navigationStart;
+            }
+            if (perf && perf.timeOrigin) {
+                return Math.round(perf.timeOrigin);
+            }
+            return Date.now();
+        })();
+
+        window.__CHALLENGE_CONFIG__ = {
+            sid: '2020',
+            acsUrlBaseTpl: 'https://dlswbr.baidu.com/heicha/mm/{sid}/acs-{sid}.js'
+        };
+
+        // 仅把参数写入当前 URL（不跳转、不刷新），供 bst / acs-token 复用
+        window.__setUrlParam__ = function (name, value) {
+            if (!window.history || !history.replaceState) {
+                return false;
+            }
+            var loc = window.location;
+            var query = loc.search;
+            var pair = name + '=' + encodeURIComponent(value);
+            var re = new RegExp('([?&])' + name + '=[^&]*');
+            if (re.test(query)) {
+                query = query.replace(re, '$1' + pair);
+            } else {
+                query += (query.indexOf('?') > -1 ? '&' : '?') + pair;
+            }
+            history.replaceState(null, '', loc.pathname + query + loc.hash);
+            return true;
+        };
+    </script>
+
+    <script>
+        (function () {
+            // 服务端读取本文档后，会把下面的占位符替换为真实的 baike-safe-token 值
+            var bstToken = '1789901380.100229a8194f505e';
+            // 用拼接方式重建占位符再比较：服务端只会替换连续的 1789901380.100229a8194f505e，
+            // 拼接后的字符串不会被替换，从而可判断服务端是否成功替换过。
+            var placeholder = '{' + 'baike-safe-token' + '}';
+            if (!bstToken || bstToken === placeholder) {
+                return;
+            }
+            window.__setUrlParam__('bst', bstToken);
+        })();
+    </script>
+
+    <script>
+        function preloadHref(href, preloadTTLMin) {
+            if (!preloadTTLMin) {
+                preloadTTLMin = 120;
+            }
+            if (preloadTTLMin) {
+                let bucketStamp = Math.floor(+new Date() / (1000 * 60 * preloadTTLMin));
+                let sepChar = href.indexOf('?') > -1 ? '&' : '?';
+                href = href + sepChar + '_=' + bucketStamp;
+            }
+
+            let linkEl = document.createElement('link');
+            linkEl.rel = 'preload';
+            linkEl.as = 'script';
+            linkEl.href = href;
+            document.head.appendChild(linkEl);
+            return href;
+        }
+
+        var cfg = window.__CHALLENGE_CONFIG__;
+        window.__ACS_PRELOAD_HREF__ = preloadHref(cfg.acsUrlBaseTpl.split('{sid}').join(cfg.sid));
+    </script>
+    <script src="https://bkssl.bdimg.com/resource/common/antispam/middle/paris.challenge.min.js"></script>
+</head>
+<body>
+    <div style="display:flex;height:100vh;align-items:center;justify-content:center;">
+        <div style="text-align:center;font-family:sans-serif;color:#666;">
+            <!-- <h2>安全校验中…</h2> -->
+        </div>
+    </div>
+
+    <script src="https://bkssl.bdimg.com/resource/common/antispam/middle/paris.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var CFG = window.__CHALLENGE_CONFIG__;
+
+            // 写入 acs-token：优先 cookie，失败则回退到 URL 参数（不跳转）
+            function saveAcsToken(code) {
+                var token = String(code);
+                var written = false;
+                // 快速预判：cookie 被禁用时直接跳过写入，省去无谓的写+回读
+                if (navigator.cookieEnabled) {
+                    document.cookie = 'acs-token=' + encodeURIComponent(token) + '; path=/';
+                    written = document.cookie.split('; ').some(function (item) {
+                        return item.indexOf('acs-token=') === 0;
+                    });
+                }
+                if (!written) {
+                    window.__setUrlParam__('acs-token', token);
+                }
+            }
+
+            CFG.handlerError = saveAcsToken;
+
+            // SDK 未加载成功时，写入状态码（710 可按业务约定调整）
+            if (typeof window.ParisChallenge === 'undefined' || !window.ParisChallenge) {
+                saveAcsToken(710);
+                return;
+            }
+            window.ParisChallenge.startChallengeFlow(CFG);
+        })();
+    </script>
+</body>
+</html>
