@@ -33,9 +33,11 @@
 from __future__ import annotations
 
 import asyncio
+import base64 as _base64_mod
 import hashlib
 import json
 import os
+import random
 import sqlite3
 import time
 from typing import Any
@@ -59,6 +61,10 @@ STICKER_MARKERS = ("[表情]", "[表情包]", "[sticker]", "[Sticker]")
 # 拿不到描述时的兜底文案 —— 关键是让模型知道「有人发了个表情」，
 # 而不是像改动前那样整条丢弃、机器人完全无感。
 FALLBACK_DESC = "（一个表情）"
+
+# 出站表情池：只有主人明确挑选过、放在 approved/ 目录里的表情才允许发送。
+# index.json 由主人（或命名脚本）生成：[{"md5","name","detail","file"}, ...]
+APPROVED_INDEX = "index.json"
 
 
 class StickerCache:
@@ -251,6 +257,11 @@ class WxStickerCache(Star):
         self._hot: dict[str, str] = {}
         # 正在分析中的 md5，避免同一表情被并发分析多次
         self._analyzing: set[str] = set()
+        # 出站表情池：name -> {"path", "md5", "detail"}
+        self._approved: dict[str, dict] = {}
+        self._approved_mtime: float = 0.0
+        # 发送冷却：会话 -> 最近发送时间戳（防刷屏）
+        self._last_send: dict[str, float] = {}
 
     # ---------------- 生命周期 ----------------
 
@@ -268,9 +279,103 @@ class WxStickerCache(Star):
             f"（{st['described']} 条有描述，{st['pending']} 条待分析）"
             f"｜累计命中 {st['seen_total']} 次"
         )
+        self._load_approved()
 
     async def terminate(self):
         logger.info("[StickerCache] 已卸载")
+
+    # ---------------- 出站表情池 ----------------
+
+    def _approved_dir(self) -> str:
+        """表情池目录。首选 plugin_data（插件重装不丢），退回插件目录内的
+        approved/（部署脚本携带的 bootstrap 副本）。"""
+        try:
+            base = self._data_dir()  # .../plugin_data/astrbot_plugin_wx_sticker_cache
+        except Exception:
+            base = ""
+        if base:
+            p = os.path.join(base, "approved")
+            if os.path.isdir(p):
+                return p
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), "approved")
+
+    def _load_approved(self) -> None:
+        """加载（或热重载）出站表情池。
+
+        每次 send 前调用，靠 index.json 的 mtime 做惰性热重载——
+        主人往目录里加/改文件后无需重启即可生效。
+        """
+        d = self._approved_dir()
+        idx = os.path.join(d, APPROVED_INDEX)
+        try:
+            mtime = os.path.getmtime(idx)
+        except OSError:
+            if self._approved:
+                logger.warning("[StickerCache] 出站表情池 index.json 消失了")
+            self._approved = {}
+            self._approved_mtime = 0.0
+            return
+        if mtime == self._approved_mtime and self._approved:
+            return
+        try:
+            with open(idx, encoding="utf-8-sig") as f:
+                items = json.load(f)
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"[StickerCache] 出站表情池读取失败: {e}")
+            return
+        pool: dict[str, dict] = {}
+        for it in items if isinstance(items, list) else []:
+            name = str(it.get("name", "")).strip()
+            fname = str(it.get("file", "")).strip()
+            if not name or not fname:
+                continue
+            path = os.path.join(d, fname)
+            if not os.path.isfile(path):
+                continue
+            if name in pool:  # 重名：后出现的被跳过，保首个
+                continue
+            pool[name] = {
+                "path": path,
+                "md5": str(it.get("md5", "")).lower(),
+                "detail": str(it.get("detail", "")).strip(),
+            }
+        self._approved = pool
+        self._approved_mtime = mtime
+        logger.info(
+            f"[StickerCache] 🎒 出站表情池就绪：{len(pool)} 张"
+            f"（{d}）"
+        )
+
+    def _pick_sticker(self, query: str) -> dict | None:
+        """按名称挑表情：精确 → 包含 → 关键词全命中。"""
+        self._load_approved()
+        if not self._approved or not query:
+            return None
+        q = query.strip()
+        if q in self._approved:
+            return self._approved[q]
+        # 包含匹配（双向），取最短的键（最精确的候选）
+        cands = [k for k in self._approved if q in k or k in q]
+        if cands:
+            return self._approved[min(cands, key=len)]
+        # 关键词全命中：query 拆词后每个词都出现在键或 detail 里
+        words = [w for w in q.replace("，", " ").replace("。", " ").split() if w]
+        if words:
+            for k, v in self._approved.items():
+                hay = k + " " + v.get("detail", "")
+                if all(w in hay for w in words):
+                    return v
+        return None
+
+    def _cooldown_left(self, event: AstrMessageEvent) -> float:
+        per = float(self._cfg("send_cooldown_seconds", 60) or 0)
+        if per <= 0:
+            return 0.0
+        key = f"{event.unified_msg_origin}"
+        return per - (time.time() - self._last_send.get(key, 0.0))
+
+    def _mark_sent(self, event: AstrMessageEvent) -> None:
+        self._last_send[event.unified_msg_origin] = time.time()
 
     def _data_dir(self) -> str:
         try:
@@ -481,6 +586,23 @@ class WxStickerCache(Star):
         if new_prompt != prompt:
             req.prompt = new_prompt
 
+        # 3) 出站表情池清单注入系统提示（让模型知道有哪些表情可发）
+        if self._cfg("send_enabled", True) and self._cfg("send_list_in_prompt", True):
+            try:
+                self._load_approved()
+                names = list(self._approved.keys())
+                if names:
+                    listing = "、".join(names)
+                    line = (f"\n[可用表情包] 你可以调用 send_sticker 工具发送以下表情之一："
+                            f"{listing}。表情包不是必须的——只在情绪正合适、"
+                            f"能让对话更生动时才发，通常一次对话最多发一张；"
+                            f"拿不准就不发。")
+                    sys_now = getattr(req, "system_prompt", "") or ""
+                    if "[可用表情包]" not in sys_now:
+                        req.system_prompt = sys_now + line
+            except Exception:
+                pass
+
         system_prompt = getattr(req, "system_prompt", "") or ""
         new_sys = self._substitute(system_prompt)
         if new_sys != system_prompt:
@@ -513,6 +635,93 @@ class WxStickerCache(Star):
             # 由 image 段的描述承担表达（见 _replace_in_request 第 1 步）
         return out
 
+    # ---------------- 出站发送 ----------------
+
+    @filter.llm_tool(name="send_sticker")
+    async def send_sticker(
+        self,
+        event: AstrMessageEvent,
+        name: str = "",
+        caption: str = "",
+    ) -> str:
+        """发送一张你自己的表情包（可选，非必须）。仅在情绪合适时使用。
+
+        表情包会作为图片消息发到当前会话。这是可选动作——大多数时候
+        纯文字回复就够了；只在想让回应更生动、情绪非常契合时才调用。
+        没有合适的表情就不要调用，这是完全正常且更好的选择。
+
+        Args:
+            name(string): 表情名，必须从系统提示列出的 [可用表情包] 里选，
+                例如：嘻嘻、笑疯了、委屈含泪。不要自己编名字。
+            caption(string): 可选，随表情一起发的一句很短的配文（不超过15字），
+                不需要就留空。
+        """
+        if not self._cfg("enable", True) or not self._cfg("send_enabled", True):
+            return '{"status":"disabled","message":"表情发送未启用。"}'
+        if self.cache is None:
+            return '{"status":"error","message":"插件未初始化。"}'
+
+        name = (name or "").strip()
+        if not name:
+            return ('{"status":"error","message":"必须提供 name 参数'
+                    '（从 [可用表情包] 列表里选）。"}')
+
+        # 冷却：防止模型连续刷表情（同一会话冷却窗口内直接拒绝）
+        left = self._cooldown_left(event)
+        if left > 0:
+            return (f'{{"status":"rate_limited","message":'
+                    f'"表情冷却中，还需 {int(left)} 秒。这次就不要发表情了，'
+                    f'正常文字回复即可。"}}')
+
+        sticker = self._pick_sticker(name)
+        if sticker is None:
+            self._load_approved()
+            names = "、".join(list(self._approved.keys())[:20])
+            return (f'{{"status":"not_found","message":'
+                    f'"没有叫「{name}」的表情。可用：{names}。"}}')
+
+        path = sticker["path"]
+        try:
+            with open(path, "rb") as f:
+                blob = f.read()
+        except OSError as e:
+            logger.warning(f"[StickerCache] 表情文件读取失败 {path}: {e}")
+            return '{"status":"error","message":"表情文件读取失败。"}'
+
+        chain = []
+        try:
+            if Image is not None:
+                chain.append(Image.fromBase64(
+                    _base64_mod.b64encode(blob).decode()))
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"[StickerCache] 构造图片组件失败: {e}")
+        if not chain:
+            return '{"status":"error","message":"图片组件不可用。"}'
+
+        cap = (caption or "").strip()
+        if cap and Plain is not None:
+            chain.append(Plain(cap[:20]))
+
+        try:
+            from astrbot.api.event import MessageChain
+            await event.send(MessageChain(chain))
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"[StickerCache] 表情发送失败: {e}")
+            return '{"status":"error","message":"发送失败，下次别发就是了，继续正常聊天。"}'
+
+        self._mark_sent(event)
+        if self._cfg("debug", False):
+            logger.info(f"[StickerCache] 📤 已发送表情「{name}」→ "
+                        f"{event.unified_msg_origin}")
+        else:
+            logger.info(f"[StickerCache] 📤 已发送表情「{name}」")
+        return json.dumps(
+            {"status": "ok", "sent": True, "name": name,
+             "message": "表情已发出。之后继续自然文字回复，"
+                        "不要向用户描述你调用了工具。"},
+            ensure_ascii=False,
+        )
+
     # ---------------- 管理命令 ----------------
 
     @filter.command("表情")
@@ -530,6 +739,8 @@ class WxStickerCache(Star):
 
         if not arg:
             st = self.cache.stats()
+            self._load_approved()
+            pool_names = "、".join(self._approved.keys()) or "（空）"
             yield event.plain_result(
                 f"📊 表情缓存\n"
                 f"  总条目：{st['total']}\n"
@@ -538,7 +749,8 @@ class WxStickerCache(Star):
                 f"  已存文件：{st['files']}\n"
                 f"  累计命中：{st['seen_total']} 次\n"
                 f"  热缓存：{len(self._hot)} 条\n\n"
-                f"用法：/表情 查 <md5>｜忘 <md5>｜清空｜导出｜补分析"
+                f"🎒 可发表情（{len(self._approved)}）：{pool_names}\n\n"
+                f"用法：/表情 查 <md5>｜忘 <md5>｜清空｜导出｜补分析｜重载池"
             )
             return
 
@@ -594,6 +806,15 @@ class WxStickerCache(Star):
             yield event.plain_result("```csv\n" + "\n".join(lines) + "\n```")
             return
 
+        if sub == "重载池":
+            self._approved_mtime = 0.0
+            self._load_approved()
+            yield event.plain_result(
+                f"出站表情池已重载：{len(self._approved)} 张\n"
+                f"目录：{self._approved_dir()}"
+            )
+            return
+
         if sub == "补分析":
             pend = self.cache.pending(limit=5)
             if not pend:
@@ -616,5 +837,5 @@ class WxStickerCache(Star):
             return
 
         yield event.plain_result(
-            "用法：/表情 查 <md5>｜忘 <md5>｜清空｜导出｜补分析"
+            "用法：/表情 查 <md5>｜忘 <md5>｜清空｜导出｜补分析｜重载池"
         )

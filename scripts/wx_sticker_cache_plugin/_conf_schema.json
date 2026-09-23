@@ -54,6 +54,24 @@
     "default": 4,
     "hint": "超过则只记描述、不存文件"
   },
+  "send_enabled": {
+    "description": "允许模型发送表情包（出站）",
+    "type": "bool",
+    "default": true,
+    "hint": "开启后注册 send_sticker 工具，模型可发送 approved 表情池里的表情；池子只含你明确挑选过的表情"
+  },
+  "send_cooldown_seconds": {
+    "description": "表情发送冷却（秒）",
+    "type": "int",
+    "default": 60,
+    "hint": "同一会话两次发表情的最小间隔，防止刷屏。0 = 不限"
+  },
+  "send_list_in_prompt": {
+    "description": "把可用表情名单注入系统提示",
+    "type": "bool",
+    "default": true,
+    "hint": "关闭则模型看不到有哪些表情可发（工具仍在，但基本不会被正确调用）"
+  },
   "debug": {
     "description": "调试日志",
     "type": "bool",
