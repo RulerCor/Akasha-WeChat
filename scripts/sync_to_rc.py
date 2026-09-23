@@ -24,6 +24,9 @@ FILES = [
     "main.py", "bridge_core.py", "ob_protocol.py", "ob_client.py",
     "senders.py", "uia_sender.py", "web_panel.py", "state.py",
     "people.py", "config.py", "astrbot_ctl.py", "exit_reason.py",
+    # 微信消息统一解析层（方案 B）：把非文本消息的 XML 归一化成「人话」。
+    # 忘了加会怎样：源码副本里 bridge_core 会 import 失败 → 桥接起不来。
+    "wx_msg_parser.py",
     "config.example.json", "requirements.txt", "start.bat",
 ]
 

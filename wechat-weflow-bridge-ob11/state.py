@@ -259,6 +259,42 @@ _recent_sent_lock = threading.Lock()
 _RECENT_SENT_MAX = 500
 
 
+# ── 发送批次进度（检测"静默残缺"） ─────────────────────────────────
+# AstrBot 会把一条长回复拆成多个 send_msg 依次下发；桥接逐个发到微信。
+# 若中途进程重启/异常，剩余气泡会永久丢失，而日志里没有任何错误。
+# 事故（2026-09-20 18:10）：6 个气泡只发出 3 个就重启，群友只看到半句话。
+# 这里记录"本批应收/已发"，退出时把未发完的批次汇总写进 exit_reason 日志。
+_send_batch_lock = threading.Lock()
+_send_batches: dict = {}          # target_id -> {"expected": n, "done": m, "ts": t}
+
+
+def begin_send_batch(target_id, expected: int) -> None:
+    """登记一个发送批次。"""
+    with _send_batch_lock:
+        _send_batches[target_id] = {
+            "expected": int(expected), "done": 0, "ts": _time.time()
+        }
+
+
+def note_send_progress(target_id) -> None:
+    """标记该批次又成功发出一个文本段。"""
+    with _send_batch_lock:
+        b = _send_batches.get(target_id)
+        if b:
+            b["done"] += 1
+
+
+def incomplete_batches() -> list:
+    """返回尚未发完的批次（expected > done）。"""
+    with _send_batch_lock:
+        return [
+            {"target": t, "expected": b["expected"], "done": b["done"],
+             "age": round(_time.time() - b["ts"], 1)}
+            for t, b in _send_batches.items()
+            if b["done"] < b["expected"]
+        ]
+
+
 def note_sent_text(text: str) -> None:
     """记录一条刚由桥接发出的文本。"""
     key = (text or "").strip()[:200]

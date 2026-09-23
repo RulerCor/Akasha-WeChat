@@ -23,6 +23,7 @@ import requests
 
 import state
 import config
+import wx_msg_parser
 from ob_protocol import push_event, make_message_event
 
 log = logging.getLogger("ob11-bridge")
@@ -302,8 +303,16 @@ class WeFlowBridge:
                 return "来自机器人本机账号"
         if msg_type in (34,):  # 34=语音
             return "语音消息（type=34）"
-        if content and ("[语音]" in content or "[表情]" in content):
-            return "语音/表情占位内容"
+        # 语音占位符仍然丢弃（没有可读内容，且 bot 无法听）。
+        #
+        # 但**表情必须放行** —— 改动前这里把「[语音] / [表情]」一起丢弃，
+        # 导致群里最高频的非文本表达 bot 完全无感（实测 2026-09-23：
+        # 一天内被丢掉的真实发言十几条）。表情现在由 wx_msg_parser
+        # 归一化后进缓冲区，不再走到这里。
+        if content and "[语音]" in content:
+            return "语音占位内容"
+        if content and "[表情]" in content:
+            return None  # 放行 —— 交给 wx_msg_parser 处理
         # 微信系统协议消息：「拍了拍」等不是人类发言，不该进模型上下文。
         # 事故（2026-09-20 16:49）：bot 把「"耳东亭氵川" 拍了拍 "辞星" 的ass」
         # 当成一条待回应的发言，还认真"解读"了一遍发到群里。
@@ -374,6 +383,21 @@ class WeFlowBridge:
                                     group_name_raw, source_name)
             return
 
+        # ---------- 富消息统一解析（方案 B）----------
+        # 走到这里说明既不是图片、也不该被 ignore_reason() 丢掉。
+        # 用 wx_msg_parser 把 XML 归一化成「人话」再进缓冲 ——
+        # 改动前这里会把链接/文件/合并转发的整坨 XML 当文本喂给模型，
+        # 而表情/语音则在 ignore_reason() 里被整条丢弃（bot 完全无感）。
+        if config.PARSE_RICH_MESSAGES:
+            parsed = wx_msg_parser.parse_content(content, config.BOT_NICKNAMES)
+            if parsed.kind != wx_msg_parser.KIND_TEXT:
+                self._handle_rich_message(
+                    parsed, data, is_group, session_id_data, sender_in_group,
+                    group_name_raw, source_name, mentioned)
+                return
+            # 纯文本：用剥离过 HTML 的干净文本继续走原逻辑
+            content = parsed.text
+
         # ---------- 文本 ----------
         # 群聊指令（/sid 等）也必须 @ 机器人才放行：避免同一个群里多个机器人
         # 对同一条 "/help" 抢答。@ 了之后仍走无外壳透传（见 process_sender）。
@@ -428,6 +452,102 @@ class WeFlowBridge:
 
         log.info(f"📩 收到来自 {contact} 的消息，等待 {config.BUFFER_SECONDS}s 后统一推送")
 
+    def _handle_rich_message(self, parsed, data, is_group, session_id_data,
+                             sender_in_group, group_name_raw, source_name,
+                             mentioned):
+        """处理非文本富消息（表情/链接/文件/合并转发/系统提示）。
+
+        这些消息在旧逻辑里要么把 XML 原样喂给模型，要么被整条丢弃。
+        现在统一走这里：**转成人话进缓冲区**，让 bot 知道「发生了什么」。
+
+        注意几个刻意的设计：
+          - 系统消息（拍了拍/撤回/入群）**不进模型上下文** —— 它们不是人类发言。
+            事故（2026-09-20）：bot 把「"A" 拍了拍 "B" 的ass」当成发言认真解读。
+            但**表情包必须保留**，那是真实的表达（旧逻辑把两者一起丢了）。
+          - 富消息同样遵守「群聊 mention 模式必须 @ 才响应」，避免刷屏。
+        """
+        # 系统消息：不推送，但要记日志（便于排查"bot 为什么不理我"）
+        if parsed.is_ignorable:
+            self._log_skip(data, f"系统协议消息（{parsed.system_kind or '未知'}）")
+            return
+
+        # 自回复去重：表情/链接也可能是自己发的
+        if state.was_sent_recently(parsed.text):
+            log.info(f"⏭️ 自回复去重跳过: {parsed.text[:30]}")
+            return
+
+        # 群聊 mention 模式：非 @ 的富消息同样不响应
+        if is_group and state.group_reply_mode == "mention" and not mentioned:
+            self._log_skip(data, "群消息未 @机器人（mention 模式）")
+            return
+
+        # 计算缓冲键与会话名（与文本路径保持一致）
+        if is_group:
+            base_name = self._resolve_group_name(session_id_data, group_name_raw, source_name)
+            contact = base_name
+        else:
+            base_name = ""
+            if source_name != "未知":
+                state.set_chat_name(session_id_data, source_name)
+            contact = source_name if source_name != "未知" else (
+                state.get_chat_name(session_id_data) or source_name)
+
+        buffer_key = self._buffer_key(session_id_data, sender_in_group, is_group, base_name)
+
+        entry_text = parsed.text
+        # 群聊批处理模式要套统一的「某某在群某某中说：」外壳
+        if is_group and state.group_reply_mode == "batch" and sender_in_group:
+            entry_text = (f'成员"{sender_in_group}"在群"{base_name}"中'
+                          f'对你说：{entry_text}')
+
+        sticker_image = None
+        if (parsed.kind == wx_msg_parser.KIND_STICKER
+                and parsed.sticker_url
+                and config.STICKER_FETCH_ENABLED):
+            # 带 md5 的表情：下载成 GIF 作为图片段投递。
+            # 下载放锁外（网络耗时），失败不影响文字部分照常推送。
+            sticker_image = self._fetch_sticker_segment(parsed)
+
+        with self.buffer_lock:
+            entry = self._ensure_entry(buffer_key, data, contact, is_group,
+                                       base_name, sender_in_group, session_id_data)
+            entry["messages"].append(entry_text)
+            if mentioned:
+                entry["mentioned_any"] = True
+            if sticker_image:
+                entry.setdefault("pending_sticker_segments", []).append(sticker_image)
+            self._schedule_flush(buffer_key, entry)
+
+        log.info(f"📩 收到 {parsed.kind}（{parsed.text[:40]}）"
+                 f"来自 {contact}，等待 {config.BUFFER_SECONDS}s 后统一推送")
+
+    def _fetch_sticker_segment(self, parsed):
+        """下载表情包 GIF，返回 OneBot image 段；失败返回 None。
+
+        实测（2026-09-23）：emojiinfo 里解出的直链可用，返回
+        HTTP 200 + 1168271 字节（与 XML 的 <totallen> 一致）+ GIF89a。
+
+        直链带时效性 filekey，所以**当下就下载**，不能只存链接。
+        """
+        try:
+            resp = requests.get(parsed.sticker_url, timeout=15)
+            if resp.status_code != 200:
+                log.warning(f"表情下载失败: HTTP {resp.status_code}")
+                return None
+            blob = resp.content
+            if not blob:
+                return None
+            if len(blob) > config.STICKER_MAX_BYTES:
+                log.warning(f"表情过大，跳过: {len(blob)} 字节")
+                return None
+            b64 = base64.b64encode(blob).decode()
+            log.info(f"😀 表情已下载: md5={parsed.sticker_md5[:8]}… "
+                     f"{len(blob)} 字节")
+            return {"type": "image", "data": {"file": f"base64://{b64}"}}
+        except Exception as e:
+            log.warning(f"表情下载异常: {e}")
+            return None
+
     def _enqueue_image(self, data, is_group, session_id_data, sender_in_group,
                        group_name_raw, source_name):
         """图片获准读取 → 排入对应缓冲条目。
@@ -462,10 +582,12 @@ class WeFlowBridge:
                 return
             msgs = entry["messages"].copy()
             pending_images = entry.get("pending_images", [])
-            if not msgs and not pending_images:
+            pending_stickers = entry.get("pending_sticker_segments", [])
+            if not msgs and not pending_images and not pending_stickers:
                 return
             entry["messages"] = []
             entry["pending_images"] = []
+            entry["pending_sticker_segments"] = []
             entry["processing"] = True
             if entry["timer"]:
                 entry["timer"].cancel()
@@ -486,6 +608,12 @@ class WeFlowBridge:
                 image_segments.append({"type": "image", "data": {"file": f"base64://{b64}"}})
         if pending_images:
             log.info(f"🖼️ 图片 {len(image_segments)}/{len(pending_images)} 张就绪 [{contact}]")
+
+        # 表情包：在 _handle_rich_message 里已下载好（直链有时效，必须即时下），
+        # 这里直接把现成的 image 段接在图片后面。
+        if pending_stickers:
+            image_segments.extend(pending_stickers)
+            log.info(f"😀 表情 {len(pending_stickers)} 个就绪 [{contact}]")
 
         log.info(f"推送 {len(msgs)} 条消息"
                  + (f" + {len(image_segments)} 张图片" if image_segments else "")

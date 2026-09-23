@@ -45,3 +45,6 @@ release/
 # 构建时由 build_dist.py 收录进发行版；放这里是为了让出包流程有个固定入口。
 installers_src/
 scripts/installers_src/
+
+# ===== 临时调研工作区（子代理/AI 的抓取脚本与样本，非项目代码，不入库）=====
+_research/

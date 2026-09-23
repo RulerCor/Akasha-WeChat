@@ -200,6 +200,17 @@ def _on_exit() -> None:
     _exit_noted = True
     _write(f"{_ts()} [退出] 原因=正常退出(atexit 触发) 阶段={_phase} "
            f"uptime={_fmt_dur(time.time() - _start_ts)}")
+    # 发送残缺审计：还有没发完的气泡就把它们记下来。
+    # 这类"静默残缺"是用户报告的（2026-09-20 18:10 长回复只发出前 3 段），
+    # 必须在退出时留下痕迹，否则事后无从追查。
+    try:
+        import state as _st
+        left = _st.incomplete_batches()
+        if left:
+            _write(f"{_ts()} [警告] 退出时仍有 {len(left)} 个发送批次未完成 "
+                   f"（部分气泡已丢失）: {left}")
+    except Exception:
+        pass
 
 
 def summary(limit: int = 12) -> dict:

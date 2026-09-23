@@ -428,6 +428,14 @@ async def _handle_ob_api(data: dict):
                         f"{json.dumps(message, ensure_ascii=False)[:120]}")
             return
 
+        # 发送前登记本条链的文本段总数，用于「发送残缺」检测（见 _send_progress）。
+        # 事故（2026-09-20 18:10）：AstrBot 把一条长回复拆成 6 个气泡依次下发，
+        # 桥接发到第 3 个时进程重启，后 3 个永久丢失——微信群友只看到半句话，
+        # 而日志里毫无异常。这类"静默残缺"必须有痕迹。
+        _tx = [s for s in message
+               if isinstance(s, dict) and s.get("type") == "text"]
+        state.begin_send_batch(target_id, len(_tx))
+
         # 逐段处理：文字和图片分别发送
         # 引用回复（可选）：AstrBot 开启 reply_with_quote 后，回复链开头是
         # {"type":"reply","data":{"id":N}} 段。
@@ -499,6 +507,7 @@ async def _handle_ob_api(data: dict):
                     # 记录自己发出的内容：这条消息会被 WeFlow 读回来，
                     # 若不拦截会被当成用户输入再回一遍（自问自答）
                     state.note_sent_text(text)
+                    state.note_send_progress(target_id)
                     log.info(f"[OB11] 文字已发送至 {contact}: {text[:50]}")
 
             elif seg_type == "image":

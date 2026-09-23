@@ -173,6 +173,26 @@ OLLAMA_TIMEOUT = config.get("ollama_timeout", 60)
 #   留空则走默认路径 —— 图片原样交给 AstrBot，由它（主模型/转述模型）决定怎么看。
 IMAGE_CAPTION_ENABLED = bool((config.get("image_caption_model") or "").strip())
 
+# ============ 消息解析层（方案 B）============
+#
+# 微信的非文本消息（表情包/链接/文件/合并转发/系统提示）在 WeFlow 推来的
+# content 里是一坨原生 XML。开启本项后，桥接用 wx_msg_parser 把它们
+# 归一化成「人话」再进缓冲区，而不是把 XML 原样喂给模型、或直接整条丢弃。
+#
+# 关闭时回退到旧行为（表情/语音被丢弃，其余 XML 当文本）——
+# 留这个开关是为了出问题时能一键回到改动前的状态。
+PARSE_RICH_MESSAGES = bool(config.get("parse_rich_messages", True))
+
+# 表情包下载：开启后，带 emoticonmd5 的表情会下载成 GIF 并作为 image 段
+# 投递给 AstrBot（配合 AstrBot 侧 astrbot_plugin_wx_sticker_cache 做
+# 「见一次就认识」的内容寻址缓存）。关闭则只传 [表情] 占位文本。
+#
+# 注意：WeFlow 对绝大多数表情只给 `[表情]` 占位符、**不带 md5**
+# （实测 1880 条真实消息里仅 1 条带完整 XML），所以本项收益有限，
+# 真正的表情语义识别依赖 AstrBot 侧的缓存插件。
+STICKER_FETCH_ENABLED = bool(config.get("sticker_fetch_enabled", True))
+STICKER_MAX_BYTES = int(config.get("sticker_max_bytes", 4 * 1024 * 1024))
+
 # ============ 日志 ============
 
 logging.basicConfig(
