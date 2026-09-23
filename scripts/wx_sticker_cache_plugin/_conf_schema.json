@@ -1,0 +1,62 @@
+{
+  "enable": {
+    "description": "启用表情缓存",
+    "type": "bool",
+    "default": true,
+    "hint": "关闭后插件完全不介入，表情按普通图片处理"
+  },
+  "analyze_enabled": {
+    "description": "首次见到表情时调模型分析",
+    "type": "bool",
+    "default": true,
+    "hint": "关闭则只缓存文件、不生成文字描述（省模型调用，但机器人看不懂表情含义）"
+  },
+  "analyze_provider_id": {
+    "description": "表情分析模型",
+    "type": "string",
+    "default": "",
+    "hint": "留空则用当前会话的主模型。建议选支持视觉的模型"
+  },
+  "analyze_prompt": {
+    "description": "表情分析提示词",
+    "type": "string",
+    "default": "这是一个微信聊天表情包。请用一句话（20字以内）描述它的画面内容和传达的情绪，格式如「一只猫在流泪，表示委屈」。只输出描述本身，不要任何前缀。",
+    "hint": "让它输出简短、可直接嵌进对话的描述"
+  },
+  "analyze_timeout": {
+    "description": "分析超时（秒）",
+    "type": "int",
+    "default": 30,
+    "hint": "超时则跳过分析，只存文件不存描述"
+  },
+  "inject_mode": {
+    "description": "注入方式",
+    "type": "string",
+    "default": "replace",
+    "options": ["replace", "append"],
+    "hint": "replace=把 [表情] 占位符替换成描述；append=在原文后追加描述"
+  },
+  "max_cache_entries": {
+    "description": "缓存条目上限",
+    "type": "int",
+    "default": 5000,
+    "hint": "超出后按「最久未使用」淘汰。5000 条约占 1MB 数据库"
+  },
+  "store_files": {
+    "description": "保存表情文件到本地",
+    "type": "bool",
+    "default": true,
+    "hint": "保存后可重复使用，也便于人工核对；关闭则只存描述"
+  },
+  "max_file_mb": {
+    "description": "单个表情文件大小上限（MB）",
+    "type": "int",
+    "default": 4,
+    "hint": "超过则只记描述、不存文件"
+  },
+  "debug": {
+    "description": "调试日志",
+    "type": "bool",
+    "default": false
+  }
+}

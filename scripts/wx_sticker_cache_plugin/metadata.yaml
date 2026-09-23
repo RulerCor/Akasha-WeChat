@@ -1,0 +1,29 @@
+name: astrbot_plugin_wx_sticker_cache
+display_name: 微信表情缓存
+desc: |
+  让机器人「见一次就认识」微信表情包。
+
+  微信表情包是有限集合，且每个表情有唯一的内容哈希（微信原生 `emoticonmd5`）。
+  本插件以此为键做**内容寻址缓存**：
+
+  - 第一次见到某个表情 → 调一次视觉模型生成描述 → 落库
+  - 之后再见 → 直接命中缓存，**零模型调用、零下载**
+
+  配合桥接侧的消息解析层（`wx_msg_parser`）使用：桥接负责把微信 XML 解析成
+  结构化消息、下载表情文件；本插件负责缓存、首次分析、以及把「这是个什么表情」
+  注入到模型上下文。
+
+  附带管理命令：`/表情` 查看统计、`/表情 查 <md5>`、`/表情 忘 <md5>`、
+  `/表情 清空`、`/表情 导出`。
+short_desc: 表情包内容寻址缓存——见一次就认识，之后零模型调用
+version: v1.0.0
+author: RulerCor
+repo: https://github.com/RulerCor/Akasha-WeChat
+astrbot_version: ">=4.16,<5"
+support_platforms:
+  - aiocqhttp
+tags:
+  - 微信
+  - 表情包
+  - 缓存
+  - 多模态
