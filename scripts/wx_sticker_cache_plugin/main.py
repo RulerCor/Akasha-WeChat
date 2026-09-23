@@ -246,6 +246,92 @@ class StickerCache:
         return [dict(r) for r in rows]
 
 
+class CollectedPool:
+    """自动采集池（素材库）：主人之后人工挑选，与 approved 出站池严格分开。
+
+    目录结构：
+        collected/
+            index.json     [{"md5","file","size","desc","collected_at"}, ...]
+            <md5>.<ext>    原始字节（GIF/JPG/PNG）
+
+    与 approved/ 的关系：approved 是「允许发送」的白名单，由主人维护；
+    collected 只是「机器人见过的表情」的原料堆，永不直接可发。
+    晋级用 scripts/sticker_curate.py（或手工挪文件+改 index）。
+    """
+
+    def __init__(self, root: str, max_items: int = 2000):
+        self.root = root
+        self.max_items = max_items
+        self.index_path = os.path.join(root, APPROVED_INDEX)
+        os.makedirs(root, exist_ok=True)
+        if not os.path.exists(self.index_path):
+            self._write([])
+
+    def load(self) -> list[dict]:
+        try:
+            with open(self.index_path, encoding="utf-8-sig") as f:
+                items = json.load(f)
+            return items if isinstance(items, list) else []
+        except Exception:
+            return []
+
+    def _write(self, items: list[dict]) -> None:
+        with open(self.index_path, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(items, f, ensure_ascii=False, indent=1)
+
+    def has(self, md5: str) -> bool:
+        return any(it.get("md5") == md5 for it in self.load())
+
+    def add(self, md5: str, blob: bytes, desc: str = "") -> bool:
+        """按 md5 去重落池；重复时仅回填空缺的描述。"""
+        items = self.load()
+        for it in items:
+            if it.get("md5") == md5:
+                if desc and not it.get("desc"):
+                    it["desc"] = desc
+                    self._write(items)
+                return False
+        ext = ".gif" if blob.startswith(b"GIF8") else \
+              ".jpg" if blob[:3] == b"\xff\xd8\xff" else \
+              ".png" if blob[:8] == b"\x89PNG\r\n\x1a\n" else ".img"
+        fname = md5 + ext
+        path = os.path.join(self.root, fname)
+        if not os.path.exists(path):
+            with open(path, "wb") as f:
+                f.write(blob)
+        items.append({
+            "md5": md5,
+            "file": fname,
+            "size": len(blob),
+            "desc": desc or "",
+            "collected_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        })
+        # 容量上限：最旧的先挤出（含删文件）
+        while len(items) > self.max_items:
+            old = items.pop(0)
+            p = os.path.join(self.root, old.get("file", ""))
+            if p and os.path.exists(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+        self._write(items)
+        return True
+
+    def fill_desc(self, md5: str, desc: str) -> None:
+        """分析完成后把描述回填到采集池（避免和 stickers.db 双写不同步）。"""
+        if not desc:
+            return
+        items = self.load()
+        changed = False
+        for it in items:
+            if it.get("md5") == md5 and not it.get("desc"):
+                it["desc"] = desc
+                changed = True
+        if changed:
+            self._write(items)
+
+
 @register(PLUGIN_NAME, "RulerCor", "微信表情包内容寻址缓存——见一次就认识",
           "v1.0.0")
 class WxStickerCache(Star):
@@ -262,6 +348,8 @@ class WxStickerCache(Star):
         self._approved_mtime: float = 0.0
         # 发送冷却：会话 -> 最近发送时间戳（防刷屏）
         self._last_send: dict[str, float] = {}
+        # 自动采集池（素材库，与 approved 出站池严格分开）
+        self.collected: CollectedPool | None = None
 
     # ---------------- 生命周期 ----------------
 
@@ -280,6 +368,15 @@ class WxStickerCache(Star):
             f"｜累计命中 {st['seen_total']} 次"
         )
         self._load_approved()
+        if self._cfg("collect_enabled", True):
+            self.collected = CollectedPool(
+                os.path.join(self._data_dir(), "collected"),
+                max_items=int(self._cfg("collect_max_items", 2000) or 2000),
+            )
+            logger.info(
+                f"[StickerCache] 📥 自动采集池就绪：{len(self.collected.load())} 张"
+                f"（{self.collected.root}）"
+            )
 
     async def terminate(self):
         logger.info("[StickerCache] 已卸载")
@@ -401,6 +498,20 @@ class WxStickerCache(Star):
         """
         if not self._cfg("enable", True) or self.cache is None:
             return
+        if self._cfg("debug", False):
+            try:
+                segs = []
+                for s in (event.get_messages() or []):
+                    t = getattr(s, "type", "?")
+                    if t == "image":
+                        f = str(getattr(s, "file", ""))[:60]
+                        u = str(getattr(s, "url", ""))[:60]
+                        segs.append(f"image(file={f}, url={u})")
+                    else:
+                        segs.append(f"{t}({getattr(s, 'text', '')!r}:{getattr(s, 'message_str', '')!r})")
+                logger.info(f"[StickerCache] 收到事件: umo={event.unified_msg_origin} segs={segs}")
+            except Exception:
+                pass
         try:
             blobs = self._extract_sticker_blobs(event)
         except Exception as e:  # noqa: BLE001
@@ -410,6 +521,19 @@ class WxStickerCache(Star):
             return
 
         for md5, blob in blobs:
+            # 自动采集：所有表情进 collected 素材池（与 approved 严格分开，
+            # collected 里的永不直接可发，由主人之后挑选晋级）
+            if self.collected is not None:
+                try:
+                    known = self.cache.get(md5)
+                    fresh = self.collected.add(
+                        md5, blob, desc=(known or {}).get("desc", ""))
+                    if fresh:
+                        logger.info(f"[StickerCache] 📥 已采集 {md5[:8]}… "
+                                    f"({len(blob)} 字节) 进素材池")
+                except Exception as e:  # noqa: BLE001
+                    logger.warning(f"[StickerCache] 采集落池失败: {e}")
+
             hit = self.cache.get(md5)
             if hit is None:
                 # 首次见到：落文件 + 占位记录
@@ -423,6 +547,18 @@ class WxStickerCache(Star):
                 if self._cfg("debug", False):
                     logger.info(f"[StickerCache] ♻️ 命中 {md5[:8]}… → "
                                 f"{hit['desc'][:30] or '(待分析)'}")
+
+    @staticmethod
+    def _seg_type_name(seg) -> str:
+        """组件类型名（兼容枚举与字符串两种形态）。
+
+        AstrBot 的组件 type 是 ComponentType 枚举（如 ComponentType.Image），
+        直接和字符串 "image" 比较永远不等 —— v1.0 的潜在 bug，导致
+        真实管道里表情从未被提取到（e2e 用模拟组件没暴露）。
+        """
+        t = getattr(seg, "type", "")
+        name = getattr(t, "name", None) or str(t)
+        return name.lower()
 
     def _extract_sticker_blobs(self, event: AstrMessageEvent) -> list[tuple[str, bytes]]:
         """从消息链里取出表情图片的 (md5, 字节)。
@@ -438,20 +574,37 @@ class WxStickerCache(Star):
             return out
 
         for seg in chain or []:
-            seg_type = getattr(seg, "type", "") or ""
-            if seg_type != "image":
+            if self._seg_type_name(seg) != "image":
                 continue
             # 取字节：AstrBot 的 Image 段可能给 file 路径或 base64
             blob = self._read_segment_bytes(seg)
             if not blob:
                 continue
-            # 只收 GIF / 小尺寸图，降低把普通照片误当表情的概率
-            if not blob.startswith(b"GIF8"):
+            # 表情判据：
+            #   GIF —— 桥接解析层投递的表情是 GIF（实测 300x300 GIF89a）；
+            #           用户发的动图也是 GIF，宁可多收（落到素材池无害）
+            #   JPEG —— 主人的静态表情实测是 JPEG（灰绿主题 16 张全为
+            #           opaque JPEG）。为避免把聊天照片也当表情，JPEG 仅在
+            #           「消息链里还有 [表情] 文本标记」时收取（桥接解析层
+            #           会把 emoji XML 转成 [表情] 文本 + image 段的组合）
+            is_gif = blob.startswith(b"GIF8")
+            is_jpg = blob[:3] == b"\xff\xd8\xff"
+            if not is_gif and not (is_jpg and self._chain_has_sticker_mark(chain)):
                 continue
             if len(blob) > int(self._cfg("max_file_mb", 4)) * 1024 * 1024:
                 continue
             out.append((StickerCache.hash_bytes(blob), blob))
         return out
+
+    @staticmethod
+    def _chain_has_sticker_mark(chain) -> bool:
+        """消息链里是否带表情文本标记（[表情] / [表情包] 等）。"""
+        for seg in chain or []:
+            text = (getattr(seg, "text", "") or getattr(seg, "message_str", "")
+                    or "")
+            if text and any(m in text for m in STICKER_MARKERS):
+                return True
+        return False
 
     def _read_segment_bytes(self, seg) -> bytes | None:
         """把 image 段读成字节。兼容 file 路径与 base64:// 两种形态。"""
@@ -499,6 +652,11 @@ class WxStickerCache(Star):
             if desc:
                 self.cache.put(md5, desc=desc)
                 self._hot[md5] = desc
+                if self.collected is not None:
+                    try:
+                        self.collected.fill_desc(md5, desc)
+                    except Exception:  # noqa: BLE001
+                        pass
                 logger.info(f"[StickerCache] ✅ {md5[:8]}… → {desc}")
             else:
                 logger.info(f"[StickerCache] ⚠️ {md5[:8]}… 分析无结果")
@@ -568,10 +726,14 @@ class WxStickerCache(Star):
         # 1) 当前事件的消息链：把 [表情] 文本段换成描述
         try:
             for seg in event.get_messages() or []:
-                if (getattr(seg, "type", "") or "") != "image":
+                if self._seg_type_name(seg) != "image":
                     continue
                 blob = self._read_segment_bytes(seg)
-                if not blob or not blob.startswith(b"GIF8"):
+                if not blob:
+                    continue
+                is_gif = blob.startswith(b"GIF8")
+                is_jpg = blob[:3] == b"\xff\xd8\xff"
+                if not (is_gif or is_jpg):
                     continue
                 md5 = StickerCache.hash_bytes(blob)
                 desc = self._desc_of(md5)
@@ -741,6 +903,7 @@ class WxStickerCache(Star):
             st = self.cache.stats()
             self._load_approved()
             pool_names = "、".join(self._approved.keys()) or "（空）"
+            collected_n = len(self.collected.load()) if self.collected else 0
             yield event.plain_result(
                 f"📊 表情缓存\n"
                 f"  总条目：{st['total']}\n"
@@ -748,7 +911,8 @@ class WxStickerCache(Star):
                 f"  待分析：{st['pending']}\n"
                 f"  已存文件：{st['files']}\n"
                 f"  累计命中：{st['seen_total']} 次\n"
-                f"  热缓存：{len(self._hot)} 条\n\n"
+                f"  热缓存：{len(self._hot)} 条\n"
+                f"  📥 素材池（自动采集）：{collected_n} 张\n\n"
                 f"🎒 可发表情（{len(self._approved)}）：{pool_names}\n\n"
                 f"用法：/表情 查 <md5>｜忘 <md5>｜清空｜导出｜补分析｜重载池"
             )

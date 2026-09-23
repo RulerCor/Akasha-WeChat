@@ -72,6 +72,18 @@
     "default": true,
     "hint": "关闭则模型看不到有哪些表情可发（工具仍在，但基本不会被正确调用）"
   },
+  "collect_enabled": {
+    "description": "自动采集表情进素材池",
+    "type": "bool",
+    "default": true,
+    "hint": "机器人见过的表情自动存入 collected 素材池（与可发表情池分开，仅供主人之后挑选，模型不可发送）"
+  },
+  "collect_max_items": {
+    "description": "素材池容量上限（张）",
+    "type": "int",
+    "default": 2000,
+    "hint": "超出后最旧的自动挤出（含文件）。约 2000 张占 300MB 内"
+  },
   "debug": {
     "description": "调试日志",
     "type": "bool",
