@@ -4,6 +4,34 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## 桥接单实例守卫重写 + 崩溃栈留痕（2026-09-25）
+
+用户早上发现「按了一键启动，Akasha 面板一直没出现」。
+
+### 修复
+
+- **桥接被陈旧 pid 文件永久挡在门外**：昨晚的桥接（pid 19868）静默死掉后，
+  `bridge.pid` 残留；早上按 `一键启动.bat`（它不清残留锁）时，新实例判定
+  「PID 19868 仍在运行」→ 自己 `sys.exit(1)`，面板 :8766 从未起来
+  （`data/exit_reason.log` 留有原始记录）。
+  旧守卫只判断「PID 是否存活」，但 **Windows 会复用 PID** —— 陈旧锁里的号
+  很可能已被别的程序占用。
+- 守卫按新判据重写（`runtime/bridge/main.py`）：
+  1. 先探面板端口 —— 有人在服务 ⇒ 铁证重复实例，拒绝启动（防一条消息回两次）；
+  2. 端口空闲 ⇒ pid 文件只是残留锁：PID 不存在 / 不是 python（PID 复用）⇒ 清理后继续；
+  3. 是 python 且存活很久却没人监听端口 ⇒ 判为卡死老实例，清掉后接管（自愈）；
+  4. 是 python 且刚启动 ⇒ 并发启动竞态，等 15s，端口起来就让位，否则接管。
+  - 启动宽限期可用 `BRIDGE_STARTUP_GRACE` 覆盖（回归测试用）。
+- **静默崩溃无迹可查**：今早那次桥接死亡零日志、无异常、`exit_reason` 只能记
+  「被强制终止」（C 层崩溃——comtypes/UIA 访问违例不走 Python 异常处理）。
+  现已在启动处 `faulthandler.enable(all_threads=True)`，崩溃瞬间把各线程栈写入
+  `runtime/bridge/data/faulthandler.log`（超 1MB 滚动一次）。
+
+### 测试
+
+- 新增 `scripts/test_bridge_single_instance.py`：覆盖陈旧 PID / PID 复用 /
+  真实例在服务 / 卡死实例（young 与 old 两条分支）共 14 项断言，全部通过。
+
 ## 微信消息统一解析层 + 表情包「见一次就认识」+ ollama 重试风暴修复（2026-09-23）
 
 起因是用户发现「回复变慢了」和「两个人 @ 机器人，后发的先被回」。

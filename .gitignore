@@ -48,3 +48,7 @@ scripts/installers_src/
 
 # ===== 临时调研工作区（子代理/AI 的抓取脚本与样本，非项目代码，不入库）=====
 _research/
+
+# 上游参考副本（勿入库）
+_akasha_orig/
+orig.zip

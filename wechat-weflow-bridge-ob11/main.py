@@ -169,36 +169,78 @@ if __name__ == "__main__":
     exit_reason.install()
     exit_reason.set_phase("初始化")
 
+    # 崩溃栈：C 层崩溃（comtypes/UIA 访问违例这类）不走 Python 异常处理，
+    # 进程会**静默消失**，只留一句"被强制终止"，查不动（2026-09-25 早上
+    # 桥接就是这样死的）。faulthandler 能在崩溃瞬间把各线程栈写盘。
+    try:
+        import faulthandler
+
+        _data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+        os.makedirs(_data_dir, exist_ok=True)
+        _fh_path = os.path.join(_data_dir, "faulthandler.log")
+        if os.path.exists(_fh_path) and os.path.getsize(_fh_path) > 1024 * 1024:
+            os.replace(_fh_path, _fh_path + ".1")     # 超 1MB 滚动一次
+        _fh_file = open(_fh_path, "a", buffering=1, encoding="utf-8")
+        faulthandler.enable(file=_fh_file, all_threads=True)
+    except Exception:
+        _fh_file = None
+
     # 从 config 初始化 state 中需要计算的值
     state._self_id_int = state._wxid_to_int(config.BOT_WXID or "wechat_bot")
     state.group_reply_mode = config.GROUP_REPLY_MODE
 
     PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bridge.pid")
 
-    def pid_exists(pid):
-        try:
-            import ctypes
-            from ctypes import wintypes
-            h = ctypes.windll.kernel32.OpenProcess(0x0400, False, pid)
-            if h:
-                ctypes.windll.kernel32.CloseHandle(h)
-                return True
-            return False
-        except Exception:
-            return True
+    def _win_proc_info(pid):
+        """查询 Windows 进程：(是否存活, 镜像名, 已存活秒数)。
 
-    if os.path.exists(PID_FILE):
+        为什么不能只判断「PID 在不在」：**Windows 会复用 PID** —— 陈旧
+        pid 文件里的号可能已被别的程序占用，只看存活就会把新实例永久挡在
+        门外。2026-09-25 事故：一键启动后新桥接自杀退出（日志
+        「bridge.pid 已存在（PID 19868 仍在运行）」），面板一直不出现。
+        """
+        import ctypes
+        from ctypes import wintypes
+
+        k32 = ctypes.windll.kernel32
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        h = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not h:
+            return (False, "", 0.0)
         try:
-            with open(PID_FILE, "r") as f:
-                old_pid = int(f.read().strip())
-            if pid_exists(old_pid):
-                log.error("⚠️ bridge.pid 已存在")
-                exit_reason.note_exit(f"bridge.pid 已存在（PID {old_pid} 仍在运行）", 1)
-                sys.exit(1)
-            else:
-                os.remove(PID_FILE)
-        except (ValueError, OSError):
-            os.remove(PID_FILE)
+            name = ""
+            buf = ctypes.create_unicode_buffer(1024)
+            size = wintypes.DWORD(len(buf))
+            if k32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(size)):
+                name = os.path.basename(buf.value).lower()
+            age = 0.0
+            created = wintypes.FILETIME()
+            exited = wintypes.FILETIME()
+            kernel = wintypes.FILETIME()
+            user = wintypes.FILETIME()
+            if k32.GetProcessTimes(h, ctypes.byref(created), ctypes.byref(exited),
+                                   ctypes.byref(kernel), ctypes.byref(user)):
+                ft = (created.dwHighDateTime << 32) | created.dwLowDateTime
+                if ft:
+                    # FILETIME = 1601-01-01 起的 100ns 计数
+                    age = time.time() - (ft / 1e7 - 11644473600)
+            return (True, name, max(age, 0.0))
+        finally:
+            k32.CloseHandle(h)
+
+    def _kill_pid(pid):
+        """强杀指定 PID。只有已确认是本项目 python 实例时才会走到这里。"""
+        import ctypes
+
+        k32 = ctypes.windll.kernel32
+        PROCESS_TERMINATE = 0x0001
+        h = k32.OpenProcess(PROCESS_TERMINATE, False, pid)
+        if not h:
+            return False
+        try:
+            return bool(k32.TerminateProcess(h, 1))
+        finally:
+            k32.CloseHandle(h)
 
     def port_in_use(port, host="127.0.0.1"):
         """Web 面板端口上是否已有人在监听。
@@ -220,11 +262,60 @@ if __name__ == "__main__":
         finally:
             s.close()
 
+    # ---- 单实例守卫 ----
+    # 判据顺序（2026-09-25 事故后重写）：
+    #   ① 端口有人在服务 ⇒ 铁证：另一个实例活着，拒绝启动（防一条消息回两次）
+    #   ② 端口空闲 ⇒ 没有任何实例在服务，pid 文件只是残留锁，分三种情况：
+    #        · PID 不存在 / 不是 python ⇒ 陈旧锁（含 PID 复用），删掉继续
+    #        · PID 是 python 且存活很久 ⇒ 卡死的老实例，清掉它再接管（自愈）
+    #        · PID 是 python 但刚启动   ⇒ 并发启动竞态，等端口，起来就让位
     if port_in_use(config.WEB_PORT):
         log.error(f"⚠️ Web 面板端口 {config.WEB_PORT} 已被占用 —— 极可能已有一个桥接在运行")
         log.error("   拒绝启动第二个实例（否则每条消息会被回复两次）。请先停掉旧实例。")
         exit_reason.note_exit(f"Web 端口 {config.WEB_PORT} 已被占用（疑似重复实例）", 1)
         sys.exit(1)
+
+    # 新实例的启动窗口：这段时间内不动"别人的" pid。
+    # 可用 BRIDGE_STARTUP_GRACE 覆盖（回归测试用来快速触发"老实例"分支）。
+    STARTUP_GRACE = float(os.environ.get("BRIDGE_STARTUP_GRACE", "60") or 60)
+
+    if os.path.exists(PID_FILE):
+        try:
+            with open(PID_FILE, "r") as f:
+                old_pid = int(f.read().strip())
+        except (ValueError, OSError):
+            old_pid = None
+
+        alive, image, age = _win_proc_info(old_pid) if old_pid else (False, "", 0.0)
+
+        if not alive:
+            log.info(f"🧹 清理陈旧 bridge.pid（PID {old_pid} 已不存在）")
+            try:
+                os.remove(PID_FILE)
+            except OSError:
+                pass
+        elif not image.startswith("python"):
+            log.warning(f"🧹 bridge.pid 里的 PID {old_pid} 现属「{image}」"
+                        f"（PID 被系统复用，并非桥接），按陈旧锁清理")
+            try:
+                os.remove(PID_FILE)
+            except OSError:
+                pass
+        elif age < STARTUP_GRACE:
+            log.info(f"⏳ 有另一个桥接刚启动（PID {old_pid}，{age:.0f}s），等它就绪…")
+            for _ in range(15):
+                time.sleep(1)
+                if port_in_use(config.WEB_PORT):
+                    log.error(f"⚠️ 已有桥接在服务（PID {old_pid}），本实例退出以免重复回复")
+                    exit_reason.note_exit(f"并发启动：PID {old_pid} 已就绪，让位退出", 1)
+                    sys.exit(1)
+            log.warning(f"⚠️ PID {old_pid} 启动 {age:.0f}s 后仍未监听 "
+                        f"{config.WEB_PORT}，视为卡死的启动，接管")
+            _kill_pid(old_pid)
+        else:
+            log.warning(f"⚠️ 发现卡死的老桥接（PID {old_pid}，已存活 {age/60:.0f} 分钟，"
+                        f"端口 {config.WEB_PORT} 无响应），清理后接管")
+            _kill_pid(old_pid)
 
     with open(PID_FILE, "w") as f:
         f.write(str(os.getpid()))
