@@ -1328,6 +1328,81 @@ class UiaSender(BaseSender):
                 continue
         return None
 
+    @staticmethod
+    def _norm_ws_text(s: str) -> str:
+        """与 _find_message_item.norm 同规则的空白归一化（供预览比对用）。"""
+        out = []
+        for ch in (s or ""):
+            out.append(" " if (ch.isspace() or ch in "\u2005\u200b\ufeff") else ch)
+        return "".join(out).strip()
+
+    def _read_quote_preview(self, input_ctrl) -> str:
+        """读取点「引用」后输入框上方的引用预览节点文本。
+
+        形如「发送者：消息内容」；读不到返回 ''（调用方视为无法校验）。
+        只在输入框祖先（≤3 层）的子控件里找「位于输入框上方、名字带冒号」
+        的节点——引用预览是输入框上方唯一满足此形状的常驻元素。
+        """
+        try:
+            ir = input_ctrl.BoundingRectangle
+        except Exception:
+            return ""
+        node = input_ctrl
+        for _ in range(3):
+            try:
+                node = node.GetParentControl()
+            except Exception:
+                break
+            if node is None:
+                break
+            try:
+                children = node.GetChildren()
+            except Exception:
+                continue
+            for c in children:
+                try:
+                    nm = (c.Name or "").strip()
+                    if not nm or len(nm) < 4 or len(nm) > 300:
+                        continue
+                    if (":" not in nm) and ("：" not in nm):
+                        continue
+                    # 消息列表里的气泡 Name 也可能带「发送者：」前缀，
+                    # 不能把它们当成引用预览 —— 按类名排除 + 只认紧贴
+                    # 输入框上方（≤160px）的节点。
+                    if self.MSG_ITEM_CLASS in (c.ClassName or ""):
+                        continue
+                    r = c.BoundingRectangle
+                    if not (ir.top - 160 <= r.top < ir.top):
+                        continue
+                    return nm
+                except Exception:
+                    continue
+        return ""
+
+    def _quote_preview_matches(self, preview: str, quote_content: str) -> bool:
+        """判断引用预览与目标原文是否一致。
+
+        · 预览读不到（''）→ 视为「无法校验」，放行（不因微信版本差异
+          误杀整个引用功能，保持旧行为）；
+        · 预览读到了 → 必须与目标互有包含（双方都可能被微信截断，
+          取 12 字短键比对），否则判为引用错位。
+        """
+        p = self._norm_ws_text(preview)
+        if not p:
+            return True
+        t = self._norm_ws_text(quote_content)
+        if not t:
+            return True
+
+        def short(s: str) -> str:
+            return s[:12]
+
+        core = p.split("：", 1)[-1].split(":", 1)[-1].strip()
+        core = core.rstrip("…").rstrip("...").strip()
+        if core and len(core) >= 4:
+            return (short(t) in core) or (short(core) in t)
+        return short(t) in p
+
     # ⚠️ 历史教训（2026-09-14，连踩三次）：**任何时候都不要对微信主窗口按 Esc**。
     #    Esc 落到主窗口上会直接把微信窗口关掉。同理，也不要用"猜菜单在不在"的方式
     #    决定是否按 Esc —— 微信正常 UI 里就有 Menu 类控件，误判率极高。
@@ -1476,10 +1551,11 @@ class UiaSender(BaseSender):
         return None
 
     def send_quote(self, contact: str, quote_content: str, text: str) -> bool:
-        """原生引用回复：右键原消息气泡 → 「引用」→ 输入正文 → 发送。
+        """原生引用回复：右键原消息气泡 → 「引用」→ 预览校验 → 输入正文 → 发送。
 
-        失败（找不到原消息 / 菜单没出来 / 不支持引用）时自动降级为普通文本发送，
-        保证消息一定送达。
+        失败（找不到原消息 / 菜单没出来 / 引用预览与目标不符）时自动降级为
+        普通文本发送，保证消息一定送达。预览校验用于拦住「右键点错旁边的
+        气泡导致引用错位」——宁可不引用，也不引用错对象。
         """
         with self._lock:
             if not self._ready:
@@ -1496,34 +1572,66 @@ class UiaSender(BaseSender):
                             return self.send_text(contact, text)
                     self._last_contact = contact
 
-                item = self._find_message_item(quote_content)
-                if item is None:
-                    log.info("引用：未定位到原消息，降级普通发送")
-                    return self.send_text(contact, text)
+                # 预清场：上次调用若在「已点引用但未发出」时中断，输入框会
+                # 残留引用节点 —— 带着错误的引用头降级发送比不发更糟。
+                self.clear_input()
 
-                # 右键必须落在气泡上才会弹菜单（点整行中心会点到空白）。
-                # 菜单是微信主窗口的子节点，用「复制/转发/删除」做兄弟项校验，
-                # 避免把常驻同名控件误当菜单。全程不按 Esc（Esc 会关掉微信窗口）。
-                picked_ctl = self._right_click_until_menu(item)
-                if picked_ctl is None:
-                    log.info("引用：右键未弹出菜单，降级普通发送")
-                    return self.send_text(contact, text)
-
-                try:
-                    picked_ctl.Click()
-                except Exception:
-                    try:
-                        self._click_control_center(picked_ctl)
-                    except Exception:
-                        log.info("引用：菜单项点击失败，降级普通发送")
+                # 引用主流程（2026-09-30 重写，带一轮重试）：
+                # 事故①（竞态）：右键位置扫描最长 2s+，期间消息列表继续滚动，
+                #   用扫描前抓的旧坐标右键 → 点中旁边的表情包 → 引用头错成
+                #   无关消息（模型根本不知道那是什么）。对策：每轮右键前
+                #   **重新**定位气泡；点完「引用」再读预览校验（见下）。
+                # 事故②（不可证）：旧流程「菜单弹出」≠「引用对了」，无从校验。
+                #   微信点「引用」后输入框上方会出现「发送者：内容预览」节点，
+                #   读它与目标原文比对，不符 → 清空重试一次，仍不符降级。
+                ctrl = None
+                quote_ok = False
+                for attempt in (1, 2):
+                    if attempt == 2:
+                        # 首轮预览不符：清掉残留引用节点/文本，重取气泡再试
+                        self.clear_input()
+                        time.sleep(0.3)
+                    item = self._find_message_item(quote_content)
+                    if item is None:
+                        log.info("引用：未定位到原消息，降级普通发送")
                         return self.send_text(contact, text)
 
-                time.sleep(0.5)
+                    # 右键必须落在气泡上才会弹菜单（点整行中心会点到空白）。
+                    # 菜单是微信主窗口的子节点，用「复制/转发/删除」做兄弟项校验，
+                    # 避免把常驻同名控件误当菜单。全程不按 Esc（Esc 会关掉微信窗口）。
+                    picked_ctl = self._right_click_until_menu(item)
+                    if picked_ctl is None:
+                        log.info("引用：右键未弹出菜单，降级普通发送")
+                        return self.send_text(contact, text)
 
-                if not self._locate_input():
+                    try:
+                        picked_ctl.Click()
+                    except Exception:
+                        try:
+                            self._click_control_center(picked_ctl)
+                        except Exception:
+                            log.info("引用：菜单项点击失败，降级普通发送")
+                            return self.send_text(contact, text)
+
+                    time.sleep(0.5)
+
+                    if not self._locate_input():
+                        return self.send_text(contact, text)
+                    ctrl = self._input_control
+
+                    preview = self._read_quote_preview(ctrl)
+                    if self._quote_preview_matches(preview, quote_content):
+                        quote_ok = True
+                        break
+                    log.warning(f"引用：第 {attempt} 次预览不匹配 "
+                                f"(目标={quote_content[:16]!r} "
+                                f"预览={(preview or '')[:24]!r})")
+                if not quote_ok or ctrl is None:
+                    log.warning("引用：两次预览均不匹配，清空后降级普通发送"
+                                "（宁可不引用，不引错）")
+                    self.clear_input()
                     return self.send_text(contact, text)
 
-                ctrl = self._input_control
                 try:
                     ctrl.SetFocus()
                     time.sleep(0.05)
@@ -1556,6 +1664,10 @@ class UiaSender(BaseSender):
             except Exception as e:
                 log.warning(f"引用失败，降级普通发送: {e}")
                 # 注意：这里刻意不按 Esc —— 盲按 Esc 会把微信窗口关掉。
+                try:
+                    self.clear_input()   # 清掉可能的半成品引用节点
+                except Exception:
+                    pass
                 return self.send_text(contact, text)
 
     # ---------- 剪贴板（纯 ctypes，不依赖 PowerShell）----------

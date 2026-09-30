@@ -195,10 +195,13 @@ STICKER_MAX_BYTES = int(config.get("sticker_max_bytes", 4 * 1024 * 1024))
 
 # ============ 日志 ============
 
+# 文件日志必须带日期：bridge.log 只追加不滚动，跨天的行混在一起时
+# 「时刻相同」的旧行会把排障引向完全错误的方向（2026-09-30 实测踩坑：
+# 把前一天的 WS 断连当成了当天的故障）。
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%H:%M:%S",
+    datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.FileHandler("bridge.log", encoding="utf-8"),
         logging.StreamHandler(),

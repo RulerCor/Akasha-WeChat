@@ -762,6 +762,23 @@ class WxStickerCache(Star):
                     sys_now = getattr(req, "system_prompt", "") or ""
                     if "[可用表情包]" not in sys_now:
                         req.system_prompt = sys_now + line
+                # 诊断（2026-09-30）：模型 7 天 0 次调用 send_sticker，
+                # 需要分辨「名单没到达模型」还是「模型自己不选」。
+                # 若最终请求里没有本行（被 companion/AstrNa 后续覆盖），
+                # 这里的日志会显示 len=0，即为名单丢失的证据。
+                _s = getattr(req, "system_prompt", "") or ""
+                _tool_names = []
+                try:
+                    _ts = getattr(req, "func_tool", None)
+                    for _t in (_ts.tools if hasattr(_ts, "tools") else (_ts or [])):
+                        _tool_names.append(getattr(_t, "name", "") or "?")
+                except Exception:
+                    _tool_names = ["<无法枚举>"]
+                logger.info(
+                    f"[StickerCache] 注入诊断: 名单注入={'有' if '[可用表情包]' in _s else '无'} "
+                    f"表情数={len(names)} system_prompt长度={len(_s)} "
+                    f"工具数={len(_tool_names)} "
+                    f"send_sticker在列={'send_sticker' in _tool_names}")
             except Exception:
                 pass
 
@@ -822,6 +839,12 @@ class WxStickerCache(Star):
             return '{"status":"disabled","message":"表情发送未启用。"}'
         if self.cache is None:
             return '{"status":"error","message":"插件未初始化。"}'
+
+        # 诊断（2026-09-30）：工具被模型调用的第一时间打 INFO——
+        # 若日志里长期看不到本行而名单注入正常，即「模型不选」，
+        # 去调提示词；若连注入诊断都显示名单丢失，即「名单没到达」。
+        logger.info(f"[StickerCache] 🛠️ send_sticker 被调用: name={name!r} "
+                    f"caption={caption!r} session={event.unified_msg_origin}")
 
         name = (name or "").strip()
         if not name:

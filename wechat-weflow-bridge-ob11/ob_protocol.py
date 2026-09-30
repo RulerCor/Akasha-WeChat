@@ -339,6 +339,18 @@ def _is_placeholder_reply(message) -> bool:
     if not joined:
         return False
     return joined in _PLACEHOLDER_TEXTS
+
+
+# 微信媒体占位内容：WeFlow/桥接解析层把表情/图片写成这些占位符。
+# 作为**引用目标**时必须跳过（UIA 气泡 Name 同样含占位符，会引错对象）。
+_MEDIA_PLACEHOLDER_RE = re.compile(
+    r"^\[(表情|图片|动画表情|视频|文件|语音|链接|名片|小程序|聊天记录|消息)\]$"
+)
+
+
+def _is_placeholder_content(content: str) -> bool:
+    """内容是否为媒体占位符（如「[表情]」「[图片]」）。"""
+    return bool(_MEDIA_PLACEHOLDER_RE.match((content or "").strip()))
 # ── end patch_placeholder_guard ──
 
 
@@ -455,8 +467,17 @@ async def _handle_ob_api(data: dict):
             if seg_type == "reply":
                 orig = state.get_message(seg_data.get("id"))
                 if config.QUOTE_REPLY_NATIVE:
-                    if orig and (orig.get("content") or "").strip():
-                        quote_target = orig.get("content")
+                    content = (orig.get("content") or "").strip() if orig else ""
+                    # 占位内容（[表情]/[图片] 等）不能做原生引用目标：
+                    # UIA 里表情/图片气泡的 Name 也含「[表情]」，按内容找
+                    # 气泡会命中**任意一个**表情包 —— 2026-09-30 实测把
+                    # 引用头错插到无关表情包上。占位符连「引用了哪张」
+                    # 都无法校验，宁可放弃引用（降级普通发送）也不引错。
+                    if content and not _is_placeholder_content(content):
+                        quote_target = content
+                    elif content:
+                        log.info(f"[OB11] 引用目标为占位内容 {content}，"
+                                 f"跳过原生引用")
                 elif orig and config.QUOTE_REPLY_PREFIX:
                     snippet = (orig.get("content") or "").replace("\n", " ")[:40]
                     quote_prefix = f"〔回复 {orig.get('sender','?')}：{snippet}〕\n"
