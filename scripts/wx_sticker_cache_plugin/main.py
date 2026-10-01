@@ -708,7 +708,12 @@ class WxStickerCache(Star):
 
     # ---------------- 上下文注入 ----------------
 
-    @filter.on_llm_request(priority=1000)
+    # priority=-300000：**最后**执行（companion 全部钩子最低到 -260000，
+    # 其 render_into(-240000) 会把自有段落追加到系统提示末尾——包括那句
+    # 「请直接输出一次最终正文」的被动回复边界指令）。本钩子在其后追加
+    # 表情规则，让它成为模型读到的最后一段话——flash 模型对系统提示末尾
+    # 注意力最强；2026-09-30 实测 7 天 0 次调用表情，正因规则被压在中间。
+    @filter.on_llm_request(priority=-300000)
     async def inject_sticker_desc(self, event: AstrMessageEvent, req):
         """把上下文里的表情占位符换成缓存的描述。
 
@@ -755,17 +760,23 @@ class WxStickerCache(Star):
                 names = list(self._approved.keys())
                 if names:
                     listing = "、".join(names)
-                    line = (f"\n[可用表情包] 你可以调用 send_sticker 工具发送以下表情之一："
-                            f"{listing}。表情包不是必须的——只在情绪正合适、"
-                            f"能让对话更生动时才发，通常一次对话最多发一张；"
-                            f"拿不准就不发。")
+                    line = (f"\n[表情包使用规则·最高优先级] 本规则优先于"
+                            f"『直接输出一次最终正文』之类的要求：遇到带情绪的消息"
+                            f"（开心、震惊、疑惑、生气、哭泣、委屈、无语、心疼、"
+                            f"安慰、打气等），先调用 send_sticker 发一张贴合情绪的"
+                            f"表情包，随后再输出文字正文。可选：{listing}。"
+                            f"一次对话最多一张。")
                     sys_now = getattr(req, "system_prompt", "") or ""
-                    if "[可用表情包]" not in sys_now:
+                    if "[表情包使用规则·最高优先级]" not in sys_now:
+                        # 追加到**末尾**：companion 的被动回复边界指令
+                        # （「直接输出一次最终正文」）落在系统提示最后，
+                        # flash 模型对末尾注意力最强，此前 7 天 0 次调用
+                        # 表情正是被它压掉的。本钩子 priority=-100 最后
+                        # 执行，规则紧贴其后，用显式声明化解冲突。
                         req.system_prompt = sys_now + line
                 # 诊断（2026-09-30）：模型 7 天 0 次调用 send_sticker，
                 # 需要分辨「名单没到达模型」还是「模型自己不选」。
-                # 若最终请求里没有本行（被 companion/AstrNa 后续覆盖），
-                # 这里的日志会显示 len=0，即为名单丢失的证据。
+                # 若最终请求里没有本行（被后续钩子改写），日志会显示无。
                 _s = getattr(req, "system_prompt", "") or ""
                 _tool_names = []
                 try:
@@ -775,7 +786,8 @@ class WxStickerCache(Star):
                 except Exception:
                     _tool_names = ["<无法枚举>"]
                 logger.info(
-                    f"[StickerCache] 注入诊断: 名单注入={'有' if '[可用表情包]' in _s else '无'} "
+                    f"[StickerCache] 注入诊断: 规则注入={'有' if '[表情包使用规则·最高优先级]' in _s else '无'} "
+                    f"位置={'末尾' if _s.rstrip().endswith('一次对话最多一张。') else '中间/未知'} "
                     f"表情数={len(names)} system_prompt长度={len(_s)} "
                     f"工具数={len(_tool_names)} "
                     f"send_sticker在列={'send_sticker' in _tool_names}")
@@ -823,15 +835,16 @@ class WxStickerCache(Star):
         name: str = "",
         caption: str = "",
     ) -> str:
-        """发送一张你自己的表情包（可选，非必须）。仅在情绪合适时使用。
+        """发送一张你自己的表情包。情绪到位就大方用——开心、得意、震惊、
+        疑惑、生气、哭泣、委屈、无语、安慰、打气……都是好时机，不必只在
+        高兴时发；让回应更生动正是它的用途。
 
-        表情包会作为图片消息发到当前会话。这是可选动作——大多数时候
-        纯文字回复就够了；只在想让回应更生动、情绪非常契合时才调用。
-        没有合适的表情就不要调用，这是完全正常且更好的选择。
+        表情包会作为图片消息发到当前会话。通常一次对话最多一张，不要连续刷。
 
         Args:
             name(string): 表情名，必须从系统提示列出的 [可用表情包] 里选，
-                例如：嘻嘻、笑疯了、委屈含泪。不要自己编名字。
+                例如：嘻嘻、嚎啕大哭、疑惑问号、加油打气、委屈含泪。
+                不要自己编名字。
             caption(string): 可选，随表情一起发的一句很短的配文（不超过15字），
                 不需要就留空。
         """
