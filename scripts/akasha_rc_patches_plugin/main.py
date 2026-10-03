@@ -340,6 +340,23 @@ def _patch_i18n_blacklist():
     return None
 
 
+def _patch_cron_sender_name():
+    """Cron 合成事件默认发送者名 Scheduler→系统日程（源码文件补丁）。
+
+    为什么必要：CronMessageEvent 默认 sender_name="Scheduler"，主动/定时
+    消息在模型上下文里都顶着这个假名（group_chat_context 拼成
+    [Scheduler/HH:MM:SS]: 前缀），模型模仿称呼 → 泄漏「Scheduler博士」
+    （2026-09-30 首现，2026-10-03 复发）。pip 升级即失效——由本插件
+    每次启动自动重打。
+    """
+    out = _run_patch_script(
+        "patch_cron_sender_name.py",
+        ("已打", "已换", "已是新版", "无需操作"))
+    if out:
+        return ("core/cron/events.py", "默认 sender_name 中性化", out)
+    return None
+
+
 PATCHES = [
     ("provider_getkeys",  "provider get_keys 归一化（修复 All chat models failed）", _patch_provider_getkeys),
     ("openai_read_timeout", "OpenAI 通道 read timeout（防流式响应挂起）",           _patch_openai_read_timeout),
@@ -348,6 +365,7 @@ PATCHES = [
     ("kb_wording_agent",  "astr_main_agent 注入头探测/兜底",                          _patch_kb_wording_agent),
     ("kb_scope",          "kb scope 白名单（API key 调知识库接口）",                  _patch_kb_scope),
     ("aiocqhttp_primary", "aiocqhttp 主动发送路由兜底",                              _patch_aiocqhttp_primary),
+    ("cron_sender_name",  "Cron 合成发送者名中性化（防 Scheduler博士泄漏）",           _patch_cron_sender_name),
     ("i18n_blacklist",    "面板 i18n 黑名单文案",                                    _patch_i18n_blacklist),
 ]
 

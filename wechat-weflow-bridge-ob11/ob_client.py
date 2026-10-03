@@ -43,6 +43,11 @@ async def _ob_client_main():
             log.info(f"[OB11] 正在连接 AstrBot: {config.ASTRBOT_OB_URL}")
             async with websockets.connect(
                 config.ASTRBOT_OB_URL,
+                # 收帧上限：websockets ≥10 默认 1MB。AstrBot 侧发来的 send_group_msg
+                # 带图片时是 base64 内联（arknights 公告卡片实测 1.5MB JPEG → ~2MB 帧），
+                # 2026-10-03 超帧直接压断连接 → AstrBot 挂满 180s 超时 → 卡片丢失。
+                # 抬到 16MB 兜住常规渲染卡片（AstrBot 侧 aiocqhttp 服务端同样不设限）。
+                max_size=16 * 1024 * 1024,
                 additional_headers={
                     "X-Self-ID": str(state._self_id_int),
                     "X-Client-Role": "Universal",

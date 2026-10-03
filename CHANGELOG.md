@@ -4,6 +4,67 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## 公告卡片压断 ws + 「Scheduler博士」复发双修（2026-10-03）
+
+### 问题①：「官方新公告」有头没身（卡片丢失）
+
+**时间线**（bridge.log 铁证，2026-10-03 11:16-11:19）：
+
+1. 11:16:43 文字「官方新公告」成功发到群；
+2. 紧接着发公告详情卡片（900×9623px、1.5MB JPEG，base64 后 ~2MB 帧）→
+   **OB11 连接当场被压断**（websockets 15.x 客户端默认收帧上限 1MB）；
+3. 5 秒后重连，但 AstrBot 侧该 API 调用等满 180s（`api_timeout_sec=180`）
+   报 `WebSocket API call timeout`；
+4. 插件仍打「推送了 1 条新公告」——群内实际只见四个字，卡片丢失。
+
+**修复**：
+
+- `wechat-weflow-bridge-ob11/ob_client.py`：`websockets.connect(max_size=16MB)`
+  （用户拍板保留卡片图形式，抬高接收上限治本）；
+- `astrbot_plugin_arknights/main.py`：公告卡片渲染后加 8MB 体积保险丝，
+  超限降级纯文本——防止渲染异常产出超大图拖垮整条连接。
+
+### 问题②：「Scheduler博士」复发（换路径）
+
+2026-10-01 修复（`3a655d2`）只堵了 companion 私聊身份锚点一条路；本次复发
+走的是 **wanna_be_human 主动聊天**（上次预留的观察点）：
+
+- `wanna_be_human/main.py` `_generate_proactive_reply` 构造 `CronMessageEvent`
+  未传 `sender_name` → 核心默认 `"Scheduler"`（core/cron/events.py:24）→
+  上下文前缀 `[Scheduler/10:38:33]:`（group_chat_context.py:211）→
+  10:38:40 发出「呜，Scheduler博士怎么又丢一大段字过来喵」；
+- 日志全量核查：`Prepare to send - Scheduler/xxx` 共 309 次（10-01 至 10-03），
+  活跃历史残留 conversations 4 条 + companions.json 18 处
+  （含 `recent_prompt_injection_events.sender_label` 5 处——
+  `event_dispatch.py:1699` 路径 2026-10-01 未覆盖）。
+
+**修复（三层收敛 + 数据清理）**：
+
+1. **核心治本**：新增 `scripts/patch_cron_sender_name.py`，把
+   `CronMessageEvent` 默认 `sender_name` 换成中性名「系统日程」（带标记可
+   还原），并注册进 `akasha_rc_patches` 补丁插件（pip 升级后自动重打，
+   PATCHES 8→9 项）；
+2. **插件显式名**：`wanna_be_human` 构造事件显式传「系统日程」（双保险）；
+   `private_companion/proactive_message.py` 的 `"PrivateCompanion"` 同款
+   人名词形隐患一并换成中性名（预防）；
+3. **companion 源头隔离**：`event_dispatch.py _sender_display_name` 加
+   `_sanitize_synthetic_sender_name`——在取名源头拦掉 "Scheduler"，
+   身份锚点/注入事件/群观察 4 个调用点自动受益（比 2026-10-01 逐点修更收敛）；
+4. **数据清理**（先备份 `*.bak_scheduler2_20261003`）：
+   `scripts/scrub_scheduler_residue.py` 替换 conversations 4 处 +
+   companions.json 18 处（「Scheduler博士」→「博士」）；复核残留 0。
+   `platform_message_history` 的 4 行发送留档故意不动（改了会引用错位）。
+
+### 验证（12:44 重启后）
+
+- AstrBot :11229/:6185 pid=10752、桥接 :8766 pid=8316 全绿；
+- 补丁日志：`Cron 合成发送者名中性化 → 状态: 已打`（5/9 项生效）；
+- 桥接 OB11 重连成功（12:46:11），群名册 324 条映射正常。
+
+**观察点**：下次主动聊天/cron 消息的前缀应为 `[系统日程/…]` 或真实昵称，
+不得再出现「Scheduler博士」；下一条超长公告卡片应完整到群。
+
+
 ## 群晚安消息「十点半」时间错误修复（2026-10-01 深夜）
 
 ### 现象
