@@ -4,6 +4,29 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## 无畏契约知识库 + 黑梦人设卡 + KB 并发导入缺块修复（2026-10-06）
+
+### 新增
+
+- **`valorant` 知识库**（`c959a2ff`）：6 篇文档 37 块全向量化。资料取 Riot
+  官方 zh-CN 本地化（valorant-api.com 镜像）+ 社区用法整理，覆盖游戏概览/
+  29 特务总览/黑梦专档/地图武器/社区梗。挂载会话由用户在面板自选，本次未绑。
+- **人设卡 `fade`（黑梦）**：`scripts/add_persona_fade.py` 幂等插入，3170 字。
+  COMMON 八段 + 原生携带「资料相关性判断」「发言归属与身份守则」，
+  `check_patches.py` 12 项保持全绿。走 persona_mgr 内存路径，免重启生效。
+  人设池备用，主群仍为 mon3tr。
+- **`scripts/import_valorant_kb.py`**：建库+导入脚本，逐篇串行上传 +
+  任务轮询 + faiss/docdb 对账。
+
+### 修复：并发导入导致向量索引缺块（存量 bug，persona3 也中招）
+
+上传文档为后台任务，各任务「读 index.faiss → add → 写回」并发时后者覆盖
+前者：valorant 首次并发导入后 docdb 37 条 / faiss 仅 9 块；实测 persona3
+存量同样缺块（107/32）。密度检索只查 faiss，缺块永远召回不到——表现为
+「检索结果恒为同一块、分数恒 0.900」。修复：导入脚本改逐篇串行（轮询
+`tasks/{id}` 至完成）+ 完成后对账；重跑后 37/37，检索恢复区分度。
+详见 `docs/delivery-20261006-valorant知识库与黑梦人设卡.md`。
+
 ## 公告卡片压断 ws + 「Scheduler博士」复发双修（2026-10-03）
 
 ### 问题①：「官方新公告」有头没身（卡片丢失）
