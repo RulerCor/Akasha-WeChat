@@ -9,6 +9,7 @@ Web 控制面板模块。
 import json
 import logging
 import os
+import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import state
@@ -231,6 +232,21 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
 .chip input{display:none}
 .chip .dot{width:7px;height:7px;border-radius:50%;background:#e3c4cd;transition:.18s}
 .chip.on .dot{background:#ec407a}
+
+/* ===== 成员页：子页签（2026-10-07 重设计） ===== */
+.seg-bar{display:flex;align-items:center;gap:6px;background:#fff;border-radius:14px;padding:6px;border:1px solid #f9e6ec;box-shadow:0 2px 10px rgba(214,51,110,0.05);position:sticky;top:0;z-index:6}
+.seg{border:none;background:transparent;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:700;color:#b06c7a;cursor:pointer;transition:all .2s;white-space:nowrap}
+.seg:hover{background:#fdf2f5;color:#d4567a}
+.seg.active{background:linear-gradient(135deg,#f48fb1,#f06292);color:#fff;box-shadow:0 3px 10px rgba(240,98,146,0.25)}
+.seg-bar .spacer{flex:1}
+.members-sub{display:none;flex-direction:column;gap:16px}
+.members-sub.active{display:flex}
+.dirty-dot{font-size:11.5px;font-weight:700;color:#e65100;display:none;white-space:nowrap}
+.dirty-dot.show{display:inline}
+.warn-badge{font-size:11.5px;font-weight:600;color:#e65100;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:4px 10px;display:none;white-space:nowrap}
+.warn-badge.show{display:inline-block}
+.btn.need-restart{border-color:#ffb74d;color:#e65100;animation:pulseAmber 1.6s ease-in-out infinite}
+@keyframes pulseAmber{0%,100%{box-shadow:0 0 0 0 rgba(255,167,38,0.45)}50%{box-shadow:0 0 0 6px rgba(255,167,38,0)}}
 </style>
 </head>
 <body>
@@ -345,171 +361,170 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
     </div>
   </div>
 
-  <!-- ===== 成员与权限页 ===== -->
+  <!-- ===== 成员与权限页（2026-10-07 重设计：子页签 + 统一保存条） ===== -->
   <div class="tab-page" id="page-members">
     <div class="header">
       <h1><span class="en">People</span><span class="cn">成员与权限</span></h1>
       <div class="badge" id="membersBadge">加载中...</div>
     </div>
 
+    <div class="seg-bar">
+      <button class="seg active" data-sub="groups" onclick="switchMembersTab('groups')">💬 群聊</button>
+      <button class="seg" data-sub="friends" onclick="switchMembersTab('friends')">🧑‍🤝‍🧑 私聊</button>
+      <button class="seg" data-sub="admins" onclick="switchMembersTab('admins')">👑 管理员</button>
+      <div class="spacer"></div>
+      <button class="btn btn-outline btn-sm" id="btnRefreshPeople" onclick="refreshPeople()" title="从 WeFlow 重新拉一遍联系人 / 群列表；bot 被拉进新群后点它立即收录">🔄 刷新名单</button>
+    </div>
+
     <div class="settings-scroll">
 
-      <div class="hint-text">
-        这里管三件事：<b>👑 谁是管理员</b>（能指挥机器人做跨群操作）｜
-        <b>💬 机器人在哪些群说话、会不会自己插嘴</b>（下面一张表全搞定）｜
-        <b>🧑‍🤝‍🧑 私聊白名单</b>（新加好友不回复 → 去下面那张卡勾上）。
-      </div>
+      <!-- ── 子页：群聊 ── -->
+      <div class="members-sub active" id="sub-groups">
 
-      <!-- 🧑‍🤝‍🧑 私聊白名单（独立卡片，可视化点选） -->
-      <div class="card" id="fwCard">
-        <h3><span class="ic">🧑‍🤝‍🧑</span>私聊白名单<span class="new-badge">新加好友不回复 → 来这里勾</span></h3>
-        <div class="card-sub">
-          开着开关时，<b>只有勾选的好友私聊会被回复</b>；@ 机器人的群消息不受这份名单影响（群走上面的表）。<br>
-          新加好友后如果他不发条消息进来，这里还没他的名字 —— 让他先随便发一句，刷新本页就会出现。
-        </div>
-        <div class="settings-row" style="margin-bottom:8px">
-          <div class="settings-field" style="min-width:170px;max-width:200px">
-            <label>开关</label>
-            <select id="fw_enable"><option value="0">关闭（所有私聊都回）</option><option value="1">开启（只回勾选的好友）</option></select>
+        <div class="card">
+          <h3><span class="ic">💬</span>群里管什么</h3>
+          <div class="card-sub">
+            <b>回复</b> = 关掉就完全不理这个群（@ 也不理），<b>立即生效</b>；
+            <b>插嘴</b> = 没人 @ 时它会不会自己说话，改完点右下「💾 保存」。
+            bot 刚被拉进的群没列出来？点右上「🔄 刷新名单」。
           </div>
-          <div class="settings-field" style="flex:1;min-width:200px">
-            <label>搜索好友（名字 / wxid / UID）</label>
-            <input class="search-input" id="fwSearch" style="width:100%" placeholder="🔍 输入即筛选下面的好友" oninput="renderFriendList('fw_friends', currentWhitelist)">
+          <div id="arWhitelistWarn" style="display:none;margin-bottom:8px"></div>
+          <div class="toolbar" style="margin-bottom:8px">
+            <input class="search-input" id="groupSearch" placeholder="🔍 搜群名 / 群 ID" oninput="renderGroups()">
+            <div class="spacer"></div>
+            <span class="set-note" id="groupCount"></span>
           </div>
-          <div class="settings-field" style="max-width:120px;align-self:end">
-            <label style="visibility:hidden">.</label>
-            <label class="chip" style="width:100%;justify-content:center"><input type="checkbox" id="fwOnlySel" onchange="renderFriendList('fw_friends', currentWhitelist)"><span class="dot"></span>只看已勾</label>
-          </div>
-          <div class="settings-field" style="max-width:220px;align-self:end">
-            <button class="btn btn-pink btn-sm" onclick="saveFriendWhitelist()">💾 保存私聊白名单</button>
-          </div>
+          <table class="member-table">
+            <thead><tr>
+              <th style="width:52px" class="center" title="收到消息后要不要理这个群；关掉立即生效">回复</th>
+              <th style="width:52px" class="center" title="没人 @ 时允许它自己插嘴；保存并重启 AstrBot 后生效">插嘴</th>
+              <th>群名</th>
+              <th style="width:250px">群 ID / UMO（点击复制）</th>
+            </tr></thead>
+            <tbody id="groupsBody"><tr><td colspan="4" style="color:#c0aab0">加载中...</td></tr></tbody>
+          </table>
         </div>
-        <div class="chip-wrap" id="fw_friends" style="max-height:260px;overflow:auto;border:1px solid #f3d9e1;border-radius:10px;padding:8px"></div>
-        <div class="field-hint" style="margin-top:6px"><span id="fwCount">-</span>　（搜索框只筛选显示，不影响已勾选项）</div>
-        <div class="set-note" style="margin-top:6px">⚠️ 保存后需<b style="color:#e65100">重启 AstrBot</b> 才生效（AstrBot 只在启动时读一次名单）。</div>
-        <div class="settings-row" style="margin-top:8px;align-items:center;gap:10px">
-          <button class="btn btn-pink btn-sm" id="abRestartBtn" onclick="restartAstrbot()">🔄 重启 AstrBot</button>
-          <span id="abRestartState" class="field-hint" style="margin:0"></span>
-        </div>
-        <div class="set-note" id="wlRestartWarn" style="display:none;margin-top:6px;background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:8px">
-          🔴 <b>刚保存的名单还没生效！</b>点上面的「🔄 重启 AstrBot」即可（约 10-25 秒），不用再手动关窗口。
-        </div>
-      </div>
 
-      <!-- 👑 管理员 -->
-      <div class="card">
-        <h3><span class="ic">👑</span>管理员</h3>
-        <div class="card-sub">管理员可以使用跨群发消息等敏感能力。<b>同一个人在私聊和所有群里算同一个 ID</b>，勾一次全局生效，不用逐群加。</div>
-        <div class="toolbar" style="margin-bottom:8px">
-          <input class="search-input" id="memberSearch" placeholder="🔍 搜名字 / wxid" oninput="renderPeople()">
-          <div class="spacer"></div>
-          <button class="btn btn-pink btn-sm" onclick="saveAdmins()">💾 保存管理员</button>
-        </div>
-        <div class="tbl-scroll">
-        <table class="member-table">
-          <thead><tr><th style="width:44px" class="center">管理</th><th>昵称</th><th style="width:190px">wxid</th><th>UID（/sid 显示的 ID）</th></tr></thead>
-          <tbody id="peopleBody"><tr><td colspan="4" style="color:#c0aab0">加载中...</td></tr></tbody>
-        </table>
-        </div>
-        <div class="field-hint" style="margin-top:6px">共 <span id="peopleCount">-</span> 人，表格内可直接滚动；搜索框在上面。</div>
-      </div>
-
-      <!-- 💬 群行为总表 -->
-      <div class="card">
-        <h3><span class="ic">💬</span>群里管什么<span class="new-badge">一张表全搞定</span></h3>
-        <div class="card-sub">
-          <b>回复</b> = 收到消息后要不要理这个群（关掉就是完全不掺和，@ 也不理，立即生效）。<br>
-          <b>插嘴</b> = 没 @ 它的时候，会不会自己冒出来说话（走下面的全局开关 + 概率）。@ 它永远会回，跟这两列都无关。
-        </div>
-        <div id="arWhitelistWarn" style="display:none;margin-bottom:8px"></div>
-        <table class="member-table">
-          <thead><tr>
-            <th style="width:52px" class="center">回复</th>
-            <th style="width:52px" class="center">插嘴</th>
-            <th>群名</th>
-            <th style="width:120px">群 ID</th>
-            <th>UMO（完整会话标识，点一下复制）</th>
-          </tr></thead>
-          <tbody id="groupsBody"><tr><td colspan="5" style="color:#c0aab0">加载中...</td></tr></tbody>
-        </table>
-        <div class="field-hint" style="margin-top:7px">「插嘴」这列改完要和下面的全局设置一起<b>点保存</b>才生效。</div>
-      </div>
-
-      <!-- 🎲 全局插话 -->
-      <div class="card">
-        <h3><span class="ic">🎲</span>随机插话（全局）</h3>
-        <div class="card-sub">就是 AstrBot 里的「主动回复」：群消息<b>不是 @ 机器人</b>时，按概率掷骰决定要不要插一嘴。关掉 = 它只在你 @ 它的时候说话。</div>
-        <div class="settings-row">
-          <div class="settings-field" style="min-width:150px;max-width:190px">
-            <label>随机插话总开关</label>
-            <select id="ab_ar_enable"><option value="0">关闭</option><option value="1">开启</option></select>
-          </div>
-          <div class="settings-field" style="min-width:150px;max-width:220px">
-            <label>插话概率（0~1，每条群消息掷一次）</label>
-            <input type="number" id="ab_ar_poss" step="0.01" min="0" max="1" placeholder="0.03">
-            <span class="field-hint">建议 0.02~0.05，太高会刷屏</span>
-          </div>
-          <div class="settings-field" style="min-width:220px">
-            <label>生效前提</label>
-            <span class="field-hint" style="margin-top:4px">① 桥接群聊模式为<b>标准</b>（批处理不转发非@消息）；② 该群先用 /new 建立过会话；③ 保存后需重启 AstrBot。</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 🔧 高级 -->
-      <details class="tier" id="tierAdvanced">
-        <summary><span class="arrow">▶</span>🔧 高级：白名单（私聊好友 / 群）<span class="count">新加好友不回复 → 点开这里</span></summary>
-        <div class="tier-body">
-          <div class="hint-text amber">
-            <b>新加好友私聊不回复？</b>九成是下面的<b>私聊白名单</b>没勾他 —— 勾上 → 保存 → 重启 AstrBot 即可。<br>
-            <br>
-            <b>三层过滤的关系</b>（从粗到细，命中即生效）：<br>
-            ① <b>平台 ID 白名单</b>——总闸（私聊好友 + 群共用一份名单）。开了之后，不在名单里的会话<b>整条消息都不进 AstrBot</b>（连 @ 都不理）。<br>
-            ② <b>群回复开关</b>——桥接侧开关，上面那张表的「回复」列，关了就是完全不理。<br>
-            ③ <b>插话白/黑名单</b>——只影响「没人 @ 时要不要插嘴」；<b>黑名单优先于白名单</b>；白名单留空 = 所有群都可能插嘴。<br>
-            想手写条目的话，填<b>群 ID</b> 或完整 <b>UMO</b> 都行（UMO 在上面那张表里点一下就能复制）。
+        <div class="card">
+          <h3><span class="ic">🎲</span>随机插话（全局）</h3>
+          <div class="card-sub">
+            群消息没 @ 它时，按概率掷骰决定要不要插一嘴；关掉 = 只有 @ 才说话。
+            生效前提：群聊模式为「标准」、该群用 /new 建过会话、保存后重启 AstrBot。
           </div>
           <div class="settings-row">
-            <div class="settings-field" style="min-width:150px;max-width:190px">
-              <label>平台 ID 白名单开关</label>
-              <select id="ab_wl_enable"><option value="0">关闭（不过滤）</option><option value="1">开启</option></select>
+            <div class="settings-field" style="min-width:140px;max-width:180px">
+              <label>总开关</label>
+              <select id="ab_ar_enable" onchange="markDirty()"><option value="0">关闭</option><option value="1">开启</option></select>
             </div>
-            <div class="settings-field wide">
-              <label>平台 ID 白名单（点选群）—— 好友在上面「私聊白名单」卡里勾</label>
-              <div id="ab_wl_groups" class="chip-wrap"></div>
-            </div>
-            <div class="settings-field wide">
-              <label>平台白名单 · 手动补充（群 ID / UMO，逗号或换行分隔）</label>
-              <textarea id="ab_wl_extra" rows="2" placeholder="留空即可"></textarea>
-            </div>
-          </div>
-          <div class="settings-row">
-            <div class="settings-field wide">
-              <label>插话白名单（只在这些群插嘴；留空 = 所有群；点选群）</label>
-              <div id="ab_ar_groups" class="chip-wrap"></div>
-            </div>
-            <div class="settings-field wide">
-              <label>插话白名单 · 手动补充（群 ID / UMO，逗号或换行分隔）</label>
-              <textarea id="ab_ar_extra" rows="2" placeholder="留空即可"></textarea>
-            </div>
-            <div class="settings-field wide">
-              <label>插话黑名单 · 手动补充（上面表格没勾「插嘴」的群会自动进这里；此处只放列表里没有的群 ID / UMO）</label>
-              <textarea id="ab_ar_black_extra" rows="2" placeholder="留空即可"></textarea>
+            <div class="settings-field" style="min-width:150px;max-width:200px">
+              <label>概率（0~1，建议 0.02~0.05）</label>
+              <input type="number" id="ab_ar_poss" step="0.01" min="0" max="1" placeholder="0.03" oninput="markDirty()">
             </div>
           </div>
         </div>
-      </details>
+
+        <details class="tier" id="tierAdvanced">
+          <summary><span class="arrow">▶</span>🔧 高级：名单手动维护<span class="count">平台 ID 白名单 · 插话白/黑名单</span></summary>
+          <div class="tier-body">
+            <div class="hint-text">
+              <b>平台 ID 白名单</b>是总闸：开启后不在名单里的会话（私聊 + 群）整条消息都不进 AstrBot，@ 也不理。
+              <b>插话白/黑名单</b>只管「没人 @ 时插不插嘴」：黑名单优先；白名单留空 = 所有群。
+              手动条目填群 ID 或完整 UMO 都行（上面表里点一下即可复制）。
+            </div>
+            <div class="settings-row">
+              <div class="settings-field" style="min-width:150px;max-width:190px">
+                <label>平台 ID 白名单开关</label>
+                <select id="ab_wl_enable" onchange="syncWlEnable(this)"><option value="0">关闭（不过滤）</option><option value="1">开启</option></select>
+              </div>
+              <div class="settings-field wide">
+                <label>平台 ID 白名单 · 点选群（好友在「私聊」子页勾）</label>
+                <div id="ab_wl_groups" class="chip-wrap"></div>
+              </div>
+              <div class="settings-field wide">
+                <label>平台白名单 · 手动补充</label>
+                <textarea id="ab_wl_extra" rows="2" placeholder="群 ID / UMO，逗号或换行分隔；留空即可" oninput="markDirty()"></textarea>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-field wide">
+                <label>插话白名单 · 点选群（留空 = 所有群）</label>
+                <div id="ab_ar_groups" class="chip-wrap"></div>
+              </div>
+              <div class="settings-field wide">
+                <label>插话白名单 · 手动补充</label>
+                <textarea id="ab_ar_extra" rows="2" placeholder="留空即可" oninput="markDirty()"></textarea>
+              </div>
+              <div class="settings-field wide">
+                <label>插话黑名单 · 手动补充（表里没勾「插嘴」的群会自动进黑名单，这里只放表外的）</label>
+                <textarea id="ab_ar_black_extra" rows="2" placeholder="留空即可" oninput="markDirty()"></textarea>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- ── 子页：私聊 ── -->
+      <div class="members-sub" id="sub-friends">
+        <div class="card" id="fwCard">
+          <h3><span class="ic">🧑‍🤝‍🧑</span>私聊白名单</h3>
+          <div class="card-sub">
+            开关开启后<b>只回复勾选的好友</b>（群消息不受这份名单影响）。
+            改完点右下「💾 保存」，再「🔄 重启 AstrBot」才生效。
+            新好友不在列表里？让对方先发一条消息，再点「🔄 刷新名单」。
+          </div>
+          <div class="settings-row" style="margin-bottom:8px">
+            <div class="settings-field" style="min-width:170px;max-width:210px">
+              <label>开关</label>
+              <select id="fw_enable" onchange="syncWlEnable(this)"><option value="0">关闭（所有私聊都回）</option><option value="1">开启（只回勾选的好友）</option></select>
+            </div>
+            <div class="settings-field" style="flex:1;min-width:200px">
+              <label>搜索好友</label>
+              <input class="search-input" id="fwSearch" style="width:100%" placeholder="🔍 名字 / wxid / UID，输入即筛选" oninput="renderFriendList('fw_friends', currentWhitelist)">
+            </div>
+            <div class="settings-field" style="max-width:120px;align-self:end">
+              <label style="visibility:hidden">.</label>
+              <label class="chip" style="width:100%;justify-content:center"><input type="checkbox" id="fwOnlySel" onchange="renderFriendList('fw_friends', currentWhitelist)"><span class="dot"></span>只看已勾</label>
+            </div>
+          </div>
+          <div class="chip-wrap" id="fw_friends" style="max-height:420px;overflow:auto;border:1px solid #f3d9e1;border-radius:10px;padding:8px"></div>
+          <div class="field-hint" style="margin-top:6px"><span id="fwCount">-</span>　（搜索只筛选显示，不影响已勾选项）</div>
+        </div>
+      </div>
+
+      <!-- ── 子页：管理员 ── -->
+      <div class="members-sub" id="sub-admins">
+        <div class="card">
+          <h3><span class="ic">👑</span>管理员</h3>
+          <div class="card-sub">
+            管理员可用跨群发消息等敏感能力。同一个人在私聊和所有群里是同一个 ID，勾一次全局生效。
+            桥接侧保存后立即生效；AstrBot 侧需重启。
+          </div>
+          <div class="toolbar" style="margin-bottom:8px">
+            <input class="search-input" id="memberSearch" placeholder="🔍 搜名字 / wxid" oninput="renderPeople()">
+            <div class="spacer"></div>
+            <span class="set-note">共 <span id="peopleCount">-</span> 人</span>
+          </div>
+          <div class="tbl-scroll">
+          <table class="member-table">
+            <thead><tr><th style="width:44px" class="center">管理</th><th>昵称</th><th style="width:190px">wxid</th><th>UID（/sid 显示的 ID）</th></tr></thead>
+            <tbody id="peopleBody"><tr><td colspan="4" style="color:#c0aab0">加载中...</td></tr></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
 
     </div>
 
     <div class="save-bar">
-      <span class="save-msg" id="abMsg">✅ 已写入 AstrBot 配置</span>
-      <span class="set-note">管理员立即生效；白名单 / 插话设置需<b style="color:#e65100">重启 AstrBot</b></span>
+      <span class="dirty-dot" id="dirtyDot">● 未保存</span>
+      <span class="save-msg" id="abMsg">✅ 已保存</span>
+      <span class="warn-badge" id="wlRestartWarn">🔴 已保存但还没生效 —— 点「重启 AstrBot」</span>
       <div class="spacer"></div>
-      <button class="btn btn-pink" onclick="saveAstrbotCfg()">💾 保存到 AstrBot</button>
+      <span id="abRestartState" class="field-hint" style="margin:0"></span>
+      <button class="btn btn-outline btn-sm" id="abRestartBtn" onclick="restartAstrbot()">🔄 重启 AstrBot</button>
+      <button class="btn btn-pink" id="abSaveBtn" onclick="saveAll()">💾 保存</button>
     </div>
   </div>
-
 </div>
 </div>
 
@@ -827,21 +842,100 @@ function saveConfig() {
   });
 }
 
-// ===== 成员与权限 =====
+// ===== 成员与权限（2026-10-07 重设计：子页签 + 统一保存） =====
+//
+// 页面结构：三个子页签（群聊 / 私聊 / 管理员）+ 底部统一保存条。
+// 保存语义只有一条规则：「回复」开关立即生效（桥接侧），其余全部
+// 走右下「💾 保存」写入 AstrBot 配置，再「🔄 重启 AstrBot」生效。
 var peopleData = null;
+var peopleDirty = false;          // 有未保存修改（刷新名单前要确认）
+var currentArBlacklist = [];      // 插话黑名单（服务端最近一次值）
+var arOverrides = {};             // gid → 「插嘴」勾选（仅记录用户改动过的行）
 
-function switchTabMembers() {
-  fetch('/api/people').then(function(r){return r.json()}).then(function(d){
-    peopleData = d;
-    document.getElementById('membersBadge').textContent = d.astrbot_available
-      ? ('AstrBot 配置已连接 · ' + d.persons.length + ' 名成员 · ' + d.groups.length + ' 个群')
-      : '⚠️ 未找到 AstrBot 配置: ' + (d.astrbot_error || d.astrbot_path);
-    renderPeople();
-    renderGroups();
-    fillAstrbotForm(d);
-  }).catch(function(e){
-    document.getElementById('membersBadge').textContent = '加载失败: ' + e.message;
+// 当前私聊白名单（uid / UMO 混合）缓存：搜索、「只看已勾」触发局部重渲染
+// 时用它，避免把「面板拉到的旧值」当成「用户正在编辑的新值」丢掉勾选。
+var currentWhitelist = [];
+
+// ---- 子页签 ----
+function switchMembersTab(name) {
+  document.querySelectorAll('#page-members .seg').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-sub') === name);
   });
+  document.querySelectorAll('#page-members .members-sub').forEach(function(p){
+    p.classList.toggle('active', p.id === 'sub-' + name);
+  });
+  try { history.replaceState(null, '', '#members/' + name); } catch (e) {}
+}
+
+// ---- 数据加载 ----
+function switchTabMembers() {
+  document.getElementById('membersBadge').textContent = '加载中...';
+  // 先用缓存立即渲染；再静默补拉一遍 WeFlow 联系人（bot 新进的群/新好友），
+  // 拉到新东西且用户没在编辑时自动重渲染一次。
+  // ⚠️ 不能先等 refresh 再渲染：WeFlow 没起时 refresh 要等 10s 超时，
+  // 整个页签会白屏卡住。
+  fetch('/api/people').then(function(r){return r.json()})
+    .then(loadPeopleData)
+    .catch(function(e){
+      document.getElementById('membersBadge').textContent = '加载失败: ' + e.message;
+    });
+  fetch('/api/refresh-people', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if (res && res.ok && res.new > 0 && !peopleDirty) {
+        fetch('/api/people').then(function(r){return r.json()}).then(loadPeopleData);
+      }
+    })
+    .catch(function(){ /* WeFlow 不可用时静默忽略，缓存照常显示 */ });
+}
+
+function loadPeopleData(d) {
+  peopleData = d;
+  peopleDirty = false;
+  arOverrides = {};
+  updateDirtyHint();
+  document.getElementById('membersBadge').textContent = d.astrbot_available
+    ? (d.persons.length + ' 人 · ' + d.groups.length + ' 群 · AstrBot 已连接')
+    : '⚠️ 未找到 AstrBot 配置: ' + (d.astrbot_error || d.astrbot_path);
+  currentArBlacklist = (d.ar_blacklist || []).map(function(x){return String(x).trim()});
+  renderPeople();
+  renderGroups(true);
+  fillAstrbotForm(d);
+}
+
+// 手动刷新名单：POST /api/refresh-people（后端拉 WeFlow contacts，
+// 群成员名册在后台线程补）→ 重新读 /api/people → 整页重渲染。
+function refreshPeople() {
+  if (peopleDirty && !confirm('有未保存的修改，刷新会丢弃它们。继续？')) return;
+  var btn = document.getElementById('btnRefreshPeople');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 刷新中…'; }
+  fetch('/api/refresh-people', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
+    .then(function(r){return r.json()})
+    .catch(function(e){ return {ok:false, error:String(e)}; })
+    .then(function(res){
+      return fetch('/api/people').then(function(r){return r.json()}).then(function(d){
+        loadPeopleData(d);
+        if (btn) { btn.disabled = false; btn.textContent = '🔄 刷新名单'; }
+        if (res && res.error) toast('⚠️ WeFlow 联系人拉取失败：' + res.error + '（已按缓存显示）', 'error');
+        else if (res && res.new > 0) toast('✅ 已刷新：新增 ' + res.new + ' 条，现在共 ' + d.groups.length + ' 个群', 'success');
+        else toast('✅ 名单已是最新（' + d.groups.length + ' 个群）', 'info');
+      });
+    })
+    .catch(function(e){
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 刷新名单'; }
+      toast('❌ 刷新失败: ' + e.message, 'error');
+    });
+}
+
+// ---- 未保存提示 ----
+function markDirty() {
+  peopleDirty = true;
+  updateDirtyHint();
+}
+
+function updateDirtyHint() {
+  var dot = document.getElementById('dirtyDot');
+  if (dot) dot.classList.toggle('show', !!peopleDirty);
 }
 
 function copyText(text) {
@@ -854,6 +948,7 @@ function copyText(text) {
   toast('已复制: ' + text, 'info');
 }
 
+// ---- 管理员子页 ----
 function renderPeople() {
   if (!peopleData) return;
   var kw = (document.getElementById('memberSearch').value || '').toLowerCase();
@@ -861,54 +956,17 @@ function renderPeople() {
   var rows = '';
   peopleData.persons.forEach(function(p){
     if (kw && p.name.toLowerCase().indexOf(kw) < 0 && p.wxid.toLowerCase().indexOf(kw) < 0) return;
+    var isAdmin = admins.indexOf(p.wxid) >= 0;
     rows += '<tr>'
-      + '<td class="center"><input type="checkbox" data-wxid="' + esc(p.wxid) + '"' + (admins.indexOf(p.wxid) >= 0 ? ' checked' : '') + '></td>'
-      + '<td>' + esc(p.name) + (admins.indexOf(p.wxid) >= 0 ? '<span class="admin-badge">管理员</span>' : '') + '</td>'
+      + '<td class="center"><input type="checkbox" data-wxid="' + esc(p.wxid) + '"' + (isAdmin ? ' checked' : '') + ' onchange="markDirty()"></td>'
+      + '<td>' + esc(p.name) + (isAdmin ? '<span class="admin-badge">管理员</span>' : '') + '</td>'
       + '<td class="wxid">' + esc(p.wxid) + '</td>'
       + '<td class="uid">' + esc(p.uid) + '</td>'
       + '</tr>';
   });
-  document.getElementById('peopleBody').innerHTML = rows || '<tr><td colspan="4" style="color:#c0aab0">没有匹配的成员（名册随消息与启动刷新）</td></tr>';
+  document.getElementById('peopleBody').innerHTML = rows || '<tr><td colspan="4" style="color:#c0aab0">没有匹配的成员（名册随消息与「刷新名单」更新）</td></tr>';
   var cnt = document.getElementById('peopleCount');
   if (cnt) cnt.textContent = peopleData.persons.length;
-}
-
-// 群总表：回复开关（立即生效） + 插嘴（写黑名单，需保存）
-function renderGroups() {
-  if (!peopleData) return;
-  var rows = '';
-  peopleData.groups.forEach(function(g){
-    rows += '<tr>'
-      + '<td class="center" title="勾选=机器人回复该群；取消=完全不掺和（立即生效）">'
-      +   '<label class="switch"><input type="checkbox" data-mute="' + esc(g.session) + '"'
-      +   (g.muted ? '' : ' checked') + ' onchange="toggleMute(this)"><span class="sl"></span></label></td>'
-      + '<td class="center" title="勾选=允许它在没人 @ 时自己插嘴（需保存）">'
-      +   '<input type="checkbox" data-bl="' + esc(g.gid) + '"></td>'
-      + '<td class="gname">' + esc(g.name) + '</td>'
-      + '<td><span class="copy-chip" data-v="' + esc(g.gid) + '" onclick="copyText(this.dataset.v)">' + esc(g.gid) + ' 📋</span></td>'
-      + '<td><span class="copy-chip" data-v="' + esc(g.umo) + '" onclick="copyText(this.dataset.v)">' + esc(g.umo) + ' 📋</span></td>'
-      + '</tr>';
-  });
-  document.getElementById('groupsBody').innerHTML = rows || '<tr><td colspan="5" style="color:#c0aab0">暂无已知群（收到消息后出现）</td></tr>';
-}
-
-function toggleMute(cb) {
-  var session = cb.getAttribute('data-mute');
-  var muted = !cb.checked;
-  fetch('/api/session-toggle', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({session: session, muted: muted}),
-  }).then(function(r){return r.json()}).then(function(res){
-    if (res.ok) {
-      toast(muted ? '🔇 已关闭该群回复（立即生效）' : '🔊 已恢复该群回复（立即生效）', 'success');
-    } else {
-      toast('❌ 操作失败: ' + res.error, 'error');
-      cb.checked = !muted;
-    }
-  }).catch(function(e){
-    toast('❌ 操作失败: ' + e.message, 'error');
-    cb.checked = !muted;
-  });
 }
 
 function scanAdminChecks() {
@@ -925,22 +983,74 @@ function scanAdminChecks() {
   });
 }
 
-function saveAdmins() {
-  scanAdminChecks();
-  var wxids = peopleData.admins.slice();
-  fetch('/api/admins', {
+// ---- 群聊子页 ----
+// 群总表：「回复」开关立即生效；「插嘴」写 arOverrides，随统一保存提交。
+// reset=true  → 忽略 DOM 现状，按服务端黑名单渲染（刚加载数据时）；
+// reset=false → 保住用户未保存的勾选（搜索筛选触发重渲染时）。
+function renderGroups(reset) {
+  if (!peopleData) return;
+  if (reset) arOverrides = {};
+  var kw = ((document.getElementById('groupSearch') || {}).value || '').toLowerCase().trim();
+  var rows = '', shown = 0;
+  peopleData.groups.forEach(function(g){
+    if (kw && g.name.toLowerCase().indexOf(kw) < 0
+        && String(g.gid).indexOf(kw) < 0
+        && String(g.session).toLowerCase().indexOf(kw) < 0) return;
+    shown++;
+    var blOn = arOverrides.hasOwnProperty(String(g.gid))
+      ? arOverrides[String(g.gid)] : !inArBlacklist(g);
+    rows += '<tr>'
+      + '<td class="center" title="关闭 = 完全不理这个群（@ 也不理），立即生效">'
+      +   '<label class="switch"><input type="checkbox" data-mute="' + esc(g.session) + '"'
+      +   (g.muted ? '' : ' checked') + ' onchange="toggleMute(this)"><span class="sl"></span></label></td>'
+      + '<td class="center" title="允许它在没人 @ 时自己插嘴（点右下保存 + 重启 AstrBot 生效）">'
+      +   '<input type="checkbox" data-bl="' + esc(g.gid) + '"' + (blOn ? ' checked' : '')
+      +   ' onchange="onArChange(this)"></td>'
+      + '<td class="gname">' + esc(g.name) + '</td>'
+      + '<td><span class="copy-chip" data-v="' + esc(g.gid) + '" onclick="copyText(this.dataset.v)" title="点击复制群 ID">' + esc(g.gid) + ' 📋</span> '
+      +   '<span class="copy-chip" data-v="' + esc(g.umo) + '" onclick="copyText(this.dataset.v)" title="点击复制完整 UMO">UMO 📋</span></td>'
+      + '</tr>';
+  });
+  document.getElementById('groupsBody').innerHTML = rows
+    || '<tr><td colspan="4" style="color:#c0aab0">'
+    + (kw ? '没有匹配的群' : '暂无已知群 —— bot 被拉进群后点上方「🔄 刷新名单」') + '</td></tr>';
+  var cnt = document.getElementById('groupCount');
+  if (cnt) cnt.textContent = kw ? (shown + ' / ' + peopleData.groups.length + ' 个群')
+                                : (peopleData.groups.length + ' 个群');
+}
+
+function onArChange(cb) {
+  arOverrides[cb.getAttribute('data-bl')] = cb.checked;
+  markDirty();
+}
+
+function inArBlacklist(g) {
+  var bl = currentArBlacklist || [];
+  return bl.indexOf(String(g.gid)) >= 0 || bl.indexOf(g.umo) >= 0 || bl.indexOf(g.session) >= 0;
+}
+
+function toggleMute(cb) {
+  var session = cb.getAttribute('data-mute');
+  var muted = !cb.checked;
+  fetch('/api/session-toggle', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({wxids: wxids}),
+    body: JSON.stringify({session: session, muted: muted}),
   }).then(function(r){return r.json()}).then(function(res){
     if (res.ok) {
-      toast('✅ 管理员已保存' + (res.synced ? '，已写入 AstrBot（重启 AstrBot 后生效）' : '，但写入 AstrBot 失败：' + res.error), res.synced ? 'success' : 'error');
-      peopleData.admins = res.admins;
-      renderPeople();
-    } else { toast('❌ 保存失败', 'error'); }
+      toast(muted ? '🔇 已关闭该群回复（立即生效）' : '🔊 已恢复该群回复（立即生效）', 'success');
+      // 同步进 peopleData，避免搜索重渲染把开关弹回旧状态
+      peopleData.groups.forEach(function(g){ if (g.session === session) g.muted = muted; });
+    } else {
+      toast('❌ 操作失败: ' + res.error, 'error');
+      cb.checked = !muted;
+    }
+  }).catch(function(e){
+    toast('❌ 操作失败: ' + e.message, 'error');
+    cb.checked = !muted;
   });
 }
 
-// 通用：把名单渲染成「群 chip 点选」；点一下选中/取消
+// ---- 群 chip 名单（高级区：平台白名单 / 插话白名单） ----
 function renderNameList(groupsId, extraId, values) {
   var vals = (values || []).map(function(x){return String(x).trim()});
   var host = document.getElementById(groupsId);
@@ -949,9 +1059,9 @@ function renderNameList(groupsId, extraId, values) {
     var hit = vals.indexOf(String(g.gid)) >= 0 || vals.indexOf(g.umo) >= 0 || vals.indexOf(g.session) >= 0;
     html += '<label class="chip' + (hit ? ' on' : '') + '">'
       + '<input type="checkbox" data-gid="' + esc(g.gid) + '"' + (hit ? ' checked' : '')
-      + ' onchange="this.parentNode.classList.toggle(\\'on\\', this.checked)"><span class="dot"></span>' + esc(g.name) + '</label>';
+      + ' onchange="this.parentNode.classList.toggle(\\'on\\', this.checked);markDirty()"><span class="dot"></span>' + esc(g.name) + '</label>';
   });
-  host.innerHTML = html || '<span style="color:#c0aab0;font-size:12px">暂无已知群（收到群消息后出现）</span>';
+  host.innerHTML = html || '<span style="color:#c0aab0;font-size:12px">暂无已知群（点「🔄 刷新名单」拉取）</span>';
   var extra = vals.filter(function(x){
     return !peopleData.groups.some(function(g){
       return x === String(g.gid) || x === g.umo || x === g.session;
@@ -960,7 +1070,6 @@ function renderNameList(groupsId, extraId, values) {
   document.getElementById(extraId).value = extra.join('\\n');
 }
 
-// 通用：收集 chip 勾选 + 手动补充框
 function collectNameList(groupsId, extraId) {
   var out = [];
   document.querySelectorAll('#' + groupsId + ' input[type=checkbox]:checked').forEach(function(cb){
@@ -972,12 +1081,9 @@ function collectNameList(groupsId, extraId) {
   return out;
 }
 
-// 私聊好友白名单：按「好友」渲染 chip（UID 为值、昵称为名），纯点选、无手动框。
-// 与群白名单是**同一份** id_whitelist —— 保存任一视图都会整表覆盖，
-// 所以两边保存时都把另一视图当前勾选合并进来（见 collectFriendWhitelist / saveAstrbotCfg）。
-// 当前白名单（uid 列表）缓存：搜索/只看已勾 触发局部重渲染时用它，
-// 避免把「面板拉到的旧值」当成「用户正在编辑的新值」丢掉勾选。
-var currentWhitelist = [];
+// ---- 私聊白名单（好友 chip） ----
+// 私聊与群白名单是**同一份** id_whitelist —— 保存时统一收集器会把
+// 「好友勾选 + 群勾选」合并后整表覆盖（见 collectFriendWhitelist）。
 
 // 白名单条目 → 私聊 UID（好友勾选状态用）。
 //
@@ -1041,14 +1147,14 @@ function renderFriendList(chipId, values) {
     shown++;
     html += '<label class="chip' + (hit ? ' on' : '') + '">'
       + '<input type="checkbox" data-uid="' + esc(p.uid) + '"' + (hit ? ' checked' : '')
-      + ' onchange="this.parentNode.classList.toggle(\\'on\\', this.checked)"><span class="dot"></span>'
+      + ' onchange="this.parentNode.classList.toggle(\\'on\\', this.checked);markDirty()"><span class="dot"></span>'
       + esc(p.name) + '</label>';
   });
   if (!shown) {
     var kw = kw0();
     html = '<span style="color:#c0aab0;font-size:12px">'
          + (kw ? '没有匹配「' + esc(kw) + '」的好友（换个关键词试试）'
-               : '暂无已知好友 —— 让对方先给你发一条消息，刷新本页就会出现')
+               : '暂无已知好友 —— 让对方先给你发一条消息，再点「🔄 刷新名单」')
          + '</span>';
   }
   host.innerHTML = html;
@@ -1106,25 +1212,84 @@ function collectFriendWhitelist() {
   return out;
 }
 
-function saveFriendWhitelist() {
+// 平台白名单开关的两处下拉（私聊卡 + 高级区）是同一份配置，互相镜像
+function syncWlEnable(el) {
+  var v = el.value;
+  var fw = document.getElementById('fw_enable');
+  var ab = document.getElementById('ab_wl_enable');
+  if (fw) fw.value = v;
+  if (ab) ab.value = v;
+  markDirty();
+}
+
+// ---- 统一保存 ----
+// 一次写入：管理员（/api/admins）+ 私聊/群白名单 + 随机插话（/api/astrbot）。
+// 「插嘴」列取 arOverrides（用户改过的行）∪ 服务端黑名单（没改过的行），
+// 保证被搜索筛掉的群不会被静默改状态。
+function saveAll() {
+  if (!peopleData) { toast('数据还没加载完，稍等一下再保存', 'error'); return; }
+  scanAdminChecks();
+  var bl = [];
+  peopleData.groups.forEach(function(g){
+    var on = arOverrides.hasOwnProperty(String(g.gid))
+      ? arOverrides[String(g.gid)] : !inArBlacklist(g);
+    if (!on) bl.push(String(g.gid));
+  });
+  document.getElementById('ab_ar_black_extra').value.split(/[,，\\n]+/).forEach(function(x){
+    x = x.trim(); if (x) bl.push(x);
+  });
   var body = {
     id_whitelist_enable: document.getElementById('fw_enable').value === '1',
+    // ⚠️ 私聊与群共用同一份 id_whitelist：统一收集器会合并两边勾选，
+    // 并把好友规整成完整 UMO（裸 UID 在私聊里永远匹配不上）。
     id_whitelist: collectFriendWhitelist(),
+    ar_enable: document.getElementById('ab_ar_enable').value === '1',
+    ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
+    ar_whitelist: collectNameList('ab_ar_groups', 'ab_ar_extra'),
+    ar_blacklist: bl,
   };
-  fetch('/api/astrbot', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(body),
-  }).then(function(r){return r.json()}).then(function(res){
-    if (res.ok) {
-      toast('✅ 私聊白名单已保存。⚠️ 必须重启 AstrBot 才生效（它只在启动时读一次名单）', 'success');
+  var btn = document.getElementById('abSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 保存中…'; }
+  Promise.all([
+    fetch('/api/admins', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({wxids: peopleData.admins.slice()})}).then(function(r){return r.json()}),
+    fetch('/api/astrbot', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)}).then(function(r){return r.json()}),
+  ]).then(function(res){
+    if (btn) { btn.disabled = false; btn.textContent = '💾 保存'; }
+    var a = res[0] || {}, c = res[1] || {};
+    if (a.ok && c.ok) {
+      peopleDirty = false;
+      arOverrides = {};
+      currentArBlacklist = bl.slice();
+      updateDirtyHint();
+      if (a.admins) { peopleData.admins = a.admins; renderPeople(); }
+      showMsg('abMsg', '✅ 已保存');
+      if (a.synced === false) {
+        toast('⚠️ 已保存，但管理员写入 AstrBot 失败：' + (a.message || '?'), 'error');
+      } else {
+        toast('✅ 已保存 —— 重启 AstrBot 后生效', 'success');
+      }
       showRestartNeeded();
     } else {
-      toast('❌ 保存失败: ' + res.error, 'error');
+      var errs = [a.error, c.error].filter(Boolean).join('；');
+      showMsg('abMsg', '❌ 保存失败');
+      toast('❌ 保存失败: ' + (errs || '未知错误'), 'error');
     }
+  }).catch(function(e){
+    if (btn) { btn.disabled = false; btn.textContent = '💾 保存'; }
+    showMsg('abMsg', '❌ 保存失败');
+    toast('❌ 保存失败: ' + e.message, 'error');
   });
 }
 
-// 重启 AstrBot：后端后台线程干活，这里轮询状态显示进度。
+// 旧函数名兼容（老文档 / 验证脚本可能引用）：统一走 saveAll
+function saveAdmins() { return saveAll(); }
+function saveFriendWhitelist() { return saveAll(); }
+function saveAstrbotCfg() { return saveAll(); }
+
+// ---- 重启 AstrBot ----
+// 后端后台线程干活，这里轮询状态显示进度。
 // 重启期间桥接会自动断开再重连 AstrBot（ob_client.py 有重连循环），无需干预。
 var _restartTimer = null;
 
@@ -1155,7 +1320,6 @@ function pollRestartState() {
   fetch('/api/astrbot-status').then(function(r){return r.json()}).then(function(s){
     var el = document.getElementById('abRestartState');
     var btn = document.getElementById('abRestartBtn');
-    var icon = {idle:'', stopping:'🛑', starting:'🚀', waiting:'⏳', done:'✅', failed:'❌'}[s.phase] || '';
     if (el) {
       el.textContent = (s.message || '') + (s.listening ? '（端口 ' + s.port + ' 在线）' : '');
       el.style.color = s.phase === 'failed' ? '#c62828'
@@ -1165,8 +1329,7 @@ function pollRestartState() {
       if (btn) { btn.disabled = false; btn.textContent = '🔄 重启 AstrBot'; }
       if (s.phase === 'done') {
         toast('✅ AstrBot 已重启完成', 'success');
-        var w = document.getElementById('wlRestartWarn');
-        if (w) w.style.display = 'none';
+        hideRestartNeeded();
       } else {
         toast('❌ 重启失败：' + (s.message || '看 astrbot_run.log'), 'error');
       }
@@ -1184,7 +1347,16 @@ function endRestartPoller() {
 
 function showRestartNeeded() {
   var el = document.getElementById('wlRestartWarn');
-  if (el) el.style.display = '';
+  if (el) el.classList.add('show');
+  var btn = document.getElementById('abRestartBtn');
+  if (btn) btn.classList.add('need-restart');
+}
+
+function hideRestartNeeded() {
+  var el = document.getElementById('wlRestartWarn');
+  if (el) el.classList.remove('show');
+  var btn = document.getElementById('abRestartBtn');
+  if (btn) btn.classList.remove('need-restart');
 }
 
 function restartAstrbotHint() {
@@ -1192,13 +1364,12 @@ function restartAstrbotHint() {
   return restartAstrbot();
 }
 
+// ---- 表单回填（白名单 / 随机插话 / 高级区） ----
 function fillAstrbotForm(d) {
-  // 高级区
   document.getElementById('ab_wl_enable').value = d.id_whitelist_enable ? '1' : '0';
-  renderNameList('ab_wl_groups', 'ab_wl_extra', d.id_whitelist);
-  // 私聊好友白名单卡片（同一份 id_whitelist，按「好友」视角展示）
   document.getElementById('fw_enable').value = d.id_whitelist_enable ? '1' : '0';
-  // 用服务端值重置缓存（重新拉取时旧编辑作废），再渲染
+  renderNameList('ab_wl_groups', 'ab_wl_extra', d.id_whitelist);
+  // 用服务端值重置缓存（重新拉取时旧编辑作废），再渲染好友 chip
   currentWhitelist = (d.id_whitelist || []).map(function(x){ return String(x).trim(); });
   renderFriendList('fw_friends', currentWhitelist);
   renderNameList('ab_ar_groups', 'ab_ar_extra', d.ar_whitelist);
@@ -1208,59 +1379,19 @@ function fillAstrbotForm(d) {
       return x === String(g.gid) || x === g.umo || x === g.session;
     });
   }).join('\\n');
-  // 全局插话
   document.getElementById('ab_ar_enable').value = d.ar_enable ? '1' : '0';
   document.getElementById('ab_ar_poss').value = d.ar_possibility;
-  // 群总表的「插嘴」列 = 不在黑名单里
-  var bl = (d.ar_blacklist || []).map(function(x){return String(x).trim()});
-  document.querySelectorAll('#groupsBody input[data-bl]').forEach(function(cb){
-    var gid = cb.getAttribute('data-bl');
-    var inBl = bl.indexOf(gid) >= 0
-      || peopleData.groups.some(function(g){
-        if (String(g.gid) !== gid) return false;
-        return bl.indexOf(g.umo) >= 0 || bl.indexOf(g.session) >= 0;
-      });
-    cb.checked = !inBl;
-  });
-  // 白名单非空时提示：表格里的「插嘴」勾选会被白名单收紧
+  // 插话白名单非空时提示：它会收紧表格里的「插嘴」勾选
   var warn = document.getElementById('arWhitelistWarn');
   if ((d.ar_whitelist || []).length) {
     warn.style.display = '';
     warn.className = 'hint-text amber';
-    warn.innerHTML = '⚠️ <b>插话白名单不是空的</b>（高级区里勾了 ' + d.ar_whitelist.length
-      + ' 条）——此时只有白名单里的群会插嘴，表格里的「插嘴」勾选会被它收紧。'
-      + '如果想让表格说了算，去高级区把插话白名单清空。';
+    warn.innerHTML = '⚠️ <b>插话白名单不是空的</b>（高级区勾了 ' + d.ar_whitelist.length
+      + ' 条）—— 只有白名单里的群会插嘴，表格「插嘴」列会被它收紧。'
+      + '想让表格说了算，去高级区把插话白名单清空。';
   } else {
     warn.style.display = 'none';
   }
-}
-
-function saveAstrbotCfg() {
-  // 黑名单 = 表格里没勾「插嘴」的群 + 高级区手动补充的条目
-  var bl = [];
-  document.querySelectorAll('#groupsBody input[data-bl]').forEach(function(cb){
-    if (!cb.checked) bl.push(cb.getAttribute('data-bl'));
-  });
-  document.getElementById('ab_ar_black_extra').value.split(/[,，\\n]+/).forEach(function(x){
-    x = x.trim(); if (x) bl.push(x);
-  });
-  var body = {
-    id_whitelist_enable: document.getElementById('ab_wl_enable').value === '1',
-    // 群视图保存时不能整表覆盖私聊勾选（同一份名单）。直接用统一收集器：
-    // 它已同时合并「好友勾选 + 群勾选」，并输出好友为完整 UMO。
-    id_whitelist: collectFriendWhitelist(),
-    ar_enable: document.getElementById('ab_ar_enable').value === '1',
-    ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
-    ar_whitelist: collectNameList('ab_ar_groups', 'ab_ar_extra'),
-    ar_blacklist: bl,
-  };
-  fetch('/api/astrbot', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(body),
-  }).then(function(r){return r.json()}).then(function(res){
-    showMsg('abMsg', res.ok ? '✅ 已写入（重启 AstrBot 后生效）' : '❌ ' + res.error);
-    toast(res.ok ? '✅ 已写入 AstrBot 配置' : '❌ 写入失败: ' + res.error, res.ok ? 'success' : 'error');
-  });
 }
 
 // ===== 自动获取机器人身份 =====
@@ -1307,9 +1438,12 @@ function detectBot(auto) {
 }
 
 // ===== 初始化 =====
-// 支持 #settings / #members 深链：刷新后停留在原页签
-var startTab = (location.hash || '').replace('#', '');
+// 支持 #settings / #members / #members/friends 深链：刷新后停留在原页签与子页签
+var startHash = (location.hash || '').replace('#', '');
+var startTab = startHash.split('/')[0];
+var startSub = startHash.split('/')[1];
 switchTab(['dashboard', 'settings', 'members'].indexOf(startTab) >= 0 ? startTab : 'dashboard');
+if (['groups', 'friends', 'admins'].indexOf(startSub) >= 0) switchMembersTab(startSub);
 refreshDashboard();
 setInterval(refreshDashboard, 3000);
 loadExitReason();
@@ -1482,6 +1616,28 @@ class WebHandler(BaseHTTPRequestHandler):
                 state.set_session_muted(session, muted)
                 log.info(f"[Web] 会话 {session} 回复已{'关闭' if muted else '开启'}")
                 self.send_json({"ok": True, "session": session, "muted": muted})
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+        elif self.path == "/api/refresh-people":
+            # 立即从 WeFlow 补拉联系人/群缓存。
+            # 场景：把 bot 拉进新群后，面板「群里管什么」表要马上能看到它，
+            # 而不是等桥接重启或 10 分钟定时刷新（2026-10-07 用户报障）。
+            try:
+                import bridge_core
+                n, total, err = bridge_core.refresh_contact_names()
+                # 群成员名册慢（每群一个请求），放后台线程补，不阻塞面板响应
+                inst = getattr(state, "bridge_instance", None)
+                if inst is not None:
+                    threading.Thread(target=inst._prefetch_group_rosters,
+                                     daemon=True).start()
+                self.send_json({
+                    "ok": not err,
+                    "new": n,
+                    "total_chats": total,
+                    "groups": len(state.known_groups()),
+                    "persons": len(state.all_persons()),
+                    "error": err,
+                })
             except Exception as e:
                 self.send_json({"ok": False, "error": str(e)}, 500)
         elif self.path == "/api/astrbot-restart":

@@ -22,8 +22,13 @@
   （`platform_settings.id_whitelist`）没包含对方：AstrBot 的
   `WhitelistCheckStage` 只在**启动时**读一次名单，不在名单里的会话在
   pipeline 第一阶段就被丢弃（日志搜 `not in the session allowlist`）。
-  面板「成员与权限 → 高级 → 私聊白名单」可视化增删（好友 chip 点选），
+  面板「成员与权限 → 私聊子页」可视化增删（好友 chip 点选），
   保存后**需重启 AstrBot**。桥接侧的群静音（muted_sessions.json）是另一层，别混淆。
+- ⚠️ **bot 被拉进新群后面板看不到**：群列表来自 WeFlow `/api/v1/contacts`
+  缓存（`state._chat_names`），桥接启动时拉一次 + 每 10 分钟补拉
+  （`bridge_core.refresh_contact_names`）；面板「成员与权限」右上
+  「🔄 刷新名单」可立即补拉（`POST /api/refresh-people`）。
+  名册循环 `_prefetch_group_rosters` 只遍历已知群，**不会**发现新群。
 
 ## 1. 模块职责
 

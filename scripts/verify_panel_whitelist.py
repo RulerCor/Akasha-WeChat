@@ -36,6 +36,12 @@ def main():
             except Exception:
                 continue
         pg.wait_for_timeout(1500)
+        # 2026-10-07 页面重设计后，白名单在「私聊」子页签里
+        try:
+            pg.locator("#page-members .seg[data-sub='friends']").click(timeout=3000)
+        except Exception:
+            pass
+        pg.wait_for_timeout(400)
 
         # 白名单卡片必须存在
         card = pg.locator("#fw_friends")

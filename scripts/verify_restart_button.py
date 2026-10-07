@@ -63,7 +63,9 @@ def main():
                     continue
             pg.wait_for_timeout(1200)
 
-        # 按钮在「私聊白名单」卡片里；该卡片所在折叠区可能默认收起 → 先展开
+        # 2026-10-07 重设计后：按钮在底部统一保存条（常驻可见）；
+        # 截图背景切到「私聊」子页签，顺带展开折叠区
+        pg.evaluate("switchMembersTab('friends')")
         pg.evaluate("document.querySelectorAll('details.tier').forEach(d => d.open = true)")
         pg.wait_for_timeout(400)
 

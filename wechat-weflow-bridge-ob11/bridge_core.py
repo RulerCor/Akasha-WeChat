@@ -79,6 +79,38 @@ def _resolve_display_name(raw: str, fallback_contact: str = "") -> str:
     return raw or fallback_contact
 
 
+def refresh_contact_names() -> tuple:
+    """从 WeFlow /api/v1/contacts 全量刷新 联系人/群 → 显示名 缓存。
+
+    返回 (本次新增条数, 缓存总条数, 错误信息或空串)。
+
+    为什么是模块级函数而不是只放在 WeFlowBridge 里（2026-10-07）：
+      ① 面板「成员与权限」的 /api/refresh-people 要在**桥接未启动**时也能
+         拉新群 —— 用户把 bot 拉进新群后立刻打开面板，就该看到它；
+      ② 后台 10 分钟名册刷新循环先调它，捕捉「启动后新加入的群」。
+      以前只有启动时拉一次 contacts，新群若一直没人发言就永远进不了
+      known_groups()，面板「群里管什么」表也就永远不出现这个群（用户报障）。
+    """
+    try:
+        url = f"{config.WE_FLOW_BASE_URL}/api/v1/contacts"
+        resp = requests.get(url, params={"access_token": config.ACCESS_TOKEN},
+                            timeout=10)
+        items = resp.json() if resp.status_code == 200 else []
+        if isinstance(items, dict):
+            items = items.get("contacts") or items.get("items") or []
+        n = 0
+        for it in items or []:
+            if not isinstance(it, dict):
+                continue
+            username = it.get("username", "")
+            name = it.get("displayName") or it.get("nickname") or ""
+            if state.set_chat_name(username, name):
+                n += 1
+        return n, len(state.all_chat_names()), ""
+    except Exception as e:
+        return 0, len(state.all_chat_names()), str(e)
+
+
 # ============ 桥接核心 ============
 
 
@@ -218,24 +250,14 @@ class WeFlowBridge:
         WeFlow 的 SSE 推送偶发缺失 groupName / sourceName（部分群、系统消息），
         没有这份缓存时桥接会把 xxx@chatroom 当群名发出去，AstrBot 面板就会
         显示原始 ID。预取失败不影响启动——后续消息仍会增量回写缓存。
+
+        实际抓取逻辑在模块级 refresh_contact_names()（面板与定时刷新共用）。
         """
-        try:
-            url = f"{config.WE_FLOW_BASE_URL}/api/v1/contacts"
-            resp = requests.get(url, params={"access_token": config.ACCESS_TOKEN}, timeout=10)
-            items = resp.json() if resp.status_code == 200 else []
-            if isinstance(items, dict):
-                items = items.get("contacts") or items.get("items") or []
-            n = 0
-            for it in items or []:
-                if not isinstance(it, dict):
-                    continue
-                username = it.get("username", "")
-                name = it.get("displayName") or it.get("nickname") or ""
-                if state.set_chat_name(username, name):
-                    n += 1
-            log.info(f"📇 联系人名称缓存已预取（本次新增 {n} 条，共 {len(state._chat_names)} 条）")
-        except Exception as e:
-            log.warning(f"联系人名称预取失败（不影响运行，靠消息流增量补充）: {e}")
+        n, total, err = refresh_contact_names()
+        if err:
+            log.warning(f"联系人名称预取失败（不影响运行，靠消息流增量补充）: {err}")
+        else:
+            log.info(f"📇 联系人名称缓存已预取（本次新增 {n} 条，共 {total} 条）")
 
     def _prefetch_group_rosters(self):
         """拉取所有已知群的成员名册（wxid ↔ 昵称），支撑「同人同 ID」。
@@ -278,11 +300,25 @@ class WeFlowBridge:
             log.debug(f"UMO 别名同步跳过: {e}")
 
     def _roster_refresh_loop(self):
-        """后台定时刷新群名册（守护线程，10 分钟一轮）。"""
+        """后台定时刷新（守护线程，10 分钟一轮）：
+        先补拉 contacts（捕捉启动后新加入的群/新好友），再刷群成员名册。
+
+        ⚠️ 只刷名册不拉 contacts 是不够的：名册遍历的是 known_groups()，
+        而它来自 contacts 缓存 —— 新群若没人发言就永远不会被名册循环看到，
+        面板「群里管什么」表也不会出现它（2026-10-07 用户报障）。
+        """
         while state.running:
             time.sleep(600)
             if not state.running:
                 break
+            try:
+                n, _total, err = refresh_contact_names()
+                if n:
+                    log.info(f"📇 联系人缓存定时刷新：新增 {n} 条（含新群/新好友）")
+                elif err:
+                    log.debug(f"联系人缓存定时刷新失败（下轮重试）: {err}")
+            except Exception as e:
+                log.debug(f"联系人缓存定时刷新异常（下轮重试）: {e}")
             try:
                 self._prefetch_group_rosters()
             except Exception as e:

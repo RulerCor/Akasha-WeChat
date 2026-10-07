@@ -17,6 +17,12 @@ with sync_playwright() as p:
         except Exception:
             continue
     pg.wait_for_timeout(1200)
+    # 2026-10-07 页面重设计后，白名单在「私聊」子页签里
+    try:
+        pg.locator("#page-members .seg[data-sub='friends']").click(timeout=3000)
+    except Exception:
+        pass
+    pg.wait_for_timeout(400)
     pg.locator("#fw_friends").wait_for(state="visible", timeout=8000)
 
     # 只看已勾 → 列表里只剩选中的 3 人
