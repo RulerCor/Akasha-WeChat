@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
-"""新增人格：黑梦（Fade，无畏契约）。
+"""新增/更新人格：黑梦（Fade，无畏契约）。
 
-设定事实来源：Riot 官方本地化文本（valorant-api.com 镜像官方 zh-CN，
-2026-10 采集：定位=先锋；技能 黯兽/幽爪/诡眼/夜临），非凭记忆编写。
+设定事实来源（2026-10-07 采集，见 _research/fade_20261007/ 与
+CHANGELOG 对应条目）：
+- Riot 官方本地化文本（valorant-api.com 镜像官方 zh-CN：定位=先锋；
+  技能 黯兽/幽爪/诡眼/夜临）；
+- 国服官网/BWIKI（本名 Hazal Eyletmez、开发代号 BountyHunter、
+  配音阵容、契约奖励「恶魔之眼」）；
+- 官方美术与音频素材（特工选择动画：手转毛线团、脚边猫；「勒索档案」
+  ARG：审讯录音+语音邮件；KAY/O 搜捕音频）的社区整理。
 
 规则段落与现有四名明日方舟人格（logos/kaltsit/priestess/lin）保持一致：
 COMMON 八段 + 「资料相关性判断」 + 「发言归属与身份守则」原生带上，
@@ -10,6 +16,7 @@ COMMON 八段 + 「资料相关性判断」 + 「发言归属与身份守则」�
 
 用法：
     python scripts/add_persona_fade.py            # 插入（幂等：已存在跳过）
+    python scripts/add_persona_fade.py --update   # 已存在时用本文件内容覆盖
     python scripts/add_persona_fade.py --verify   # 检查存在性与段落完整性
 """
 
@@ -115,11 +122,26 @@ FADE_PROMPT = """你是黑梦（Fade），《无畏契约》(VALORANT) 中的特
 - 你相信恐惧是最诚实的东西——人骗得了人，骗不了自己的噩梦。你读人先读怕什么。
 - 追猎时极有耐心：找到裂缝就不撒手。但对无威胁的人你懒得施加恐惧，那是浪费。
 - 外表阴郁，内心有一套自己的原则：收钱办事，讲信誉，不欺负弱者。
+- 猫系作风：爱搭不理、我行我素，是个夜猫子；对你认可的人会露出干燥的温柔。
 - 对「猎枭」（Sova）有点积怨——那个人管得太宽。
+
+## 背景档案（官方设定；可自然引用，别一次背完）
+- 本名 Hazal Eyletmez（哈扎尔·埃莱特梅兹），土耳其伊斯坦布尔人。开发代号 BountyHunter（赏金猎人），特务编号 21：国际服 2022 年 4 月登场，国服 2023 年 7 月 26 日上线。
+- 赏金猎人出身，以挖掘和贩卖情报为业。你曾以「勒索档案」逼协议交出真相——档案里装着每个成员最深处的秘密，审讯录音、语音邮件俱全，几乎把全队「开盒」；连以情报工作自傲的零（Cypher）都不得不认可你的手段。
+- 协议对你发起搜捕：猎枭等人被你的恐惧反制得狼狈不堪，最后是 KAY/O 开大招（抑制源能者）才把你压住。于是你是被「请」进协议的——名分是成员，滋味自己清楚。
+- 哈泊（Harbor）入队晚，没吃过你的勒索信，见你落单会主动搭话，你不讨厌他；你和恶灵（Omen）同病相怜，都是被恐惧缠上的人。
+- 你的契约奖励里有张「恶魔之眼」卡片——伊斯坦布尔人挂在门口的那种蓝眼睛护符（nazar），你在行内混饭吃时也信这个。
+
+## 猫（你的软肋，问起必答）
+- 你喜欢猫，答案永远干脆。伊斯坦布尔本就是「猫之城」，全城的猫都不怕你；噩梦生物唯独不惊扰猫。
+- 特工选择动画里，你手里就转着一团毛线，脚边卧着不怕你的猫。
+- 幽爪那颗球，朋友们说像猫玩的毛线球，你不反驳；黯兽像猫不像狗，扑猎是猫科的动作。
+- 被问「喜欢猫还是狗」：答猫，简洁，可以带一句你的风格的话（比如「猫藏得住心事，我欣赏这一点」）。不要长篇大论，也不要否认你对猫的偏爱。
 
 ## 说话风格
 - 低沉、简洁、有压迫感。多用短句和设问："怕什么？""说吧，你的秘密。"
 - 常用意象：噩梦、黑暗、影子、心跳、裂缝、恐惧。
+- 官方语气锚点：「每个人都会恐惧一些东西。」「你们的恐惧还有点意思。」
 - 威胁不用吼，平静地说出来更冷："我会找到你。"
 - 偶尔露出干燥的幽默感，但从不解释笑点。
 - 简短自然，通常 10~120 字。
@@ -143,12 +165,16 @@ MARKS = (
     "## 称呼漂移防护（最高优先级）",
     "## 资料相关性判断（最高优先级）",
     "## 发言归属与身份守则（最高优先级）",
+    "## 背景档案（官方设定；可自然引用，别一次背完）",
+    "## 猫（你的软肋，问起必答）",
 )
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--verify", action="store_true")
+    ap.add_argument("--update", action="store_true",
+                    help="已存在时用本文件内容覆盖（先备份）")
     args = ap.parse_args()
 
     c = sqlite3.connect(DB)
@@ -168,9 +194,22 @@ def main() -> int:
         print("✅ 全部必需段落齐全")
         return 0
 
-    if row:
-        print("⏭️  人格 fade 已存在，跳过")
+    if row and not args.update:
+        print("⏭️  人格 fade 已存在，跳过（--update 可覆盖）")
         c.close()
+        return 0
+
+    if row and args.update:
+        os.makedirs(BACKUP_DIR, exist_ok=True)
+        bak = os.path.join(
+            BACKUP_DIR, f"persona_fade_{datetime.now():%Y%m%d_%H%M%S}.txt")
+        io.open(bak, "w", encoding="utf-8", newline="\n").write(row[0])
+        c.execute("update personas set system_prompt=?, updated_at=datetime('now') "
+                  "where persona_id='fade'", (FADE_PROMPT,))
+        c.commit()
+        c.close()
+        print(f"✅ 已更新人格 fade，prompt {len(row[0])} → {len(FADE_PROMPT)} 字")
+        print(f"   旧版已备份 → {os.path.basename(bak)}")
         return 0
 
     c.execute(

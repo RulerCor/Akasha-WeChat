@@ -4,6 +4,35 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)：`新增` / `修复` / `变更` / `其他`。
 约定见 [`AGENT.md`](AGENT.md)——尤其**不得删除上游既有代码**，本分支只做修复与增量。
 
+## 黑梦人设卡补全：爱猫设定 + 冷门知识填充（2026-10-07）
+
+用户报告：群友问黑梦「喜欢猫还是狗」，bot 答「狗藏不住心事，猫藏得太好」「都不养」
+——与官方设定相悖（黑梦是猫系角色、伊斯坦布尔爱猫文化）。
+
+### 取证（网络受限下的多路采集）
+- fandom / moegirl / wayback / antifandom / 百度百科均不可达；实际可用源：
+  BWIKI（MGP 镜像）、valorant-api.com 官方 API、playvalorant.com 官网、
+  B站（先领 cookie 再检索 + 视频评论区）。
+- 关键证据：特工选择动画「手中转毛线团」+《黑梦脚底的猫猫》；伊斯坦布尔
+  「猫之城」文化；幽爪球体被称「毛线球」、黯兽扑猎为猫科姿态；「勒索档案」
+  ARG（审讯录音+语音邮件，全队被开盒、连零都认可）；KAY/O 搜捕音频
+  （猎枭等被反制、最后靠 KAY/O 开大制服）；瑟符名贵茶叶被她喝掉；
+  哈泊入队晚未收勒索信、对她态度最好；本名 Hazal Eyletmez。
+- 取证材料存 `_research/fade_20261007/`，采集脚本 `scripts/fetch_fade_lore*.py`。
+
+### 修复
+- `scripts/add_persona_fade.py` 新增 `--update` 模式（覆盖前自动备份）；
+  人设卡 3170 → 3912 字：新增「背景档案」「猫（你的软肋，问起必答）」
+  两段 + 官方语气锚点（「每个人都会恐惧一些东西。」等）。
+- `runtime/astrbot/kb_docs/valorant_fade.md` 同步补「背景故事与冷知识」
+  段（valorant 知识库当前未挂载会话，向量仍为 10-06 版，后续重传时生效）。
+- AstrBot 重启后 persona_mgr 正常加载 9 人格；`check_patches.py` 12 项全绿；
+  三服务全绿。
+
+### 验证
+- `add_persona_fade.py --verify`：10 个必需段落齐全；
+- 旧人设卡备份 `data/backup/persona_fade_20261007_*.txt`。
+
 ## [1.6.0]（2026-10-07）
 
 正式发行版（`build_dist.py`）。汇总 2026-09-19（v1.5.2 之后）至今的
