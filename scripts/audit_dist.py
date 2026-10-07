@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""发行版最终审计：隐私 / 人格 / 启动器 / 安装包 / 四项改动。"""
+"""发行版最终审计：隐私 / 人格 / 启动器 / 安装包 / 关键改动回归。
+
+默认审计 release/dist 里**最新**的 zip（按修改时间），也可显式传路径：
+    python scripts/audit_dist.py
+    python scripts/audit_dist.py release/dist/Akasha_...-v1.6.0.zip
+"""
 import json
 import os
 import sqlite3
@@ -9,12 +14,21 @@ import zipfile
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-ZIP = "release/dist/Akasha_RulerCordelius-Wechatbot-v1.5.1.zip"
+DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    "release", "dist")
+if len(sys.argv) > 1:
+    ZIP = sys.argv[1]
+else:
+    cands = [os.path.join(DIST, f) for f in os.listdir(DIST)
+             if f.endswith(".zip")]
+    if not cands:
+        raise SystemExit("❌ release/dist 里没有 zip")
+    ZIP = max(cands, key=os.path.getmtime)
 z = zipfile.ZipFile(ZIP)
 N = z.namelist()
 
 print("=" * 62)
-print("v1.5.1 发行版最终审计")
+print(f"发行版最终审计：{os.path.basename(ZIP)}")
 print("=" * 62)
 print(f"条目数: {len(N)}   大小: {os.path.getsize(ZIP)/1048576:.1f} MB")
 print()
@@ -90,16 +104,22 @@ for n in N:
     if "/installers/" in n and n.lower().endswith((".exe", ".zip")):
         print(f"  ✅ {n.split('/')[-1]}  ({z.getinfo(n).file_size/1048576:.0f} MB)")
 
-# 8) 四项改动
+# 8) 关键改动回归（历史 + 本版）
 print()
-print("=== 8) 今晚四项改动 ===")
+print("=== 8) 关键改动回归 ===")
 checks = [
-    ("一键重启按钮", "akasha/web_panel.py",
+    ("一键重启按钮（v1.5.0）", "akasha/web_panel.py",
      ["abRestartBtn", "restartAstrbot", "api/astrbot-restart", "api/astrbot-status"]),
-    ("进程控制模块", "akasha/astrbot_ctl.py",
+    ("进程控制模块（v1.5.2）", "akasha/astrbot_ctl.py",
      ["DETACHED_PROCESS", "find_astrbot_pids", "restart_async", "_astrbot_root", "astrbot.lock"]),
-    ("白名单显示修复", "akasha/web_panel.py", ["wlEntryToUid", "wlUidSet"]),
-    ("白名单规整去重", "akasha/people.py", ["normalize_whitelist_entries", "covered_uids"]),
+    ("白名单显示修复（v1.5.0）", "akasha/web_panel.py", ["wlEntryToUid", "wlUidSet"]),
+    ("白名单规整去重（v1.5.0）", "akasha/people.py", ["normalize_whitelist_entries", "covered_uids"]),
+    ("消息统一解析层（v1.6.0）", "akasha/bridge_core.py", ["wx_msg_parser"]),
+    ("SVG 假成功修复（v1.6.0）", "akasha/ob_protocol.py",
+     ["_decode_base64_image", "send_file"]),
+    ("卡片 16MB 收帧上限（v1.6.0）", "akasha/ob_client.py",
+     ["max_size=16 * 1024 * 1024"]),
+    ("退出归因（v1.5.2）", "akasha/exit_reason.py", ["set_phase", "exit_reason.log"]),
 ]
 ok_all = True
 for label, rel, kws in checks:
@@ -111,6 +131,22 @@ for label, rel, kws in checks:
     print(f"  {'✅' if not miss else '❌'} {label}" + (f"  缺 {miss}" if miss else ""))
     if miss:
         ok_all = False
+
+# 8b) 版本一致性
+print()
+print("=== 8b) 版本一致性 ===")
+try:
+    ver_in_zip = z.read([n for n in N if n.endswith("akasha/VERSION")][0]) \
+                   .decode("utf-8").strip()
+    ver_name = os.path.basename(ZIP)
+    ok_ver = f"v{ver_in_zip}" in ver_name
+    print(f"  包内 VERSION: {ver_in_zip}  文件名: {ver_name}  "
+          f"{'✅' if ok_ver else '❌ 不一致'}")
+    if not ok_ver:
+        ok_all = False
+except (IndexError, KeyError):
+    print("  ❌ 包内没有 akasha/VERSION")
+    ok_all = False
 
 # 9) 使用说明含白名单坑
 t = z.read([n for n in N if n.endswith("使用说明.md")][0]).decode("utf-8")

@@ -184,7 +184,7 @@ Akasha-WeChat-vX.Y.Z/
 
 | 保留 ✅ | 删除 ❌ |
 |---|---|
-| 三个人格（软件资产，可开源） | 全部 API Key / 面板口令 / jwt_secret |
+| 全部角色人格（软件资产，可开源） | 全部 API Key / 面板口令 / jwt_secret |
 | 普通知识库文档（`kb_docs/*.md`） | 向量知识库（`doc.db` / `index.faiss`） |
 | AstrBot 框架与依赖 | 聊天历史 / 会话映射 / 定时任务 / 好友群名单 |
 
@@ -212,3 +212,4 @@ Akasha-WeChat-vX.Y.Z/
 ## 致谢
 
 上游 [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 以及 [AstrBot](https://github.com/AstrBotDevs/AstrBot)、[WeFlow](https://weflow.top)。
+
