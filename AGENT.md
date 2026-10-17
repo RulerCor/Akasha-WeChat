@@ -96,6 +96,12 @@
 - 删除/替换任何过滤逻辑时，记得保留 `_log_skip()` 日志，否则被丢弃的消息会静默消失，排查时极难定位
 
 **运行**
+- **一键启动已幂等化（2026-10-17）**：`一键启动.bat` 按端口/进程探测，
+  在跑的服务自动跳过（WeFlow 经 RunAsDate 冻结 2026-09-30 启动）。守护
+  `watch_services.py` 现在管 AstrBot / 桥接 / WeFlow 三个；守护拉起 WeFlow
+  只走 RunAsDate，组件缺失只报警不裸启。⚠️ 在 Git Bash 里手工验证
+  findstr / tasklist / cmd /c 时引号会被 MSYS 吃掉产生误报（本次实测把
+  在跑的 WeFlow 误判成没跑），要用 cmd 原生或 Python subprocess。
 - **⚠️ 由 AI/自动化启动长驻服务时必须清空 `PYTHONPATH`**（2026-09-14 实测）：
   工具环境里 `PYTHONPATH` 指向一个 shim 目录，其中 `sitecustomize.py` 会拦截
   `os.remove()`；AstrBot 清理临时文件时触发其批量删除保护，被 `SystemExit(1)`
@@ -176,6 +182,18 @@
   ① 当客观资料用、不许说成自己的经历/回忆；② 正常回复里不出现"知识库/资料库/检索/文档"字样；
   ③ 用户**直接问起**来源时如实说明，不要硬躲。
   补丁：`scripts/patch_kb_wording.py`（三处 AstrBot 文件）+ `scripts/patch_persona_kb_framing.py`（人设三条规则）。
+
+- **KB 导入必须逐篇串行 + 完成后对账**：AstrBot 的上传是后台任务，每个任务各自
+  「读 index.faiss → 加向量 → 写回」，**并发时后者整体覆盖前者**——persona3 曾因此丢
+  75/107 块、valorant 首次导入 37 块只剩 9。所有 `scripts/import_*_kb.py` 都必须保持
+  「上传 → 轮询 tasks/{id} 到 completed/failed → 下一篇 → 对账 kb.chunk_count=docdb=faiss」
+  结构，改脚本时别把等待逻辑"优化"掉。对账脚本直接以只读 URI 打开
+  `data/knowledge_base/{kb_id}/doc.db` 与 `index.faiss`（faiss.read_index().ntotal）。
+- **抓 BWIKI（wiki.biligame.com）要走 MediaWiki API**：动态渲染页面直接抓 HTML 只有
+  导航壳；用 `api.php?action=parse&page=…&prop=text&formatversion=2` 拿渲染后正文。
+  连续高频请求会触发限流（fs-quality-fetch 报 403/超时），错峰或分批。萌百/PRTS 的
+  条目 URL 用**全角冒号**（`明日方舟：终末地`），半角冒号 404。灰机wiki / wiki.gg
+  对非浏览器抓取 403，别死磕。
 
 ## 4. 怎么验证
 

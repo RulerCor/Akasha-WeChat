@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-"""watch_services.py — Akasha 双服务守护（探活 + 自动拉起）。
+"""watch_services.py — Akasha 三服务守护（探活 + 自动拉起）。
 
 ## 管什么、不管什么
 
-* **管**：AstrBot（6185+11229）、桥接（8766）—— 这两个是生产服务，挂了必须拉起。
+* **管**：AstrBot（6185+11229）、桥接（8766）、WeFlow（5031）—— 生产服务，挂了必须拉起。
+* WeFlow 的拉起**只能经 RunAsDate**（进程内时钟冻结在 2026-09-30，绕过
+  wcdb_api.dll 的 -101 授权时间炸弹，见 docs/WeFlow时间回拨启动套件.md）。
+  RunAsDate 或 WeFlow.exe 缺失时守护只报警、**绝不**裸启 WeFlow.exe。
+  用户手动退出 WeFlow 也会被守护重新拉起 —— 想停就先关守护窗口。
 * **不管**：模拟器（sim_wechat.py, :8767）。它会在 OneBot WS 上与真桥接
   **抢 AstrBot 的回复路由**，导致微信侧"发消息没反应"（事故 2026-09-20）。
   要用模拟器请手动 `sim/start_sim.bat`，用完即关。
@@ -86,6 +90,47 @@ SERVICES = [
 # 即为此类冲突。
 
 
+# ---- WeFlow（必须经 RunAsDate 时间回拨启动，见 SERVICES 下方说明）----
+# WeFlow 上游 wcdb_api.dll 内置授权时间炸弹：真实时间越过 2026-10-01 后
+# 数据库层整体不可用（InitProtection 返回 -101）。RunAsDate 把 WeFlow 进程
+# 内时钟静态冻结在到期点之前，系统时钟不受影响。守护拉起 WeFlow 时必须走
+# 这条路；组件缺失就只报警，绝不裸启 WeFlow.exe（裸启=定时炸弹复活）。
+RUNASDATE_EXE = os.path.join(ROOT, "vendor", "runasdate", "RunAsDate.exe")
+WEFLOW_FAKE_DAY = "30\\09\\2026"     # RunAsDate 参数格式：dd\mm\yyyy
+WEFLOW_FAKE_TIME = "12:00:00"
+
+
+def _find_weflow_exe():
+    """WeFlow.exe 常见安装位置，按序探测。"""
+    cands = [
+        os.path.join(ROOT, "vendor", "weflow", "WeFlow.exe"),
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "WeFlow", "WeFlow.exe"),
+    ]
+    for p in cands:
+        if p and os.path.isfile(p):
+            return p
+    return None
+
+
+WEFLOW_EXE = _find_weflow_exe()
+# cmd=None 表示缺组件（RunAsDate / WeFlow.exe），spawn 时只报警不拉起
+WEFLOW_CMD = (
+    [RUNASDATE_EXE, "/immediate", WEFLOW_FAKE_DAY, WEFLOW_FAKE_TIME, WEFLOW_EXE]
+    if WEFLOW_EXE and os.path.isfile(RUNASDATE_EXE) else None
+)
+
+
+SERVICES.append(dict(
+    name="WeFlow",
+    ports=(5031,),
+    cmd=WEFLOW_CMD,          # None = 缺 RunAsDate / WeFlow.exe，spawn 只报警
+    cwd=os.path.dirname(WEFLOW_EXE) if WEFLOW_EXE else ROOT,
+    log=os.path.join(ROOT, "runtime", "bridge", "weflow_watchdog.log"),
+    grace=120,               # 十来个进程 + 建库，实测启动约 25s，给足余量
+    probe_host="127.0.0.1",
+))
+
+
 def log(msg):
     line = f"{time.strftime('%m-%d %H:%M:%S')} {msg}"
     print(line, flush=True)
@@ -111,8 +156,37 @@ def alive(svc):
     return all(port_alive(p, svc["probe_host"]) for p in svc["ports"])
 
 
+def process_running(image):
+    """指定映像名的进程是否在跑。None = 查询失败（调用方保守处理）。"""
+    try:
+        out = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {image}"],
+            capture_output=True, text=True, timeout=15,
+        ).stdout or ""
+    except Exception:
+        return None
+    return image.lower() in out.lower()
+
+
 def spawn(svc):
     """拉起一个服务（追加写它自己的日志，和手工启动的日志格式一致）。"""
+    # 命令二选一：python+args（AstrBot / 桥接）或现成 cmd（WeFlow 经 RunAsDate）
+    cmd = svc.get("cmd")
+    if cmd is None and svc.get("python"):
+        cmd = [svc["python"], *svc["args"]]
+    if not cmd:
+        log(f"  ❌ {svc['name']}：无法构造启动命令（组件缺失），跳过拉起，请手动处理")
+        return False
+    if svc["name"] == "WeFlow":
+        # WeFlow.exe 进程还在但 5031 不通 = 卡死/弹窗中，再拉会双开，只报警
+        running = process_running("WeFlow.exe")
+        if running:
+            log(f"  ⚠️ WeFlow.exe 进程存在但 {svc['ports']} 不通，不重复拉起"
+                f"（先手动退出旧实例，守护下一轮会接手）")
+            return False
+        if running is None:
+            log("  ⚠️ 无法确认 WeFlow.exe 是否在运行，保守跳过本轮拉起")
+            return False
     env = dict(os.environ)
     env["PYTHONPATH"] = ""                      # 铁律 1：必须清空（shim 会拦 os.remove）
     env["PYTHONUNBUFFERED"] = "1"
@@ -124,7 +198,7 @@ def spawn(svc):
         return False
     try:
         subprocess.Popen(
-            [svc["python"], *svc["args"]],
+            cmd,
             cwd=svc["cwd"], env=env, stdout=fh, stderr=subprocess.STDOUT,
             creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
         )
@@ -143,10 +217,25 @@ def main():
 
     log(f"=== Akasha 守护启动 | 项目: {ROOT} | 间隔 {args.interval}s | {'仅体检' if args.once else '自动拉起'} ===")
     for svc in SERVICES:
-        log(f"  目标 {svc['name']}: 端口 {svc['ports']} | 解释器 {os.path.relpath(svc['python'], ROOT)}")
+        if svc.get("python"):
+            how = os.path.relpath(svc["python"], ROOT)
+        elif svc.get("cmd"):
+            how = "RunAsDate 时间回拨" if svc["name"] == "WeFlow" else " ".join(svc["cmd"])
+        else:
+            how = "组件缺失，仅报警"
+        log(f"  目标 {svc['name']}: 端口 {svc['ports']} | 启动方式 {how}")
 
     last_launch = {}                 # name -> 上次拉起时间
     status = {}                      # name -> 上次报告的存活状态（只在变化时打印，避免刷屏）
+
+    # 启动宽限：守护启动时就不在线的服务，先等它自己就绪（一键启动场景下
+    # AstrBot 要 2-3 分钟才监听端口、WeFlow 约 25s），等满宽限期仍不在线
+    # 才转入自动拉起 —— 避免把「刚点火还没监听」误判成崩溃再点一把火。
+    startup_deadline = {}
+    for svc in SERVICES:
+        if not alive(svc):
+            startup_deadline[svc["name"]] = time.time() + svc["grace"]
+            log(f"  ⏳ {svc['name']} 启动时未在线，先等待就绪（最多 {svc['grace']}s，超时才拉起）")
 
     while True:
         for svc in SERVICES:
@@ -155,6 +244,15 @@ def main():
                 log(f"{'✅' if ok else '⚠️'} {svc['name']} {'在线' if ok else '不在线'}"
                     f"（端口 {svc['ports']}）")
                 status[svc["name"]] = ok
+            if ok:
+                startup_deadline.pop(svc["name"], None)
+            else:
+                deadline = startup_deadline.get(svc["name"])
+                if deadline is not None:
+                    if time.time() < deadline:
+                        continue        # 还在等它自己起来
+                    del startup_deadline[svc["name"]]
+                    log(f"  ⚠️ {svc['name']} 启动等待超时，转入自动拉起")
             if ok or args.once:
                 continue
             # 不在线：宽限期内不重复拉起

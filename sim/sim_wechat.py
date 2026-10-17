@@ -92,6 +92,24 @@ def _handle_action(data: dict):
         segs = params.get("message") or []
         text = "".join(s.get("data", {}).get("text", "") for s in segs
                        if isinstance(s, dict) and s.get("type") == "text")
+        # 图片段：解 base64 记 md5/大小，供表情包链路测试核对内容
+        # （web 页不渲染图片本体，只在 /api/replies 里给出指纹）
+        images = []
+        for s in segs:
+            if not (isinstance(s, dict) and s.get("type") == "image"):
+                continue
+            fv = (s.get("data", {}) or {}).get("file", "") or ""
+            if fv.startswith("base64://"):
+                try:
+                    import base64 as _b64
+                    import hashlib as _hl
+                    blob = _b64.b64decode(fv[9:])
+                    images.append({"md5": _hl.md5(blob).hexdigest(),
+                                   "bytes": len(blob)})
+                except Exception:
+                    images.append({"md5": "?", "bytes": 0})
+            elif fv:
+                images.append({"md5": "", "bytes": 0, "file": fv[:120]})
         target = None
         for k, p in PROFILES.items():
             if p["type"] == "private" and int(params.get("user_id", -1)) == p["user_id"]:
@@ -102,8 +120,8 @@ def _handle_action(data: dict):
                 break
         _msg_id += 1
         with _replies_lock:
-            _replies.append({"ts": time.time(), "profile": target or "?", "text": text,
-                             "mid": _msg_id})
+            _replies.append({"ts": time.time(), "profile": target or "?",
+                             "text": text, "mid": _msg_id, "images": images})
         _respond(_ok({"message_id": _msg_id}))
     elif action == "get_login_info":
         _respond(_ok({"user_id": SIM_SELF_ID, "nickname": SIM_NICK}))
@@ -169,7 +187,8 @@ def send_text(profile_key: str, text: str, at: bool = False):
 
 def replies_snapshot(since: int = 0):
     with _replies_lock:
-        return [{"idx": i, "text": _replies[i]["text"], "profile": _replies[i]["profile"]}
+        return [{"idx": i, "text": _replies[i]["text"], "profile": _replies[i]["profile"],
+                 "images": _replies[i].get("images", [])}
                 for i in range(since, len(_replies)) if _replies[i]["profile"] != "?"]
 
 
