@@ -661,8 +661,14 @@ var CFG_GROUPS = [
     {type:'info', text:'<b>「怎么理解图片」不在这里配</b>：图片默认原样转交 AstrBot，由 AstrBot 面板(6185) → 配置 里的主模型（多模态）或图片转述模型决定。下面「上游遗留」里的桥接侧转述是备用方案，默认关闭。'},
   ]},
   {tier:'adv', icon:'🔌', title:'连接', sub:'本机服务地址，一般不动', fields:[
-    {key:'weflow_base_url', label:'WeFlow 地址', type:'text', ph:'http://127.0.0.1:5031'},
-    {key:'access_token', label:'WeFlow Access Token', type:'password', ph:'输入 Token'},
+    {key:'message_source', label:'消息源（读微信消息用哪个后端）', type:'select', opts:[
+      {v:'weflow',l:'WeFlow（旧链路，未维护 + 需 RunAsDate）'},
+      {v:'alpha',l:'Alpha（WeFlow 继任者，原生 API）'}]},
+    {key:'alpha_base_url', label:'Alpha 地址', type:'text', ph:'http://127.0.0.1:5030', restart:1},
+    {key:'alpha_access_token', label:'Alpha Access Token', type:'password', ph:'输入 Alpha Token', restart:1},
+    {key:'alpha_account_id', label:'Alpha 账号 ID（留空 = 自动取唯一就绪账号）', type:'text', ph:'留空自动检测', restart:1},
+    {key:'weflow_base_url', label:'WeFlow 地址', type:'text', ph:'http://127.0.0.1:5031', restart:1},
+    {key:'access_token', label:'WeFlow Access Token', type:'password', ph:'输入 Token', restart:1},
     {key:'astrbot_ob_url', label:'AstrBot OneBot 反向 WS 地址', type:'text', ph:'ws://127.0.0.1:11229/ws', restart:1},
     {key:'astrbot_attachments', label:'附件目录（AstrBot 存图片的路径）', type:'text', ph:'C:\\astrbot\\attachments'},
     {key:'astrbot_config_file', label:'AstrBot 主配置路径（成员与权限页同步用）', type:'text', ph:'留空 = 自动探测 ../AstrBot/data/cmd_config.json', restart:1},
@@ -676,11 +682,12 @@ var CFG_GROUPS = [
       {v:'list',l:'仅会话列表点击'},
       {v:'search',l:'仅 Ctrl+F 搜索'}]},
   ]},
-  {tier:'legacy', icon:'📦', title:'上游遗留（默认关闭 · 一般不用动）', sub:'这些是上游 Akasha-WeChat 留下来的备用方案，当前链路用不到', fields:[
-    {key:'send_method', label:'发送方式（<b>只有 UIA 能用</b>：WeFlow 没有发送接口，选它必然发不出去）', type:'select', opts:[
-      {v:'uia',l:'UIA 自动化（微信 PC 客户端）——唯一可用'},
-      {v:'weflow_api',l:'WeFlow API（实测不可用，勿选）'}]},
-    {key:'weflow_send_api', label:'WeFlow 发送 API（<b>当前代码没有使用这个配置</b>，仅保留兼容）', type:'text', ph:'http://127.0.0.1:5031/api/v1/message'},
+  {tier:'legacy', icon:'📦', title:'发送方式（默认 UIA）', sub:'Alpha 原生发送需付费激活；UIA 不花钱、已验证', fields:[
+    {key:'send_method', label:'发送方式', type:'select', opts:[
+      {v:'uia',l:'UIA 自动化（默认，微信 PC 客户端）'},
+      {v:'alpha_api',l:'Alpha API（需 ¥100/月激活「发送文字消息」）'}]},
+    {key:'alpha_send_wait_seconds', label:'Alpha 发送等待秒数（0~120）', type:'number', ph:'30', restart:1},
+    {key:'weflow_send_api', label:'WeFlow 发送 API（历史遗留，代码已不使用）', type:'text', ph:'http://127.0.0.1:5031/api/v1/message'},
     {key:'image_caption_model', label:'桥接侧图片转述模型名（留空 = 不启用，走 AstrBot 配置）', type:'text', ph:'留空即可'},
     {key:'image_caption_provider', label:'转述服务', type:'select', opts:[{v:'ollama',l:'Ollama 本地'},{v:'openai',l:'OpenAI 兼容'}]},
     {key:'image_caption_api_key', label:'转述 API Key（OpenAI 模式）', type:'password', ph:'sk-xxx'},
@@ -1469,6 +1476,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 "running": state.running,
                 "paused": state.paused.is_set(),
                 "send_method": config.SEND_METHOD,
+                "message_source": config.MESSAGE_SOURCE,
                 "ob_url": config.ASTRBOT_OB_URL,
                 "ob_connected": ob_connected,
                 "weflow_connected": weflow_connected,
@@ -1683,18 +1691,30 @@ class WebHandler(BaseHTTPRequestHandler):
             out["error"] = f"缺少 requests: {e}"
             return out
 
-        base = (config.WE_FLOW_BASE_URL or "").rstrip("/")
-        tok = config.ACCESS_TOKEN
-        if not base:
-            out["error"] = "未配置 WeFlow 地址"
+        # WeFlow/Alpha 的鉴权、分页、参数名差异统一走 message_source。
+        # 这里不直接用 fetch_contacts()：面板只需要群列表，逐页拉全量太重。
+        from message_source import create_message_source
+        source = create_message_source()
+        if not source.base_url:
+            out["error"] = "未配置消息源地址"
             return out
 
         def _get(path, **params):
-            params.setdefault("access_token", tok)
-            r = requests.get(f"{base}{path}", params=params, timeout=8)
-            if r.status_code != 200:
-                return None
             try:
+                if source.name == "alpha":
+                    # Alpha 需要 account_id + chatroomId（不是 WeFlow 的 talker）
+                    params.setdefault("account_id", source.ensure_account())
+                    if path == "/api/v1/group-members" and "talker" in params:
+                        params["chatroomId"] = params.pop("talker")
+                    r = requests.get(
+                        f"{source.base_url}{path}", params=params,
+                        headers={"Authorization": f"Bearer {config.ALPHA_ACCESS_TOKEN}"},
+                        timeout=15)
+                else:
+                    params.setdefault("access_token", config.ACCESS_TOKEN)
+                    r = requests.get(f"{source.base_url}{path}", params=params, timeout=15)
+                if r.status_code != 200:
+                    return None
                 return r.json()
             except Exception:
                 return None
@@ -1703,7 +1723,7 @@ class WebHandler(BaseHTTPRequestHandler):
         rooms = []
         try:
             d = _get("/api/v1/contacts") or {}
-            rooms = [c.get("username", "") for c in (d.get("contacts") or [])
+            rooms = [c.get("username", "") for c in (d.get("contacts") or d.get("items") or [])
                      if "@chatroom" in (c.get("username") or "")]
         except Exception:
             rooms = []
@@ -1764,8 +1784,12 @@ class WebHandler(BaseHTTPRequestHandler):
                 for m in msgs:
                     if not isinstance(m, dict):
                         continue
-                    if str(m.get("isSend")) in ("1", "true", "True"):
-                        su = str(m.get("senderUsername") or "").strip()
+                    # WeFlow: isSend/senderUsername；Alpha: direction/sender_id
+                    is_own = (str(m.get("isSend")) in ("1", "true", "True")
+                              or m.get("direction") in (2, "2"))
+                    if is_own:
+                        su = str(m.get("senderUsername")
+                                 or m.get("sender_id") or "").strip()
                         if su.startswith("wxid_"):
                             wxid = su
                             out["source"] = "own-message"

@@ -11,6 +11,7 @@
 | `RELEASE_PROCESS.md` | 发版 7 步流程（v1.5.3 起强制） |
 | `人设卡制作规范.md` | 人设卡三段结构、说话方式写法、六步流程与验收 |
 | `WeFlow时间回拨启动套件.md` | RunAsDate 冻结时钟绕过 -101 时间炸弹的原理与操作 |
+| `Alpha接入说明.md` | **WeFlow 继任者 Alpha 的原生接入**：端口、配置、接口差异、发送激活、切换/回滚步骤 |
 | `漏收消息补偿工具-reply-missed.md` | 漏收消息找回→注入→回复→验证的工具说明 |
 | `architecture.html` / `architecture.json` | 可交互架构图（浏览器打开） |
 

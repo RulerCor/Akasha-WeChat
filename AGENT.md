@@ -30,15 +30,33 @@
   「🔄 刷新名单」可立即补拉（`POST /api/refresh-people`）。
   名册循环 `_prefetch_group_rosters` 只遍历已知群，**不会**发现新群。
 
+## 0.5 消息源：WeFlow / Alpha 切换（2026-10-18 起）
+
+- 配置 `message_source`：`"weflow"`（默认，老链路）或 `"alpha"`（WeFlow 继任者）
+- Alpha 配置：`alpha_base_url` / `alpha_access_token` / `alpha_account_id`
+  - 本机分配：WeFlow=5031，Alpha=5030（两个默认都是 5031，同开必冲突）
+  - `alpha_account_id` 留空时自动取「唯一就绪或当前选中」账号
+- 两套接口差异统一在 `message_source.py`，**不要**在 `bridge_core.py` 里写 if alpha / if weflow
+- Alpha 群消息 `sourceName` 是**发言人 wxid**（不是昵称），靠 `senderWxid` 直传稳定 ID，
+  群名册只用来解析显示名
+- Alpha 群成员参数是 `chatroomId=`（不是 WeFlow 的 `talker=`）
+- Alpha `media=true` + `order=desc` 的 limit 超过 100 会 422
+  `media.hydration_budget_exceeded`，取图用 limit≤50
+- 发送：默认 UIA。`send_method="alpha_api"` 需要 Alpha 里激活
+  「发送文字消息」（约 ¥100/月）并连接一次微信；未激活返回
+  409 `SEND_CONNECTION_REQUIRED`，桥接会失败并打日志，不会假报成功
+- 详细文档：`docs/Alpha接入说明.md`
+
 ## 1. 模块职责
 
 | 文件 | 职责 |
 |---|---|
 | `main.py` | 入口：启停、线程编排、Web 服务 |
 | `bridge_core.py` | `WeFlowBridge`：SSE 消费、消息过滤、缓冲合并、构造事件、图片处理 |
+| `message_source.py` | **消息源抽象层**：把 WeFlow / Alpha 两套 HTTP API 差异挡在这里（鉴权、SSE 参数、群成员参数、内容归一） |
 | `ob_protocol.py` | OneBot 协议：构造事件、推送、处理 AstrBot 的 API 请求（含只读查询） |
 | `ob_client.py` | 反向 WebSocket 客户端（连 AstrBot 的 aiocqhttp） |
-| `senders.py` | 发送器工厂：`UiaSender` / `WeFlowApiSender`（后者**不可用**，见下） |
+| `senders.py` | 发送器工厂：`UiaSender`（默认）/ `AlphaApiSender`（需付费激活）。`WeFlowApiSender` 仅作上游遗留保留，不再被工厂选用 |
 | `uia_sender.py` | UIA 自动化：找窗口、切联系人、找输入框、找发送按钮、发送 |
 | `web_panel.py` | 内置 Web 面板（HTML/JS 内嵌） |
 | `state.py` | 全局共享状态 + 各类缓存/映射 |

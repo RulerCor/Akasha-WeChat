@@ -79,8 +79,37 @@ ASTRBOT_ATTACHMENTS = _resolve_dir_or_file(
     config.get("astrbot_attachments", ""), "data/attachments")
 BOT_NICKNAMES = config["bot_nicknames"]
 BOT_WXID = config.get("bot_wxid", "")
-SEND_METHOD = config.get("send_method", "weflow_api")
-WE_FLOW_SEND_API = config["weflow_send_api"]
+SEND_METHOD = config.get("send_method", "uia")
+# 兼容老配置：上游/历史版本写过 "weflow_api"，但 WeFlow 实测**没有**发送接口
+# （/api/v1/message、/api/v1/send、/api/v1/messages/send 全 404），选它必然发不出去。
+# 这里直接归一化成 uia，避免用户从旧 config.json 启动时白白发不出消息。
+if SEND_METHOD == "weflow_api":
+    SEND_METHOD = "uia"
+WE_FLOW_SEND_API = config.get("weflow_send_api", "")
+# ============ 消息源（读取微信消息的后端）============
+#
+# "weflow" —— 老的 WeFlow 链路（未维护 + 授权时间炸弹，靠 RunAsDate 冻结时钟续命）
+# "alpha"  —— WeFlow 的继任者 Alpha 的原生 HTTP API + SSE
+#
+# ⚠️ 两条链路的接口形态**不一样**，不是换个地址就能跑：
+#   · 鉴权：WeFlow 走 query access_token；Alpha 走 Authorization: Bearer
+#   · 推送：Alpha 的 /api/v1/push/messages 必须带 accountId（WeFlow 不带）
+#   · 群发言人：WeFlow 给昵称；Alpha 给 wxid（群名另在 groupName）
+#   · 群成员：WeFlow 用 talker=；Alpha 用 chatroomId=
+# 统一封在 message_source.py 里，桥接只跟抽象层打交道。
+MESSAGE_SOURCE = (config.get("message_source") or "weflow").strip().lower()
+if MESSAGE_SOURCE not in ("weflow", "alpha"):
+    MESSAGE_SOURCE = "weflow"
+
+# Alpha 本机 HTTP API。端口默认 5031，但 WeFlow 也默认 5031，两个同开必冲突
+# （Alpha 端口被占会直接启动失败，不会自己换）。本机把 Alpha 放在 5030。
+ALPHA_BASE_URL = (config.get("alpha_base_url") or "").rstrip("/")
+ALPHA_ACCESS_TOKEN = config.get("alpha_access_token", "")
+# 留空 = 启动时自动从 /api/v1/accounts 取「唯一就绪」的账号
+ALPHA_ACCOUNT_ID = config.get("alpha_account_id", "")
+# Alpha 发送文字要等多久（秒）。Alpha 侧 0~120，默认 30。
+ALPHA_SEND_WAIT_SECONDS = int(config.get("alpha_send_wait_seconds", 30) or 30)
+
 BUFFER_SECONDS = config.get("buffer_seconds", 5)
 WEB_PORT = config.get("web_port", 8766)
 WEB_HOST = config.get("web_host", "0.0.0.0")

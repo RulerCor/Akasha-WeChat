@@ -2264,3 +2264,35 @@ if (event.unified_msg_origin not in self.whitelist
 - 微信原生「引用回复」气泡做不了（需要客户端右键菜单操作，UIA 不可靠）；`quote_reply_prefix` 只是文本模拟，默认关闭
 - 群成员完整名单与群人数取不到（WeFlow 无对应接口），`get_group_member_list` 只含发过言的成员
 - AstrBot 在拿不到群人数时会用 `len(成员列表)` 兜底，因此该数字偏小——已知，不编造
+
+## Alpha 原生消息源接入（2026-10-18）
+
+### 新增
+- `message_source.py`：消息源抽象层，把 WeFlow / Alpha 两套 HTTP API 差异（鉴权、SSE 参数、群成员参数、内容归一）统一封装
+- 配置项 `message_source`（`weflow` / `alpha`），`alpha_base_url` / `alpha_access_token` / `alpha_account_id`
+- `AlphaApiSender`：Alpha 原生 `POST /api/v1/messages/send-text` 发送器（需付费激活，默认不启用）
+
+### 变更
+- `bridge_core.py`：SSE / contacts / group-members / messages / media 全部走 `message_source` 抽象层
+- `main.py`：启动自检支持 Alpha（Alpha `/api/v1/messages` 必须带 `talker`，改探 `/api/v1/accounts`）
+- `senders.py`：`send_method=weflow_api` 归一化为 `uia`（WeFlow 没有发送接口，选了必失败）；新增 `alpha_api` 选项
+- `web_panel.py`：连接组新增消息源选择 + Alpha 3 项；发送方式改为 `uia` / `alpha_api`；`_detect_bot` 支持 Alpha
+- `state.py`：新增 `resolve_name_in_group()`（wxid → 群内昵称）
+- `scripts/watch_services.py`：按 `message_source` 决定是否守护 WeFlow（选 alpha 时不拉 WeFlow/RunAsDate）
+- `scripts/sync_to_rc.py`：同步列表加入 `message_source.py`
+
+### 已知差异（已适配）
+- Alpha 群消息 `sourceName` 是发言人 wxid，不是昵称
+- Alpha 群成员参数名是 `chatroomId`，不是 `talker`
+- Alpha `media=true + order=desc + limit>100` 会 422 `media.hydration_budget_exceeded`（取图改用 limit≤50）
+- Alpha 发送文字未激活时返回 409 `SEND_CONNECTION_REQUIRED`（实测确认，桥接会失败并打日志）
+
+### 验证
+- Alpha API：accounts / sessions / contacts / group-members / messages / media / SSE / MCP 全部实测通过
+- SSE：连接后持续收 `stream.ready` + `message.new`（群文本 + XML 表情）60 秒无断连
+- 群名册：12/12 群、336 条昵称映射成功拉取
+- wxid → 昵称解析：实测从 Alpha 的群消息 wxid 成功解析出该成员昵称 ✅
+- 图片：media API 返回 `/api/v1/media/...` + Bearer 下载，实测 6233 字节 JPEG ✅
+- AlphaApiSender：未激活时正确返回 False + `SEND_CONNECTION_REQUIRED` ✅
+- 桥接端到端：Alpha SSE → 归一化 → add_to_buffer → process_sender → AstrBot 推送，全链路无报错 ✅
+- 生产桥接已切换到 Alpha 并保持运行（AstrBot 已连接，SSE 已连接）

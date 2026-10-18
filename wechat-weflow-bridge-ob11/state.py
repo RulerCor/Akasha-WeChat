@@ -608,6 +608,25 @@ def roster_stats() -> dict:
         return {k: len(v["names"]) for k, v in _group_rosters.items()}
 
 
+def resolve_name_in_group(chatroom: str, wxid: str) -> str:
+    """按 wxid 在群名册里反查可读名；找不到返回空串。
+
+    Alpha 群消息 sourceName 给的是 wxid，不是昵称（与 WeFlow 相反）。
+    名册里存的是「名字 → wxid」，没有反向索引，所以这里线性扫一遍。
+    群成员最多几千，收消息时逐条扫也能接受；真正慢的话再建反向 dict。
+    """
+    if not chatroom or not wxid:
+        return ""
+    with _api_lock:
+        roster = _group_rosters.get(chatroom)
+    if not roster:
+        return ""
+    for name, sid in (roster.get("names") or {}).items():
+        if sid == wxid:
+            return name
+    return ""
+
+
 _load_persons()
 
 # ============ 会话回复开关（面板可控静音） ============

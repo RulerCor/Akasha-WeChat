@@ -24,6 +24,7 @@ import requests
 import state
 import config
 import wx_msg_parser
+from message_source import create_message_source
 from ob_protocol import push_event, make_message_event
 
 log = logging.getLogger("ob11-bridge")
@@ -92,10 +93,8 @@ def refresh_contact_names() -> tuple:
       known_groups()，面板「群里管什么」表也就永远不出现这个群（用户报障）。
     """
     try:
-        url = f"{config.WE_FLOW_BASE_URL}/api/v1/contacts"
-        resp = requests.get(url, params={"access_token": config.ACCESS_TOKEN},
-                            timeout=10)
-        items = resp.json() if resp.status_code == 200 else []
+        # WeFlow/Alpha 的分页、鉴权、字段差异统一封在 message_source。
+        items = create_message_source().fetch_contacts()
         if isinstance(items, dict):
             items = items.get("contacts") or items.get("items") or []
         n = 0
@@ -187,6 +186,8 @@ class WeFlowBridge:
                 "group_name": base_name if is_group else "",
                 "sender_in_group": sender_in_group if is_group else "",
                 "session_id_data": session_id_data,
+                # Alpha 直接给发言人 wxid；WeFlow 没有（后续靠名册反查）。
+                "sender_wxid": data.get("senderWxid", "") or data.get("talkerId", ""),
             }
             self.pending_buffers[buffer_key] = entry
         return entry
@@ -269,15 +270,10 @@ class WeFlowBridge:
         """
         rooms = list(state.known_groups().keys())
         ok = 0
+        source = create_message_source()
         for room in rooms:
             try:
-                resp = requests.get(
-                    f"{config.WE_FLOW_BASE_URL}/api/v1/group-members",
-                    params={"access_token": config.ACCESS_TOKEN, "talker": room},
-                    timeout=12,
-                )
-                data = resp.json() if resp.status_code == 200 else {}
-                members = data.get("members") or []
+                members = source.fetch_group_members(room)
                 if members:
                     state.set_group_roster(room, members)
                     for m in members:
@@ -662,14 +658,21 @@ class WeFlowBridge:
         # 加一次即全局生效。名册里查不到时退回旧行为（群ID_昵称）。
         if is_group:
             sender_name = entry.get("sender_in_group", "") or entry.get("source_name", "未知")
-            wxid = state.resolve_wxid_in_group(entry.get("session_id_data", ""), sender_name)
-            if wxid:
-                sender_wxid = wxid
-                state.remember_person(wxid, sender_name)
+            # ① Alpha：事件里直接带 wxid —— 最权威，优先用。
+            sender_wxid = (entry.get("sender_wxid") or "").strip()
+            if sender_wxid:
+                state.remember_person(sender_wxid, sender_name)
             else:
-                sender_wxid = entry.get("session_id_data", "") + "_" + sender_name
-                log.info(f"ℹ️ 群名册中未找到「{sender_name}」，本条退回旧式 ID"
-                         f"（该成员的管理员识别要等名册刷新后生效）")
+                # ② WeFlow：只有昵称，靠群名册反查 wxid。
+                wxid = state.resolve_wxid_in_group(
+                    entry.get("session_id_data", ""), sender_name)
+                if wxid:
+                    sender_wxid = wxid
+                    state.remember_person(wxid, sender_name)
+                else:
+                    sender_wxid = entry.get("session_id_data", "") + "_" + sender_name
+                    log.info(f"ℹ️ 群名册中未找到「{sender_name}」，本条退回旧式 ID"
+                             f"（该成员的管理员识别要等名册刷新后生效）")
         else:
             sender_name = entry.get("source_name", contact)
             sender_wxid = entry.get("session_id_data", sender_id)
@@ -783,63 +786,89 @@ class WeFlowBridge:
                     self._schedule_flush(sender_id, entry)
 
     def listen_sse(self):
-        """连接 WeFlow SSE 推送。"""
-        sse_url = f"{config.WE_FLOW_BASE_URL}/api/v1/push/messages?access_token={config.ACCESS_TOKEN}"
-        # ⚠️ 日志里绝不打完整 URL：里面有 access_token 明文（2026-09-18 修）。
-        # 之前 log.info 直接打 sse_url，token 落进 bridge.log —— 而本项目的
-        # 隐私提醒（README「隐私提醒」小节）明确要求"贴日志前删掉 token"，
-        # 工具自己却把 token 印出来了。面板的日志窗口也会显示这行，
-        # 局域网内他人可读。只打基址，token 用 *** 代替。
-        log.info(f"连接 WeFlow 推送服务: {config.WE_FLOW_BASE_URL}/api/v1/push/messages?access_token=***")
-        headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
+        """连接消息源 SSE 推流（WeFlow / Alpha）。"""
+        source = create_message_source()
+        sse_url = source.sse_url()
+        # ⚠️ 日志里绝不打完整 URL：WeFlow 的 URL 里含 access_token 明文。
+        # Alpha 的 URL 不含 token，但保持同一策略：只打路径，鉴权一律 Header。
+        log.info(f"连接 {source.name.upper()} 推送服务: {source.base_url}/api/v1/push/messages")
+        headers = source.sse_headers()
 
         try:
-            self._sse_session = requests.get(sse_url, headers=headers, stream=True, timeout=None)
+            self._sse_session = requests.get(
+                sse_url, headers=headers, stream=True, timeout=None)
             if self._sse_session.status_code != 200:
+                # 只打 code，不打 body —— 有些后端会把 token/内部路径回显在错误里。
                 log.error(f"连接失败: HTTP {self._sse_session.status_code}")
                 return
-            log.info("✅ 已连接到 WeFlow 推送")
+            log.info(f"✅ 已连接到 {source.name.upper()} 推送")
             self._prefetch_contact_names()
-            # 群名册在后台线程拉取（可能要跑几十秒），不阻塞消息循环
+            # 群名册在后台线程拉取（可能要跑几十秒），不阻塞消息循环。
+            # Alpha 群消息 sourceName 是 wxid，必须先有名册才能解析成昵称；
+            # 名册未就绪期间消息**不会被丢**，只是暂时显示 wxid。
             threading.Thread(target=self._prefetch_group_rosters, daemon=True).start()
             threading.Thread(target=self._roster_refresh_loop, daemon=True).start()
 
+            # SSE 是「event: xxx / data: {...}」成对出现的；
+            # Alpha 的 stream.error 会主动断开连接，WeFlow 也有非 message 事件。
+            # 只处理 message.new，其他事件忽略（ready/error 仅为控制信号）。
+            current_event = ""
             for line in self._sse_session.iter_lines(decode_unicode=True):
                 if not state.running:
                     break
                 if not line:
+                    current_event = ""
                     continue
-                if line.startswith("data:"):
-                    data_str = line[5:].strip()
-                    if not data_str:
+                if line.startswith("event:"):
+                    current_event = line[6:].strip()
+                    continue
+                if not line.startswith("data:"):
+                    continue
+                data_str = line[5:].strip()
+                if not data_str:
+                    continue
+                # stream.error 的 data 是 {"code":...}，不是消息体；
+                # 打出来便于排障（code 无敏感信息），然后让连接关闭/重连。
+                if current_event == "stream.error":
+                    log.warning(f"⚠️ SSE stream.error: {data_str[:200]}")
+                    continue
+                if current_event and current_event != "message.new":
+                    continue
+
+                try:
+                    data = json.loads(data_str)
+                    # Alpha 原生字段归一（群 wxid → senderWxid 等）
+                    data = source.normalize_event(data)
+                    msg_time = data.get("timestamp", 0)
+                    if msg_time < self.start_timestamp:
                         continue
-                    try:
-                        data = json.loads(data_str)
-                        msg_time = data.get("timestamp", 0)
-                        if msg_time < self.start_timestamp:
-                            continue
-                        raw_id = data.get("rawid", "")
-                        if raw_id in self.processed_ids:
-                            continue
-                        self.processed_ids.add(raw_id)
-                        self._processed_order.append(raw_id)
-                        if len(self._processed_order) > 5000:   # 只留最近 5000 条，防内存持续增长
-                            for _old in self._processed_order[:2500]:
-                                self.processed_ids.discard(_old)
-                            del self._processed_order[:2500]
-                        ignore_reason = self.ignore_reason(data)
-                        if ignore_reason:
-                            self._log_skip(data, ignore_reason)
-                        else:
-                            log.info(f"📩 收到: {data.get('sourceName','')} → {data.get('content','')[:50]}")
-                            self.add_to_buffer(data)
-                    except json.JSONDecodeError:
-                        pass
+                    raw_id = data.get("rawid", "")
+                    if raw_id in self.processed_ids:
+                        continue
+                    self.processed_ids.add(raw_id)
+                    self._processed_order.append(raw_id)
+                    if len(self._processed_order) > 5000:   # 只留最近 5000 条，防内存持续增长
+                        for _old in self._processed_order[:2500]:
+                            self.processed_ids.discard(_old)
+                        del self._processed_order[:2500]
+                    ignore_reason = self.ignore_reason(data)
+                    if ignore_reason:
+                        self._log_skip(data, ignore_reason)
+                    else:
+                        # 展示名优先用归一后的 senderName；私聊仍是 sourceName。
+                        shown = (data.get("senderName") or data.get("sourceName") or "")
+                        log.info(f"📩 收到: {shown} → {data.get('content','')[:50]}")
+                        self.add_to_buffer(data)
+                except json.JSONDecodeError:
+                    pass
 
         except requests.exceptions.ConnectionError:
-            log.error("无法连接 WeFlow")
+            log.error(f"无法连接 {source.name.upper()}")
         except Exception as e:
-            log.error(f"SSE 异常: {e}")
+            # 手动 stop 时 requests 会在 iter_lines 里抛各种「响应已关闭」异常，
+            # 这不是故障 —— state.running=False 时静默退出即可。
+            if state.running:
+                log.error(f"SSE 异常: {e}")
         finally:
             self._sse_session = None
 
@@ -851,35 +880,35 @@ class WeFlowBridge:
         """
         talker = data.get("sessionId", "")
         rawid = str(data.get("rawid", "") or "")
+        source = create_message_source()
         try:
-            resp = requests.get(
-                f"{config.WE_FLOW_BASE_URL}/api/v1/messages",
-                params={"access_token": config.ACCESS_TOKEN, "talker": talker,
-                        "media": "true", "limit": 5},
-                timeout=15,
+            # Alpha 0.2.0 实测：media=true + limit>100 + order=desc 会触发
+            # 422 media.hydration_budget_exceeded（媒体注水预算）。50 安全。
+            payload = source.fetch_messages(
+                talker, limit=50, media=True,
+                # Alpha 默认升序（最旧在前）；要找「刚到的那张」必须倒序。
+                # WeFlow 忽略 order，保持原行为。
+                order="desc",
             )
-            if resp.status_code != 200:
-                log.warning(f"取图失败: WeFlow 消息接口 HTTP {resp.status_code}")
-                return None
-
-            payload = resp.json()
             messages = payload if isinstance(payload, list) else payload.get("messages", payload.get("data", []))
             if not isinstance(messages, list):
                 messages = []
 
-            candidates = [m for m in messages
-                          if m.get("mediaType") == "image" and m.get("mediaUrl")]
+            candidates = [m for m in messages if m.get("mediaUrl")]
             if rawid:
-                exact = [m for m in candidates if str(m.get("rawid", "")) == rawid]
+                exact = [m for m in candidates
+                         if (str(m.get("rawid", "")) == rawid
+                             or str(m.get("platform_message_id", "")) == rawid
+                             or str(m.get("server_id", "")) == rawid)]
                 if exact:
                     candidates = exact
             if not candidates:
                 log.warning(f"取图失败: 消息列表里没有可用图片 (talker={talker})")
                 return None
 
-            media_url = candidates[0]["mediaUrl"]
-            sep = "&" if "?" in media_url else "?"
-            img = requests.get(f"{media_url}{sep}access_token={config.ACCESS_TOKEN}", timeout=30)
+            # Alpha: /api/v1/media/...，需 Bearer；WeFlow: 绝对 URL + query token。
+            # 统一交给 source.download_media 处理。
+            img = source.download_media(candidates[0]["mediaUrl"])
             if img.status_code != 200:
                 log.warning(f"取图失败: 下载 HTTP {img.status_code}")
                 return None
@@ -902,30 +931,15 @@ class WeFlowBridge:
     def _fetch_wechat_image(self, talker: str) -> str | None:
         """从 WeFlow REST API 获取最新图片并保存到本地"""
         try:
-            url = f"{config.WE_FLOW_BASE_URL}/api/v1/messages"
-            params = {
-                "access_token": config.ACCESS_TOKEN,
-                "talker": talker,
-                "media": "true",
-                "limit": 3,
-            }
-            resp = requests.get(url, params=params, timeout=10)
-            if resp.status_code != 200:
-                log.error(f"WeFlow 消息API: HTTP {resp.status_code}")
-                return None
-
-            data = resp.json()
+            source = create_message_source()
+            data = source.fetch_messages(talker, limit=20, media=True, order="desc")
             messages = data if isinstance(data, list) else data.get("messages", data.get("data", []))
             if not isinstance(messages, list):
                 messages = []
 
             for msg in messages:
-                if msg.get("mediaType") == "image" and msg.get("mediaUrl"):
-                    media_url = msg["mediaUrl"]
-                    sep = "&" if "?" in media_url else "?"
-                    dl_url = f"{media_url}{sep}access_token={config.ACCESS_TOKEN}"
-
-                    img_resp = requests.get(dl_url, timeout=30)
+                if msg.get("mediaUrl"):
+                    img_resp = source.download_media(msg["mediaUrl"])
                     if img_resp.status_code != 200:
                         continue
 

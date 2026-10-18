@@ -38,6 +38,7 @@
 
 import argparse
 import io
+import json
 import os
 import socket
 import subprocess
@@ -120,15 +121,35 @@ WEFLOW_CMD = (
 )
 
 
-SERVICES.append(dict(
-    name="WeFlow",
-    ports=(5031,),
-    cmd=WEFLOW_CMD,          # None = 缺 RunAsDate / WeFlow.exe，spawn 只报警
-    cwd=os.path.dirname(WEFLOW_EXE) if WEFLOW_EXE else ROOT,
-    log=os.path.join(ROOT, "runtime", "bridge", "weflow_watchdog.log"),
-    grace=120,               # 十来个进程 + 建库，实测启动约 25s，给足余量
-    probe_host="127.0.0.1",
-))
+def _bridge_config():
+    """只读桥接 config.json；文件损坏时返回空 dict（守护必须永不抛异常）。"""
+    try:
+        with io.open(os.path.join(ROOT, "runtime", "bridge", "config.json"),
+                     encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _selected_message_source():
+    return str(_bridge_config().get("message_source") or "weflow").strip().lower()
+
+
+# ⚠️ 只在桥接确实选择 WeFlow 时才守护 WeFlow。
+# 选 Alpha 时：不占 5031、不需要 RunAsDate、Alpha 由用户自己开着（Electron 桌面应用）。
+# 守护 Alpha.exe 需要处理多进程/自更新/锁屏，盲目拉起容易双开；当前策略是**不自动拉**，
+# 只在选了 Alpha 时把 WeFlow 从守护列表移除。
+if _selected_message_source() != "alpha":
+    SERVICES.append(dict(
+        name="WeFlow",
+        ports=(5031,),
+        cmd=WEFLOW_CMD,      # None = 缺 RunAsDate / WeFlow.exe，spawn 只报警
+        cwd=os.path.dirname(WEFLOW_EXE) if WEFLOW_EXE else ROOT,
+        log=os.path.join(ROOT, "runtime", "bridge", "weflow_watchdog.log"),
+        grace=120,           # 十来个进程 + 建库，实测启动约 25s，给足余量
+        probe_host="127.0.0.1",
+    ))
+
 
 
 def log(msg):

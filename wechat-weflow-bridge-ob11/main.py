@@ -19,6 +19,7 @@ import exit_reason
 from senders import create_sender
 from ob_client import _run_ob_client
 from bridge_core import WeFlowBridge
+from message_source import create_message_source
 from web_panel import WebHandler, PAGE
 from http.server import HTTPServer
 
@@ -109,24 +110,28 @@ def _bridge_loop():
         state.running = False
         return
 
-    log.info(f"Bridge | WeFlow: {config.WE_FLOW_BASE_URL} | OB11: {config.ASTRBOT_OB_URL} | 发送: {config.SEND_METHOD}")
+    log.info(f"Bridge | 消息源: {config.MESSAGE_SOURCE.upper()} | "
+             f"OB11: {config.ASTRBOT_OB_URL} | 发送: {config.SEND_METHOD}")
+    # Alpha 专属前置检查（地址/令牌/账号），错误信息里不含 token。
+    if config.MESSAGE_SOURCE == "alpha":
+        if not config.ALPHA_BASE_URL or not config.ALPHA_ACCESS_TOKEN:
+            log.error("❌ 未配置 alpha_base_url / alpha_access_token")
+            state.running = False
+            return
 
     bridge = WeFlowBridge(state.sender_instance)
     with state.bridge_lock:
         state.bridge_instance = bridge
 
-    try:
-        r = requests.get(f"{config.WE_FLOW_BASE_URL}/api/v1/messages?limit=1&access_token={config.ACCESS_TOKEN}", timeout=5)
-        if r.status_code == 200:
-            log.info("✅ WeFlow API 正常")
-        elif r.status_code == 401:
-            log.error("❌ Access Token 无效")
-            state.running = False
-            return
-    except requests.exceptions.ConnectionError:
-        log.error("❌ 无法连接 WeFlow")
+    # WeFlow/Alpha 的自检差异（WeFlow 旧接口不带 talker 也能探活；
+    # Alpha /api/v1/messages 必须带 talker，所以这里探 accounts 而不是 messages）
+    # 统一封在 message_source.check() 里。
+    ok, status, msg = create_message_source().check()
+    if not ok:
+        log.error(f"❌ {msg}")
         state.running = False
         return
+    log.info(f"✅ {msg}")
 
     while state.running:
         try:
