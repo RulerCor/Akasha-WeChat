@@ -102,6 +102,7 @@ python main.py          # 或双击 start.bat（会开一个可见的控制台�
 | **[`docs/开发文档.md`](docs/开发文档.md)** | **开发前读这份**：架构、核心机制、配置参考、AstrBot 补丁清单、排障 |
 | **[`docs/依赖与目录说明.md`](docs/依赖与目录说明.md)** | **搬家/换电脑前读这份**：每个目录是什么、哪些依赖在文件夹内、哪些在外部、开发环境与正式发行版的区别 |
 | **[`docs/人设卡制作规范.md`](docs/人设卡制作规范.md)** | **加/改角色人设前读这份**：三段结构、说话方式怎么写、台词来源分级、六步流程与验收 |
+| **[docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)** | **发版前读这份**：版号、CHANGELOG、tag、发行包、补丁快照、证据归档七步 |
 | `AGENT.md` | 红线与已知坑（改代码前的必读警告） |
 | `CHANGELOG.md` | 每个版本改了什么、为什么 |
 | `docs/architecture.html` | 可交互架构图（浏览器打开） |
@@ -118,8 +119,7 @@ Akasha-WeChat_RC/
 ├── docs/
 │   ├── 开发文档.md           ★ 开发、配置、排障主文档
 │   ├── 依赖与目录说明.md      ★ 每个目录/依赖在哪、换电脑怎么办
-│   ├── upstream-SETUP.md     上游「从零开始搭建指南」
-│   └── upstream-CLAUDE.md    上游给 AI 的模块速查
+│   ├── upstream/             上游原样文档（SETUP / CLAUDE 速查）
 ├── vendor/                   随项目走的第三方依赖（不入库，约 750MB）
 │   ├── python/               免安装 Python 基座（两个 venv 都指向它）
 │   └── weflow/               WeFlow 程序本体
