@@ -94,7 +94,9 @@ WeFlow 相关字段（`weflow_base_url` / `access_token`）**原样保留**，�
 - **图片/表情/视频在 SSE 里是微信原生 XML**（`<img>` / `<emoji …md5=… cdnurl=… >` / `<videomsg>`），
   不像 WeFlow 那样已经归一化成 `[图片]` / `[表情]` 占位符。
   桥接的 `message_source` 会把它们分类成 `[图片]` / `[表情]` / `[视频]`，并把原始 XML 留在 `_alphaRawContent`。
-- 链接/文件/合并转发仍是 `<appmsg>` XML，交给 `wx_msg_parser` 归一化（与 WeFlow 同一条路）。
+- 链接/文件/合并转发/引用回复仍是 `<appmsg>` XML，交给 `wx_msg_parser` 归一化（与 WeFlow 同一条路）。
+  引用回复是 `appmsg type=57`：`<title>` 是新回复，`<refermsg>` 里是被引用内容与发送者。
+- Alpha SSE 的图片事件有时不是 XML，而是 `content=""` + `type=3`；桥接会按类型码归一成 `[图片]`。
 - 取真实字节：`/api/v1/messages?talker=X&media=true` 的 `media.resources[0].url`
   或 `mediaUrl`，值是 `/api/v1/media/<opaque>`，**下载要带 Bearer 头**。
 

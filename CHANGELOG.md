@@ -2286,6 +2286,26 @@ if (event.unified_msg_origin not in self.whitelist
 - 实关 WeFlow 根进程并等待 50 秒：无新 WeFlow 进程、:5031 保持关闭，:5030 Alpha、:8766 桥接、AstrBot 均在线。
 - 守护 `--once` 输出接收端 ALPHA，目标只有 AstrBot + 桥接；面板 :8766、Alpha accounts 接口均 200。
 
+## Alpha 消息兼容补丁（2026-10-18）
+
+### 修复
+- **引用消息（appmsg type=57）**：新增 `KIND_QUOTE` 与 `_parse_quote()`，把
+  `<title>` 作为用户的新回复、`<refermsg><content>/<displayname>` 作为被引用上下文，
+  输出为 `〔引用 某人：…〕\n新回复`。此前 type=57 被降级为
+  `[未识别消息 type=57]`，模型只能看到标题片段。
+- **空内容图片事件**：Alpha SSE 的图片事件可能 `content=""` 且 `type=3`，
+  现在会归一成 `[图片]` 并进入既有取图链路；空文本事件仍按旧逻辑跳过。
+  此前这类图片被 `ignore_reason()` 判成“空内容”直接丢弃。
+- 被引用内容如果是另一段 XML，会压缩成 `[图片]/[视频]/[语音]/[富媒体消息]`
+  或其 `<title>`，不再把整段 XML 塞进模型上下文。
+
+### 验证
+- 用 Alpha `/api/v1/messages` 拉取真实群消息，13 条 type=57 全部解析为 `quote`，
+  不再出现 `[未识别消息 type=57]`。
+- 真实样本包含“引用文本”和“引用图片 XML”两类，均输出可读上下文。
+- 构造空 content + type=3 事件 → `[图片]`；空 content + type=1 仍为空并按旧逻辑跳过。
+- 源码/运行副本同步后语法检查通过；重启桥接后 Alpha SSE 与 AstrBot 均在线。
+
 ## Alpha 原生消息源接入（2026-10-18）
 
 ### 新增

@@ -330,8 +330,26 @@ class AlphaSource(BaseMessageSource):
             out["senderName"] = source_name or session_id
 
         raw_content = str(out.get("content") or "")
+        # Alpha 0.2.0 实测：SSE 的图片事件可能是空 content，而不是 XML。
+        # 只有媒体类型码（3=图片 / 43=视频 / 34=语音）才映射占位符，
+        # 空 sourceType=1 的文本消息仍保持空内容，由旧逻辑按“空内容”跳过。
+        if not raw_content.strip():
+            try:
+                event_type = int(out.get("type") or out.get("msgType")
+                                 or out.get("sourceType") or 0)
+            except (TypeError, ValueError):
+                event_type = 0
+            if event_type == 3:
+                out["content"] = "[图片]"
+            elif event_type == 43:
+                out["content"] = "[视频]"
+            elif event_type == 34:
+                out["content"] = "[语音]"
+            else:
+                out["content"] = raw_content
+        else:
+            out["content"] = self._classify_content(raw_content)
         out["_alphaRawContent"] = raw_content
-        out["content"] = self._classify_content(raw_content)
         return out
 
 

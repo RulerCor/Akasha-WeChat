@@ -69,6 +69,7 @@ KIND_STICKER = "sticker"      # 微信表情包（appmsg type=8）
 KIND_LINK = "link"            # 链接分享（type=4/5）
 KIND_FILE = "file"            # 文件（type=6）
 KIND_FORWARD = "forward"      # 合并转发（type=19）
+KIND_QUOTE = "quote"          # 引用回复（appmsg type=57）
 KIND_SYSTEM = "system"        # 系统消息（拍了拍/撤回/转账等）
 KIND_VOICE = "voice"
 KIND_VIDEO = "video"
@@ -83,6 +84,7 @@ APPMSG_TYPES = {
     6: (KIND_FILE, "文件"),
     8: (KIND_STICKER, "表情包"),
     19: (KIND_FORWARD, "合并转发"),
+    57: (KIND_QUOTE, "引用回复"),
     36: (KIND_LINK, "小程序/分享"),
     51: (KIND_SYSTEM, "系统提示"),
     53: (KIND_LINK, "接龙"),
@@ -142,6 +144,10 @@ class ParsedMessage:
 
     # 合并转发专属
     summary: str = ""
+
+    # 引用回复专属
+    quote_text: str = ""
+    quote_sender: str = ""
 
     # 系统消息专属
     system_kind: str = ""               # 拍了拍 / 撤回 / 入群 ...
@@ -275,6 +281,46 @@ def _parse_file(xml: str) -> ParsedMessage:
         p.text = f"发送了文件：{title}" + (f"（{mb}）" if mb else "")
     else:
         p.text = "[文件]"
+    return p
+
+
+def _parse_quote(xml: str) -> ParsedMessage:
+    """解析引用回复（appmsg type=57）。
+
+    Alpha 推送的是微信原生 XML：用户自己的新回复在 <title>，
+    被引用内容在 <refermsg><content>，引用者显示名在
+    <refermsg><displayname>。旧解析不认识 type 57，会降成
+    “[未识别消息 type=57]”，模型只能看到 title 片段。
+    """
+    title = _tag(xml, "title")
+    quote_text = _tag(xml, "content")
+    quote_sender = _tag(xml, "displayname")
+    p = ParsedMessage(kind=KIND_QUOTE, raw=xml, text=title,
+                      quote_text=quote_text, quote_sender=quote_sender)
+
+    if quote_text:
+        if re.search(r"<(msg|appmsg|img)\b", quote_text, re.I):
+            if re.search(r"<img\b", quote_text, re.I):
+                ref_desc = "[图片]"
+            elif re.search(r"<videomsg\b", quote_text, re.I):
+                ref_desc = "[视频]"
+            elif re.search(r"<voice\b", quote_text, re.I):
+                ref_desc = "[语音]"
+            elif _tag(quote_text, "title"):
+                ref_desc = _tag(quote_text, "title")
+            else:
+                ref_desc = "[富媒体消息]"
+        else:
+            ref_desc = " ".join(quote_text.split())
+        if len(ref_desc) > 160:
+            ref_desc = ref_desc[:160] + "…"
+        sender = quote_sender or "某人"
+        prefix = f"〔引用 {sender}：{ref_desc}〕"
+        p.text = prefix + ("\n" + title if title else "")
+    elif title:
+        p.text = title
+    else:
+        p.text = "[引用消息]"
     return p
 
 
@@ -433,6 +479,8 @@ def parse_content(content: str, bot_nicknames: tuple = ()) -> ParsedMessage:
                         return _parse_file(s)
                     if k == KIND_FORWARD:
                         return _parse_forward(s)
+                    if k == KIND_QUOTE:
+                        return _parse_quote(s)
                     if k == KIND_SYSTEM:
                         return _parse_system(s, bot_nicknames)
                 # 未知 appmsg 类型：尽量取出 title 当文本，别丢
