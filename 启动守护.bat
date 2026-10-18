@@ -1,7 +1,9 @@
 @echo off
+title AkashaWatchdog
 rem ============================================================
 rem  Akasha service watchdog - double-click this file to run.
 rem  请保持这个窗口开着：守护跑在这里，它不会被 AI 会话回收。
+rem  守护目标随面板「消息链路 → 接收端」变化：Alpha 时不会拉起/守护 WeFlow。
 rem  关掉窗口 = 停止守护（已经跑起来的服务不受影响）。
 rem ============================================================
 cd /d "%~dp0"

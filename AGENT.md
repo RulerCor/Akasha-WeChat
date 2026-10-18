@@ -114,10 +114,13 @@
 - 删除/替换任何过滤逻辑时，记得保留 `_log_skip()` 日志，否则被丢弃的消息会静默消失，排查时极难定位
 
 **运行**
-- **一键启动已幂等化（2026-10-17）**：`一键启动.bat` 按端口/进程探测，
-  在跑的服务自动跳过（WeFlow 经 RunAsDate 冻结 2026-09-30 启动）。守护
-  `watch_services.py` 现在管 AstrBot / 桥接 / WeFlow 三个；守护拉起 WeFlow
-  只走 RunAsDate，组件缺失只报警不裸启。⚠️ 在 Git Bash 里手工验证
+- **一键启动已幂等化（2026-10-17，接收端分流见 2026-10-18）**：`一键启动.bat`
+  读取 `runtime/bridge/config.json` 的 `message_source`：Alpha 时只检查 :5030，
+  **不启动 WeFlow**；WeFlow 时仍经 RunAsDate 冻结 2026-09-30 启动。
+- `scripts/watch_services.py` 管 AstrBot / 桥接；只有接收端=WeFlow 时才额外
+  守护 WeFlow，每轮重读配置，切到 Alpha 后会把 WeFlow 从目标移除（手动关掉
+  也不会再被拉起）。WeFlow 拉起只走 RunAsDate，组件缺失只报警不裸启。
+  ⚠️ 在 Git Bash 里手工验证
   findstr / tasklist / cmd /c 时引号会被 MSYS 吃掉产生误报（本次实测把
   在跑的 WeFlow 误判成没跑），要用 cmd 原生或 Python subprocess。
 - **⚠️ 由 AI/自动化启动长驻服务时必须清空 `PYTHONPATH`**（2026-09-14 实测）：

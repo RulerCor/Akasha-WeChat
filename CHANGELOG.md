@@ -112,7 +112,7 @@
 
 ### 验证
 - `watch_services.py` 语法与模块加载 OK，`WEFLOW_CMD` 正确解析为
-  RunAsDate + `/immediate 30 96 12:00:00` + vendor 路径。
+  RunAsDate + `/immediate 30\09\2026 12:00:00` + vendor 路径。
 - bat 探测管道用 cmd 原生实测：5031/8766 在监听时 probe=1（正确跳过），
   WeFlow.exe 进程检测 yes，守护窗口标题检测工作正常。
   ⚠️ Git Bash 里手工跑 findstr/tasklist 的引号会被吃掉产生**误报**，
@@ -2264,6 +2264,27 @@ if (event.unified_msg_origin not in self.whitelist
 - 微信原生「引用回复」气泡做不了（需要客户端右键菜单操作，UIA 不可靠）；`quote_reply_prefix` 只是文本模拟，默认关闭
 - 群成员完整名单与群人数取不到（WeFlow 无对应接口），`get_group_member_list` 只含发过言的成员
 - AstrBot 在拿不到群人数时会用 `len(成员列表)` 兜底，因此该数字偏小——已知，不编造
+
+## 启动链路按接收端分流：面板可选 Alpha / WeFlow（2026-10-18）
+
+### 修复
+- `一键启动.bat` 原先无条件启动 WeFlow，导致面板切到 Alpha 后关闭 WeFlow 仍会被重新拉起；现读取
+  `runtime/bridge/config.json` 的 `message_source`，Alpha 时只检查 :5030，不启动也不触碰 WeFlow。
+- 一键启动的守护检测原先依赖窗口标题 `AkashaWatchdog`，桥接子进程会继承标题造成误判；改为按
+  `watch_services.py` 命令行检测。`启动守护.bat` 增加独立窗口标题，防止再次认错。
+
+### 变更
+- `scripts/watch_services.py` 每轮重读配置动态生成守护目标：Alpha 只守护 AstrBot + 桥接，WeFlow 才
+  额外守护 :5031；从面板切换无需重启守护，手动关闭 WeFlow 也不再被旧规则拉起。
+- `wechat-weflow-bridge-ob11/web_panel.py` 设置页新增常驻「消息链路」：真实下拉框选择接收端
+  （WeFlow / Alpha）与发送端（UIA / Alpha API）；状态卡由硬编码 WeFlow 改为「接收端」。
+- 排查脚本 `scripts/probe_port_batch.bat` 同时探测 5030/5031/8766 并打印当前 `message_source`；
+  `临时启动WeFlow_时间回拨.bat` 注明仅在接收端=WeFlow 时使用。
+
+### 验证
+- 一键启动在 `message_source=alpha` 时输出 `Alpha selected - skipping WeFlow`；重复运行能正确识别已运行的守护。
+- 实关 WeFlow 根进程并等待 50 秒：无新 WeFlow 进程、:5031 保持关闭，:5030 Alpha、:8766 桥接、AstrBot 均在线。
+- 守护 `--once` 输出接收端 ALPHA，目标只有 AstrBot + 桥接；面板 :8766、Alpha accounts 接口均 200。
 
 ## Alpha 原生消息源接入（2026-10-18）
 

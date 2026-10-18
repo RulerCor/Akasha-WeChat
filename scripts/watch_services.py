@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""watch_services.py — Akasha 三服务守护（探活 + 自动拉起）。
+"""watch_services.py — Akasha 服务守护（探活 + 自动拉起）。
 
 ## 管什么、不管什么
 
-* **管**：AstrBot（6185+11229）、桥接（8766）、WeFlow（5031）—— 生产服务，挂了必须拉起。
+* **管**：AstrBot（6185+11229）、桥接（8766）；当接收端=WeFlow 时额外管 WeFlow（5031）。
 * WeFlow 的拉起**只能经 RunAsDate**（进程内时钟冻结在 2026-09-30，绕过
   wcdb_api.dll 的 -101 授权时间炸弹，见 docs/WeFlow时间回拨启动套件.md）。
   RunAsDate 或 WeFlow.exe 缺失时守护只报警、**绝不**裸启 WeFlow.exe。
-  用户手动退出 WeFlow 也会被守护重新拉起 —— 想停就先关守护窗口。
+  接收端=WeFlow 时，手动退出 WeFlow 会被守护重新拉起；切到 Alpha 后不会。
 * **不管**：模拟器（sim_wechat.py, :8767）。它会在 OneBot WS 上与真桥接
   **抢 AstrBot 的回复路由**，导致微信侧"发消息没反应"（事故 2026-09-20）。
   要用模拟器请手动 `sim/start_sim.bat`，用完即关。
@@ -33,7 +33,9 @@
     python scripts/watch_services.py          # 前台守护，Ctrl+C 退出（不杀已起的服务）
     python scripts/watch_services.py --once   # 只体检一次并打印状态，不拉起任何东西
 
-推荐由用户双击项目根目录的 `启动守护.bat` 使用。
+推荐由用户双击项目根目录的 `启动守护.bat` 使用。守护每轮都会重新读取
+`runtime/bridge/config.json`；面板把接收端切到 Alpha 后无需重启守护，
+WeFlow 会立即从守护目标中移除。
 """
 
 import argparse
@@ -136,19 +138,26 @@ def _selected_message_source():
 
 
 # ⚠️ 只在桥接确实选择 WeFlow 时才守护 WeFlow。
-# 选 Alpha 时：不占 5031、不需要 RunAsDate、Alpha 由用户自己开着（Electron 桌面应用）。
-# 守护 Alpha.exe 需要处理多进程/自更新/锁屏，盲目拉起容易双开；当前策略是**不自动拉**，
-# 只在选了 Alpha 时把 WeFlow 从守护列表移除。
-if _selected_message_source() != "alpha":
-    SERVICES.append(dict(
-        name="WeFlow",
-        ports=(5031,),
-        cmd=WEFLOW_CMD,      # None = 缺 RunAsDate / WeFlow.exe，spawn 只报警
-        cwd=os.path.dirname(WEFLOW_EXE) if WEFLOW_EXE else ROOT,
-        log=os.path.join(ROOT, "runtime", "bridge", "weflow_watchdog.log"),
-        grace=120,           # 十来个进程 + 建库，实测启动约 25s，给足余量
-        probe_host="127.0.0.1",
-    ))
+# 选 Alpha 时：不占 5031、不需要 RunAsDate、Alpha 由用户自己开着
+# （Electron 桌面应用）。守护 Alpha.exe 需要处理多进程/自更新/锁屏，
+# 盲目拉起容易双开；当前策略是**不自动拉 Alpha**。
+#
+# 列表在每轮巡检前重新计算，因此面板把接收端切到 Alpha 后无需重启守护，
+# 手动关掉的 WeFlow 也不会再被旧规则拉起。
+def _active_services():
+    """返回当前接收端对应的守护列表。"""
+    services = list(SERVICES)
+    if _selected_message_source() == "weflow":
+        services.append(dict(
+            name="WeFlow",
+            ports=(5031,),
+            cmd=WEFLOW_CMD,      # None = 缺 RunAsDate / WeFlow.exe，spawn 只报警
+            cwd=os.path.dirname(WEFLOW_EXE) if WEFLOW_EXE else ROOT,
+            log=os.path.join(ROOT, "runtime", "bridge", "weflow_watchdog.log"),
+            grace=120,           # 十来个进程 + 建库，实测启动约 25s，给足余量
+            probe_host="127.0.0.1",
+        ))
+    return services
 
 
 
@@ -236,8 +245,10 @@ def main():
     ap.add_argument("--interval", type=int, default=20, help="巡检间隔秒数（默认 20）")
     args = ap.parse_args()
 
-    log(f"=== Akasha 守护启动 | 项目: {ROOT} | 间隔 {args.interval}s | {'仅体检' if args.once else '自动拉起'} ===")
-    for svc in SERVICES:
+    source = _selected_message_source()
+    services = _active_services()
+    log(f"=== Akasha 守护启动 | 项目: {ROOT} | 间隔 {args.interval}s | 接收端 {source.upper()} | {'仅体检' if args.once else '自动拉起'} ===")
+    for svc in services:
         if svc.get("python"):
             how = os.path.relpath(svc["python"], ROOT)
         elif svc.get("cmd"):
@@ -253,13 +264,28 @@ def main():
     # AstrBot 要 2-3 分钟才监听端口、WeFlow 约 25s），等满宽限期仍不在线
     # 才转入自动拉起 —— 避免把「刚点火还没监听」误判成崩溃再点一把火。
     startup_deadline = {}
-    for svc in SERVICES:
+    for svc in services:
         if not alive(svc):
             startup_deadline[svc["name"]] = time.time() + svc["grace"]
             log(f"  ⏳ {svc['name']} 启动时未在线，先等待就绪（最多 {svc['grace']}s，超时才拉起）")
 
+    last_source = source
     while True:
-        for svc in SERVICES:
+        source = _selected_message_source()
+        services = _active_services()
+        if source != last_source:
+            log(f"🔁 接收端切换为 {source.upper()}，守护目标已更新为: "
+                f"{', '.join(svc['name'] for svc in services)}")
+            last_source = source
+        active_names = {svc["name"] for svc in services}
+        for name in list(status):
+            if name not in active_names:
+                status.pop(name, None)
+        for name in list(startup_deadline):
+            if name not in active_names:
+                startup_deadline.pop(name, None)
+
+        for svc in services:
             ok = alive(svc)
             if status.get(svc["name"]) != ok:
                 log(f"{'✅' if ok else '⚠️'} {svc['name']} {'在线' if ok else '不在线'}"
@@ -268,6 +294,12 @@ def main():
             if ok:
                 startup_deadline.pop(svc["name"], None)
             else:
+                if svc["name"] not in startup_deadline:
+                    # 运行中切换到 WeFlow 时，给新加入的守护目标一个启动宽限，
+                    # 避免刚由一键启动拉起就又被守护重复点火。
+                    startup_deadline[svc["name"]] = time.time() + svc["grace"]
+                    log(f"  ⏳ {svc['name']} 新加入守护，先等待就绪"
+                        f"（最多 {svc['grace']}s，超时才拉起）")
                 deadline = startup_deadline.get(svc["name"])
                 if deadline is not None:
                     if time.time() < deadline:

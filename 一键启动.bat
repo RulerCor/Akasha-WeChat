@@ -5,12 +5,13 @@ rem  Akasha one-click launcher (redone 2026-10-17)
 rem  One click starts everything below. Idempotent: anything
 rem  already running is skipped, nothing is started twice.
 rem
-rem    [1/4] WeFlow   - via RunAsDate, process clock frozen at
-rem                     30/09/2026 12:00:00 (WCDB -101 timebomb
-rem                     bypass, see docs WeFlow time-rollback doc)
-rem    [2/4] AstrBot  - :6185 WebUI / :11229 OneBot, 2-3 min init
-rem    [3/4] Bridge   - :8766 panel
-rem    [4/4] Watchdog - auto relaunches any crashed service;
+rem    [1/5] Message source - Alpha (native API, :5030) or WeFlow
+rem                     (fallback, :5031 via RunAsDate frozen clock).
+rem                     The launcher reads runtime\bridge\config.json
+rem                     and only starts the selected backend.
+rem    [2/5] AstrBot  - :6185 WebUI / :11229 OneBot, 2-3 min init
+rem    [3/5] Bridge   - :8766 panel
+rem    [4/5] Watchdog - auto relaunches any crashed service;
 rem                     WeFlow is relaunched via RunAsDate too
 rem
 rem  Prereq: WeChat PC 4.x logged in, main window kept open.
@@ -34,7 +35,15 @@ echo.
 echo === Akasha one-click launcher ===
 echo.
 
-echo [1/4] WeFlow - frozen clock 30/09/2026 via RunAsDate ...
+set "MESSAGE_SOURCE=weflow"
+if exist "%ROOT%runtime\bridge\config.json" (
+    for /f "tokens=2 delims=:, " %%A in ('findstr /C:"message_source" "%ROOT%runtime\bridge\config.json" 2^>nul') do set "MESSAGE_SOURCE=%%~A"
+)
+
+echo [1/5] Message source: %MESSAGE_SOURCE%
+if /I "%MESSAGE_SOURCE%"=="alpha" goto :alpha
+
+echo   WeFlow selected - frozen clock 30/09/2026 via RunAsDate ...
 call :port_busy 5031
 if "%PORT_BUSY%"=="1" (
     echo   port 5031 listening - already running, skip
@@ -58,8 +67,18 @@ if not exist "%WFEXE%" (
 echo   launching via RunAsDate ...
 start "" "%RAD%" /immediate 30\09\2026 12:00:00 "%WFEXE%"
 
+:alpha
+echo   Alpha selected - skipping WeFlow.
+call :port_busy 5030
+if "%PORT_BUSY%"=="1" (
+    echo   Alpha HTTP API :5030 listening - OK
+) else (
+    echo   [warn] Alpha HTTP API :5030 not listening.
+    echo   [warn] Start Alpha manually and keep its desktop app running.
+)
+
 :astrbot
-echo [2/4] AstrBot - :6185 WebUI / :11229 OneBot ...
+echo [2/5] AstrBot - :6185 WebUI / :11229 OneBot ...
 call :port_busy 11229
 if "%PORT_BUSY%"=="1" (
     echo   port 11229 listening - already running, skip
@@ -73,7 +92,7 @@ echo   launching in a new window - needs 2-3 min to init ...
 start "AstrBot" /D "%ROOT%runtime\astrbot" "%PYA%" -u run_astrbot.py run
 
 :bridge
-echo [3/4] Bridge - :8766 panel ...
+echo [3/5] Bridge - :8766 panel ...
 call :port_busy 8766
 if "%PORT_BUSY%"=="1" (
     echo   port 8766 listening - already running, skip
@@ -87,8 +106,8 @@ echo   launching in a new window ...
 start "Bridge" /D "%ROOT%runtime\bridge" "%PYB%" -u main.py
 
 :watchdog
-echo [4/4] Watchdog - auto relaunch on crash ...
-tasklist /V /FI "WINDOWTITLE eq AkashaWatchdog*" 2>nul | findstr /I "AkashaWatchdog" >nul
+echo [4/5] Watchdog - target follows Message source ...
+wmic process where "name='python.exe'" get CommandLine 2>nul | findstr /I "watch_services.py" >nul
 if not errorlevel 1 (
     echo   watchdog window already open, skip
     goto :done

@@ -284,8 +284,8 @@ details.tier.warn>.tier-body{background:linear-gradient(180deg,#fffdf8,#fff);mar
     <div class="status-row">
       <div class="status-card"><div class="label">桥接状态</div><div class="value" id="bridgeStatus">-</div></div>
       <div class="status-card"><div class="label">AstrBot</div><div class="value" id="obStatus">-</div></div>
-      <div class="status-card"><div class="label">WeFlow</div><div class="value" id="weflowStatus">-</div></div>
-      <div class="status-card"><div class="label">发送模式</div><div class="value" id="sendMethod" style="font-size:13px">-</div></div>
+      <div class="status-card"><div class="label">接收端</div><div class="value" id="recvStatus" style="font-size:13px">-</div></div>
+      <div class="status-card"><div class="label">发送端</div><div class="value" id="sendMethod" style="font-size:13px">-</div></div>
     </div>
 
     <div class="btn-row">
@@ -599,9 +599,13 @@ function refreshDashboard() {
     document.getElementById('statusText').textContent = s.running ? (s.paused ? '已暂停' : '运行中') : '未运行';
     document.getElementById('obStatus').textContent = s.ob_connected ? '已连接' : '未连接';
     document.getElementById('obStatus').style.color = s.ob_connected ? '#4caf50' : '#bdbdbd';
-    document.getElementById('weflowStatus').textContent = s.weflow_connected ? '已连接' : '未连接';
-    document.getElementById('weflowStatus').style.color = s.weflow_connected ? '#4caf50' : '#bdbdbd';
-    document.getElementById('sendMethod').textContent = s.send_method;
+    // 接收端 = 消息源（weflow/alpha），SSE 是否连上
+    var srcName = (s.message_source === 'alpha') ? 'Alpha' : 'WeFlow';
+    document.getElementById('recvStatus').textContent = srcName + (s.weflow_connected ? ' 已连接' : ' 未连接');
+    document.getElementById('recvStatus').style.color = s.weflow_connected ? '#4caf50' : '#bdbdbd';
+    // 发送端 = 发送方式（uia/alpha_api）
+    var sendName = (s.send_method === 'alpha_api') ? 'Alpha API' : 'UIA';
+    document.getElementById('sendMethod').textContent = sendName;
 
     // 项目标识：标题与抬头由后端下发（改 config.PROJECT_NAME / VERSION 即可生效）
     if (s.project_version) {
@@ -641,6 +645,15 @@ document.getElementById('btnToggleMode').onclick = function(){
 // ===== 设置定义 =====
 // tier: common=常驻展示  adv=折叠（进阶）  legacy=折叠（上游遗留，一般别动）
 var CFG_GROUPS = [
+  {tier:'common', icon:'🔗', title:'消息链路', sub:'读微信消息的后端 + 回微信消息的方式（改完保存并重启桥接生效）', fields:[
+    {key:'message_source', label:'接收端（读微信消息用哪个后端）', type:'select', opts:[
+      {v:'weflow',l:'WeFlow（旧链路，已停维护，需 RunAsDate 冻结时钟）'},
+      {v:'alpha',l:'Alpha（WeFlow 继任者，原生 API）'}], restart:1},
+    {key:'send_method', label:'发送端（回微信消息用什么）', type:'select', opts:[
+      {v:'uia',l:'UIA 自动化（默认，不花钱，微信 PC 客户端）'},
+      {v:'alpha_api',l:'Alpha API（需 ¥100/月激活「发送文字消息」）'}], restart:1},
+    {type:'info', text:'<b>端口提醒</b>：WeFlow 默认 5031、Alpha 默认也是 5031，两个同开会冲突 —— 本机把 Alpha 放在了 <b>5030</b>（设置 → 接口与集成 → 本机 HTTP API）。详见 docs/Alpha接入说明.md。'},
+  ]},
   {tier:'common', icon:'🐱', title:'机器人身份', sub:'它在微信里叫什么、被什么名字唤醒', fields:[
     {type:'detect', label:'自动获取（从已登录的微信读取，改完仍可手动改）'},
     {key:'bot_nicknames', label:'机器人昵称（逗号分隔，@ 其中任何一个都会唤醒）', type:'text', ph:'Mon3tr, M3, 小猫'},
@@ -660,10 +673,7 @@ var CFG_GROUPS = [
     {key:'image_max_bytes', label:'单张图片大小上限（字节），超过就跳过', type:'number', ph:'8388608'},
     {type:'info', text:'<b>「怎么理解图片」不在这里配</b>：图片默认原样转交 AstrBot，由 AstrBot 面板(6185) → 配置 里的主模型（多模态）或图片转述模型决定。下面「上游遗留」里的桥接侧转述是备用方案，默认关闭。'},
   ]},
-  {tier:'adv', icon:'🔌', title:'连接', sub:'本机服务地址，一般不动', fields:[
-    {key:'message_source', label:'消息源（读微信消息用哪个后端）', type:'select', opts:[
-      {v:'weflow',l:'WeFlow（旧链路，未维护 + 需 RunAsDate）'},
-      {v:'alpha',l:'Alpha（WeFlow 继任者，原生 API）'}]},
+  {tier:'adv', icon:'🔌', title:'连接', sub:'各后端的地址与令牌（消息源/发送端在上面「消息链路」选）', fields:[
     {key:'alpha_base_url', label:'Alpha 地址', type:'text', ph:'http://127.0.0.1:5030', restart:1},
     {key:'alpha_access_token', label:'Alpha Access Token', type:'password', ph:'输入 Alpha Token', restart:1},
     {key:'alpha_account_id', label:'Alpha 账号 ID（留空 = 自动取唯一就绪账号）', type:'text', ph:'留空自动检测', restart:1},
@@ -682,11 +692,8 @@ var CFG_GROUPS = [
       {v:'list',l:'仅会话列表点击'},
       {v:'search',l:'仅 Ctrl+F 搜索'}]},
   ]},
-  {tier:'legacy', icon:'📦', title:'发送方式（默认 UIA）', sub:'Alpha 原生发送需付费激活；UIA 不花钱、已验证', fields:[
-    {key:'send_method', label:'发送方式', type:'select', opts:[
-      {v:'uia',l:'UIA 自动化（默认，微信 PC 客户端）'},
-      {v:'alpha_api',l:'Alpha API（需 ¥100/月激活「发送文字消息」）'}]},
-    {key:'alpha_send_wait_seconds', label:'Alpha 发送等待秒数（0~120）', type:'number', ph:'30', restart:1},
+  {tier:'legacy', icon:'📦', title:'发送参数与上游遗留（默认不动）', sub:'发送端在上面「消息链路」选；这里只有细节参数和历史遗留', fields:[
+    {key:'alpha_send_wait_seconds', label:'Alpha 发送等待秒数（0~120，仅 send_method=alpha_api 时用）', type:'number', ph:'30', restart:1},
     {key:'weflow_send_api', label:'WeFlow 发送 API（历史遗留，代码已不使用）', type:'text', ph:'http://127.0.0.1:5031/api/v1/message'},
     {key:'image_caption_model', label:'桥接侧图片转述模型名（留空 = 不启用，走 AstrBot 配置）', type:'text', ph:'留空即可'},
     {key:'image_caption_provider', label:'转述服务', type:'select', opts:[{v:'ollama',l:'Ollama 本地'},{v:'openai',l:'OpenAI 兼容'}]},

@@ -7,6 +7,7 @@ if not exist "%WF%" set "WF=%LOCALAPPDATA%\Programs\WeFlow\WeFlow.exe"
 
 echo ============================================================
 echo   WeFlow temporary launch with frozen clock - bypass -101
+echo   Use this only when Message source = WeFlow; Alpha uses :5030.
 echo   Fake clock: 2026-09-30 12:00:00, frozen inside WeFlow only.
 echo   System clock untouched. AstrBot / bridge / WeChat unaffected.
 echo   Frozen clock never reaches the expiry point - no restart needed.
