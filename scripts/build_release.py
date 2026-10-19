@@ -41,7 +41,7 @@ except Exception:
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 CODE_DIR = os.path.join(ROOT, "wechat-weflow-bridge-ob11")
-PROJECT_CODE = "Akasha_RulerCordelius-Wechatbot"  # 项目代号（2026-09-18 起固定）
+PROJECT_CODE = "Mon3trBot_Remake"
 RELEASE = os.path.join(ROOT, "release")
 
 # 需要原样打包的顶层条目（相对项目根）

@@ -215,7 +215,7 @@ def main():
     line("═")
     print("  ✅ 配置完成")
     print()
-    print("  接下来：双击「启动 Akasha.bat」")
+    print("  接下来：双击「启动 Mon3trBot.bat」")
     print("  首次启动 AstrBot 约需 40~90 秒，请等它自动打开面板。")
     line("═")
     return 0

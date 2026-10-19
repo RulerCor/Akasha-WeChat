@@ -3,7 +3,7 @@
 
 默认审计 release/dist 里**最新**的 zip（按修改时间），也可显式传路径：
     python scripts/audit_dist.py
-    python scripts/audit_dist.py release/dist/Akasha_...-v1.6.0.zip
+    python scripts/audit_dist.py release/dist/Mon3trBot_Remake-...-v1.8.1.zip
 """
 import json
 import os
@@ -94,7 +94,7 @@ print(f"  {len(vec)} 个  {'✅' if not vec else '❌'}")
 # 6) 启动器
 print()
 print("=== 6) 启动器 ===")
-for f in ("启动 Akasha.bat", "停止 Akasha.bat", "使用说明.md", "BUILD_INFO.md"):
+for f in ("启动 Mon3trBot.bat", "停止 Mon3trBot.bat", "使用说明.md", "BUILD_INFO.md"):
     print(f"  {'✅' if any(n.endswith(f) for n in N) else '❌'} {f}")
 
 # 7) 安装包

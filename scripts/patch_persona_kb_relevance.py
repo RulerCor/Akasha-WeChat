@@ -73,6 +73,10 @@ def main() -> int:
         cur = row[0] or ""
 
         if args.verify:
+            # default / me 不是角色扮演卡，不要求携带角色公共规则段。
+            if pid in ("default", "me"):
+                print(f"  {pid:10s} ⏭️ 非角色卡，跳过")
+                continue
             print(f"  {pid:10s} {'✅ 已打' if MARK in cur else '❌ 未打'}")
             if MARK not in cur:
                 rc = 1

@@ -76,7 +76,7 @@ PAGE = """<!DOCTYPE html>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Akasha_RulerCordelius-Wechatbot</title>
+<title>Mon3trBot_Remake</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>💎</text></svg>">
 <style>
 :root {
@@ -975,7 +975,7 @@ details.tier.warn > .tier-body { background: linear-gradient(180deg, rgba(251,24
 
 <!-- ===== 侧边栏 ===== -->
 <div class="sidebar">
-  <div class="logo">Akasha</div>
+  <div class="logo">Mon3trBot</div>
   <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
     <span class="icon">🏠</span><span>控制面板</span>
   </button>
@@ -994,7 +994,7 @@ details.tier.warn > .tier-body { background: linear-gradient(180deg, rgba(251,24
   <!-- ===== 面板页 ===== -->
   <div class="tab-page active" id="page-dashboard">
     <div class="header">
-      <h1><span class="pname" id="pname">Akasha_RulerCordelius-Wechatbot</span>
+      <h1><span class="pname" id="pname">Mon3trBot_Remake</span>
         <span class="ver" id="verTag">v-</span></h1>
       <div class="badge" id="statusText">加载中...</div>
     </div>
@@ -1106,7 +1106,6 @@ details.tier.warn > .tier-body { background: linear-gradient(180deg, rgba(251,24
             <b>插嘴</b> = 没人 @ 时它会不会自己说话，改完点右下「💾 保存」。
             bot 刚被拉进的群没列出来？点右上「🔄 刷新名单」。
           </div>
-          <div id="arWhitelistWarn" style="display:none;margin-bottom:8px"></div>
           <div class="toolbar" style="margin-bottom:8px">
             <input class="search-input" id="groupSearch" placeholder="🔍 搜群名 / 群 ID" oninput="renderGroups()">
             <div class="spacer"></div>
@@ -1141,44 +1140,6 @@ details.tier.warn > .tier-body { background: linear-gradient(180deg, rgba(251,24
           </div>
         </div>
 
-        <details class="tier" id="tierAdvanced">
-          <summary><span class="arrow">▶</span>🔧 高级：名单手动维护<span class="count">平台 ID 白名单 · 插话白/黑名单</span></summary>
-          <div class="tier-body">
-            <div class="hint-text">
-              <b>平台 ID 白名单</b>是总闸：开启后不在名单里的会话（私聊 + 群）整条消息都不进 AstrBot，@ 也不理。
-              <b>插话白/黑名单</b>只管「没人 @ 时插不插嘴」：黑名单优先；白名单留空 = 所有群。
-              手动条目填群 ID 或完整 UMO 都行（上面表里点一下即可复制）。
-            </div>
-            <div class="settings-row">
-              <div class="settings-field" style="min-width:150px;max-width:190px">
-                <label>平台 ID 白名单开关</label>
-                <select id="ab_wl_enable" onchange="syncWlEnable(this)"><option value="0">关闭（不过滤）</option><option value="1">开启</option></select>
-              </div>
-              <div class="settings-field wide">
-                <label>平台 ID 白名单 · 点选群（好友在「私聊」子页勾）</label>
-                <div id="ab_wl_groups" class="chip-wrap"></div>
-              </div>
-              <div class="settings-field wide">
-                <label>平台白名单 · 手动补充</label>
-                <textarea id="ab_wl_extra" rows="2" placeholder="群 ID / UMO，逗号或换行分隔；留空即可" oninput="markDirty()"></textarea>
-              </div>
-            </div>
-            <div class="settings-row">
-              <div class="settings-field wide">
-                <label>插话白名单 · 点选群（留空 = 所有群）</label>
-                <div id="ab_ar_groups" class="chip-wrap"></div>
-              </div>
-              <div class="settings-field wide">
-                <label>插话白名单 · 手动补充</label>
-                <textarea id="ab_ar_extra" rows="2" placeholder="留空即可" oninput="markDirty()"></textarea>
-              </div>
-              <div class="settings-field wide">
-                <label>插话黑名单 · 手动补充（表里没勾「插嘴」的群会自动进黑名单，这里只放表外的）</label>
-                <textarea id="ab_ar_black_extra" rows="2" placeholder="留空即可" oninput="markDirty()"></textarea>
-              </div>
-            </div>
-          </div>
-        </details>
       </div>
 
       <!-- ── 子页：私聊 ── -->
@@ -1782,37 +1743,6 @@ function toggleMute(cb) {
   });
 }
 
-// ---- 群 chip 名单（高级区：平台白名单 / 插话白名单） ----
-function renderNameList(groupsId, extraId, values) {
-  var vals = (values || []).map(function(x){return String(x).trim()});
-  var host = document.getElementById(groupsId);
-  var html = '';
-  peopleData.groups.forEach(function(g){
-    var hit = vals.indexOf(String(g.gid)) >= 0 || vals.indexOf(g.umo) >= 0 || vals.indexOf(g.session) >= 0;
-    html += '<label class="chip' + (hit ? ' on' : '') + '">'
-      + '<input type="checkbox" data-gid="' + esc(g.gid) + '"' + (hit ? ' checked' : '')
-      + ' onchange="this.parentNode.classList.toggle(\\'on\\', this.checked);markDirty()"><span class="dot"></span>' + esc(g.name) + '</label>';
-  });
-  host.innerHTML = html || '<span style="color:#7d838c;font-size:12px">暂无已知群（点「🔄 刷新名单」拉取）</span>';
-  var extra = vals.filter(function(x){
-    return !peopleData.groups.some(function(g){
-      return x === String(g.gid) || x === g.umo || x === g.session;
-    });
-  });
-  document.getElementById(extraId).value = extra.join('\\n');
-}
-
-function collectNameList(groupsId, extraId) {
-  var out = [];
-  document.querySelectorAll('#' + groupsId + ' input[type=checkbox]:checked').forEach(function(cb){
-    out.push(cb.getAttribute('data-gid'));
-  });
-  document.getElementById(extraId).value.split(/[,，\\n]+/).forEach(function(x){
-    x = x.trim(); if (x) out.push(x);
-  });
-  return out;
-}
-
 // ---- 私聊白名单（好友 chip） ----
 // 私聊与群白名单是**同一份** id_whitelist —— 保存时统一收集器会把
 // 「好友勾选 + 群勾选」合并后整表覆盖（见 collectFriendWhitelist）。
@@ -1936,21 +1866,11 @@ function collectFriendWhitelist() {
     var isGroup = peopleData.groups.some(function(g){ return String(g.gid) === u; });
     if (!isGroup) push(u);
   });
-  // 3) 群视图已勾的群条目
-  document.querySelectorAll('#ab_wl_groups input[type=checkbox]:checked').forEach(function(cb){
-    var v = String(cb.getAttribute('data-gid') || '').trim();
-    if (v) push(v);
-  });
   return out;
 }
 
-// 平台白名单开关的两处下拉（私聊卡 + 高级区）是同一份配置，互相镜像
+// 私聊白名单开关
 function syncWlEnable(el) {
-  var v = el.value;
-  var fw = document.getElementById('fw_enable');
-  var ab = document.getElementById('ab_wl_enable');
-  if (fw) fw.value = v;
-  if (ab) ab.value = v;
   markDirty();
 }
 
@@ -1967,9 +1887,6 @@ function saveAll() {
       ? arOverrides[String(g.gid)] : !inArBlacklist(g);
     if (!on) bl.push(String(g.gid));
   });
-  document.getElementById('ab_ar_black_extra').value.split(/[,，\\n]+/).forEach(function(x){
-    x = x.trim(); if (x) bl.push(x);
-  });
   var body = {
     id_whitelist_enable: document.getElementById('fw_enable').value === '1',
     // ⚠️ 私聊与群共用同一份 id_whitelist：统一收集器会合并两边勾选，
@@ -1977,7 +1894,6 @@ function saveAll() {
     id_whitelist: collectFriendWhitelist(),
     ar_enable: document.getElementById('ab_ar_enable').value === '1',
     ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
-    ar_whitelist: collectNameList('ab_ar_groups', 'ab_ar_extra'),
     ar_blacklist: bl,
   };
   var btn = document.getElementById('abSaveBtn');
@@ -2014,11 +1930,6 @@ function saveAll() {
     toast('❌ 保存失败: ' + e.message, 'error');
   });
 }
-
-// 旧函数名兼容（老文档 / 验证脚本可能引用）：统一走 saveAll
-function saveAdmins() { return saveAll(); }
-function saveFriendWhitelist() { return saveAll(); }
-function saveAstrbotCfg() { return saveAll(); }
 
 // ---- 重启 AstrBot ----
 // 后端后台线程干活，这里轮询状态显示进度。
@@ -2091,39 +2002,14 @@ function hideRestartNeeded() {
   if (btn) btn.classList.remove('need-restart');
 }
 
-function restartAstrbotHint() {
-  // 保留旧名做兼容（老页面缓存里可能还引用它）；直接走新的一键重启
-  return restartAstrbot();
-}
-
-// ---- 表单回填（白名单 / 随机插话 / 高级区） ----
+// ---- 表单回填（白名单 / 随机插话） ----
 function fillAstrbotForm(d) {
-  document.getElementById('ab_wl_enable').value = d.id_whitelist_enable ? '1' : '0';
   document.getElementById('fw_enable').value = d.id_whitelist_enable ? '1' : '0';
-  renderNameList('ab_wl_groups', 'ab_wl_extra', d.id_whitelist);
   // 用服务端值重置缓存（重新拉取时旧编辑作废），再渲染好友 chip
   currentWhitelist = (d.id_whitelist || []).map(function(x){ return String(x).trim(); });
   renderFriendList('fw_friends', currentWhitelist);
-  renderNameList('ab_ar_groups', 'ab_ar_extra', d.ar_whitelist);
-  document.getElementById('ab_ar_black_extra').value = (d.ar_blacklist || []).filter(function(x){
-    x = String(x).trim();
-    return x && !peopleData.groups.some(function(g){
-      return x === String(g.gid) || x === g.umo || x === g.session;
-    });
-  }).join('\\n');
   document.getElementById('ab_ar_enable').value = d.ar_enable ? '1' : '0';
   document.getElementById('ab_ar_poss').value = d.ar_possibility;
-  // 插话白名单非空时提示：它会收紧表格里的「插嘴」勾选
-  var warn = document.getElementById('arWhitelistWarn');
-  if ((d.ar_whitelist || []).length) {
-    warn.style.display = '';
-    warn.className = 'hint-text amber';
-    warn.innerHTML = '⚠️ <b>插话白名单不是空的</b>（高级区勾了 ' + d.ar_whitelist.length
-      + ' 条）—— 只有白名单里的群会插嘴，表格「插嘴」列会被它收紧。'
-      + '想让表格说了算，去高级区把插话白名单清空。';
-  } else {
-    warn.style.display = 'none';
-  }
 }
 
 // ===== 自动获取机器人身份 =====
@@ -2208,7 +2094,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 "group_reply_mode": state.group_reply_mode,
                 # 项目标识：面板标题上的 _RC 标记与版本号从后端下发，
                 # 这样以后改 VERSION 文件就够了，不用再回来改 HTML。
-                "project_name": getattr(config, "PROJECT_NAME", "Akasha_RulerCordelius-Wechatbot"),
+                "project_name": getattr(config, "PROJECT_NAME", "Mon3trBot_Remake"),
                 "project_version": getattr(config, "PROJECT_VERSION", ""),
                 "log": "\n".join(log_lines),
             })

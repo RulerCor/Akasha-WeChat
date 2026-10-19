@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""一键检查所有「AstrBot 核心补丁」是否还在（升级后必跑）。
+"""检查不随 AstrBot 升级丢失的 Mon3trBot 配置补丁。
 
-AstrBot 升级 / 重装会把以下补丁全部覆盖掉。本脚本逐个调用对应补丁脚本的
---verify 模式，只读不写，最后汇总一张表。
+AstrBot 代码层修复已迁移到 akasha_rc_patches 插件，本脚本只检查：
+  - data_v4.db 中的人设规则；
+  - 桥接自身源码里的引号配对保护。
 
 用法:
     python scripts/check_patches.py
-退出码: 0 = 全部已打；1 = 有缺失（按提示重打即可）
+退出码: 0 = 全部就绪；1 = 有缺失
 """
-import io
 import os
 import subprocess
 import sys
@@ -23,56 +23,41 @@ PY = os.path.join(ROOT, "runtime", "astrbot", ".venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = os.path.join(ROOT, "runtime", "bridge", ".venv", "Scripts", "python.exe")
 
-# (补丁脚本, 作用说明, 重打命令)
 PATCHES = [
-    ("patch_aiocqhttp_primary_client.py",
-     "aiocqhttp 主动发送路由兜底（定时任务/跨会话发送）",
-     "python scripts/patch_aiocqhttp_primary_client.py"),
-    ("patch_astrbot_i18n_blacklist.py",
-     "面板 i18n：主动回复黑名单文案（4 语言）",
-     "python scripts/patch_astrbot_i18n_blacklist.py"),
-    ("patch_kb_wording.py",
-     "知识库注入措辞：如实标注为资料、不许编成亲身经历（4 处）",
-     "python scripts/patch_kb_wording.py"),
     ("patch_persona_kb_framing.py",
-     "人设：知识库来源的表述规则（3 条）",
+     "人设：知识库来源的表述规则",
      "python scripts/patch_persona_kb_framing.py"),
     ("patch_persona_topic_guard.py",
-     "人设：「话题边界」段落（禁倒剧情/编往事）",
+     "人设：话题边界",
      "python scripts/patch_persona_topic_guard.py"),
     ("patch_persona_name_rule.py",
-     "人设：「名字照抄」规则（禁简体化群友昵称）",
+     "人设：名字照抄规则",
      "python scripts/patch_persona_name_rule.py"),
     ("patch_persona_doctor_drift.py",
-     "人设：「称呼漂移防护」（禁跟着用对方的错称呼；mon3tr + mostima）",
+     "人设：称呼漂移防护",
      "python scripts/patch_persona_doctor_drift.py"),
-    ("patch_group_alias_note.py",
-     "群上下文：「同名说明」（昵称=备注，防模型把同一人当两位好友）",
-     "python scripts/patch_group_alias_note.py"),
     ("patch_persona_kb_relevance.py",
-     "人设：「资料相关性判断」（防检索结果绑架话题；全部人格）",
+     "人设：资料相关性判断",
      "python scripts/patch_persona_kb_relevance.py"),
-    ("patch_provider_get_keys.py",
-     "provider get_keys() str 归一化（修复 All chat models failed）",
-     "python scripts/patch_provider_get_keys.py"),
     ("patch_persona_speaker_attribution.py",
-     "人设：「发言归属与身份守则」（防误认发言者/防自曝模型名；全部人格）",
+     "人设：发言归属与身份守则",
      "python scripts/patch_persona_speaker_attribution.py"),
     ("patch_quote_split.py",
-     "桥接：引号配对保护（防「后半个引号跑到第二条消息」）",
+     "桥接：引号配对保护",
      "python scripts/patch_quote_split.py"),
 ]
 
 
 def main() -> int:
     print("=" * 72)
-    print("AstrBot 核心补丁状态总检")
+    print("Mon3trBot 持久化补丁状态总检")
     print("=" * 72)
+    print("AstrBot 代码层补丁由 akasha_rc_patches 插件在运行时接管。")
     bad = []
     for fname, desc, redo in PATCHES:
         path = os.path.join(ROOT, "scripts", fname)
         if not os.path.exists(path):
-            print(f"\n❌ {fname}  —— 脚本本身缺失")
+            print(f"\n❌ {desc} —— 脚本缺失: {fname}")
             bad.append((desc, redo))
             continue
         try:
@@ -80,8 +65,8 @@ def main() -> int:
                                timeout=120)
             out = (r.stdout or b"").decode("utf-8", "replace")
             err = (r.stderr or b"").decode("utf-8", "replace")
-            line = next((l.strip() for l in out.splitlines()
-                         if "补丁状态" in l), "")
+            line = next((x.strip() for x in out.splitlines()
+                         if "补丁状态" in x), "")
             ok = r.returncode == 0
             print(f"\n{'✅' if ok else '❌'} {desc}")
             print(f"     {fname}")
@@ -98,14 +83,12 @@ def main() -> int:
     print()
     print("=" * 72)
     if not bad:
-        print(f"结果: 全部 {len(PATCHES)} 项已打 ✅")
+        print(f"结果: 全部 {len(PATCHES)} 项已就绪 ✅")
         print("=" * 72)
         return 0
-    print(f"结果: {len(PATCHES) - len(bad)}/{len(PATCHES)} 已打，{len(bad)} 项缺失 ❌")
-    print("重打命令（逐条执行即可）:")
+    print(f"结果: {len(PATCHES) - len(bad)}/{len(PATCHES)} 已就绪，{len(bad)} 项缺失 ❌")
     for desc, redo in bad:
-        print(f"  # {desc}")
-        print(f"  {redo}")
+        print(f"  # {desc}\n  {redo}")
     print("=" * 72)
     return 1
 

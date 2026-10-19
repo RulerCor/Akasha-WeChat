@@ -1,47 +1,117 @@
 # -*- coding: utf-8 -*-
-"""Akasha RC 补丁集插件。
+"""Mon3trBot_Remake runtime patch plugin for AstrBot.
 
-解决的问题：本仓库对 AstrBot 核心有若干行为修正，以前以"直接改
-site-packages 源码"的方式落地——AstrBot 每次 pip 升级都会把改动全部
-覆盖，必须手动重打一遍（check_patches.py 就是为此而生）。
+This plugin keeps Mon3trBot-specific behavior in one place instead of editing
+AstrBot's installed source files. Every patch is applied in memory when the
+plugin starts, so upgrading AstrBot does not require replaying source patches.
 
-本插件把**代码层**的补丁全部改为**运行时 monkey-patch**：
-  - 插件加载时动态修改目标模块的函数/属性，不落盘、不改原文件
-  - AstrBot 升级后只要重新安装/启用本插件即可，无需重打源码
-  - 每个补丁独立开关（_conf_schema.json），可单独禁用
-  - 内置自检：启动日志逐条打印补丁状态，与 check_patches.py 对齐
+Runtime patches:
+  1. provider_getkeys       normalize a string API key to a one-item list
+  2. openai_read_timeout    bound stalled OpenAI-compatible streaming reads
+  3. kb_wording_mgr         label retrieved knowledge as reference material
+  4. kb_wording_agent       apply the same rule to non-agentic KB injection
+  5. kb_scope               expose the knowledge-base scope to API keys
+  6. aiocqhttp_primary      route proactive sends without an event context
+  7. cron_sender_name       use a neutral sender name for scheduler events
+  8. group_alias_note       explain nickname/remark aliases in group context
+  9. active_reply_blacklist keep the 4.29-removed group blacklist behavior
 
-覆盖的补丁（代码层 6 个）：
-  1. provider_getkeys        provider.get_keys() str→[str] 归一化
-                             （修复 "All chat models failed: 'str' object
-                             has no attribute 'copy'"）
-  2. kb_wording_mgr          kb_mgr.format_context() 知识库注入模板
-                             （"记忆措辞"→"知识库资料+使用要求"）
-  3. kb_wording_agent        astr_main_agent 非 agentic 注入头
-  4. kb_wording_tools        knowledge_base_tools 工具描述+空结果文案
-  5. aiocqhttp_primary       packages/aiocqhttp/api_impl.py 主动发送路由兜底
-  6. i18n_blacklist          面板 i18n 主动回复黑名单文案（4 语言）
-
-人设层补丁（名字照抄/话题边界/称呼漂移防护/资料相关性判断/知识库来源
-表述）保存在 data_v4.db 的 personas.system_prompt 里，不受升级影响，
-不在本插件管辖内——但 check_patches.py 仍会检查它们。
-
-本插件加载后，check_patches.py 的 1-6 项应显示"已打（插件接管）"。
+The active-reply blacklist is stored under AstrBot's plugin_data directory.
+Persona rules live in data_v4.db and are checked separately by
+scripts/check_patches.py; they are not modified by this plugin.
 """
 
-import asyncio
-import contextlib
-import importlib
+import hashlib
 import inspect
 import io
+import json
 import os
-import sys
 
 from astrbot.api import logger
 from astrbot.api.event import filter as event_filter, AstrMessageEvent
-from astrbot.api.star import Context, Star, register
+from astrbot.api.star import Context, Star
 
 PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
+
+ACTIVE_REPLY_BLACKLIST_PATH = os.path.normpath(os.path.join(
+    PLUGIN_DIR, "..", "..", "plugin_data", "akasha_rc_patches",
+    "active_reply_blacklist.json",
+))
+
+
+def _read_json(path, default=None):
+    try:
+        with io.open(path, encoding="utf-8-sig") as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+
+def _atomic_write_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with io.open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, path)
+
+
+def _legacy_active_reply():
+    cfg_path = os.path.normpath(os.path.join(
+        PLUGIN_DIR, "..", "..", "cmd_config.json"))
+    cfg = _read_json(cfg_path, {}) or {}
+    ar = ((cfg.get("provider_ltm_settings") or {}).get("active_reply") or {})
+    return ar if isinstance(ar, dict) else {}
+
+
+def _known_group_ids():
+    """Read bridge contact cache and reproduce its stable integer-group IDs."""
+    cfg_path = os.path.normpath(os.path.join(
+        PLUGIN_DIR, "..", "..", "cmd_config.json"))
+    repo = os.path.abspath(os.path.join(os.path.dirname(cfg_path), "..", "..", ".."))
+    chat_path = os.path.join(repo, "runtime", "bridge", "data", "chat_names.json")
+    chat = _read_json(chat_path, {}) or {}
+    out = []
+    for wxid in chat:
+        if "@chatroom" not in str(wxid):
+            continue
+        digest = hashlib.md5(str(wxid).encode("utf-8")).digest()
+        out.append(str(int.from_bytes(digest[:8], "big") % (2 ** 31)))
+    return list(dict.fromkeys(out))
+
+
+def _runtime_blacklist():
+    """Return the canonical active-reply blacklist.
+
+    AstrBot 4.29 removed active_reply.blacklist from core. The plugin owns this
+    file, so upgrades and config migrations cannot silently drop the setting.
+    On first use, migrate the old blacklist. If an old whitelist was present,
+    preserve its effective behavior by blacklisting every known group outside
+    that whitelist, then clear the obsolete whitelist in the panel.
+    """
+    path = ACTIVE_REPLY_BLACKLIST_PATH
+    if os.path.isfile(path):
+        data = _read_json(path, None)
+        if isinstance(data, dict):
+            data = data.get("entries") or []
+        return [str(x).strip() for x in (data or []) if str(x).strip()]
+
+    legacy = _legacy_active_reply()
+    raw = legacy.get("blacklist") or []
+    entries = [str(x).strip() for x in raw if str(x).strip()]
+    whitelist = {str(x).strip() for x in (legacy.get("whitelist") or []) if str(x).strip()}
+    if whitelist:
+        known = _known_group_ids()
+        # Match the old precedence: whitelist restricts candidates, then the
+        # explicit blacklist excludes them. With a non-empty whitelist, all
+        # known groups outside it are effectively blacklisted.
+        entries = [gid for gid in known if gid not in whitelist]
+    if entries:
+        try:
+            _atomic_write_json(path, {"entries": list(dict.fromkeys(entries))})
+            logger.info(f"[Mon3trBot补丁][主动回复] 已迁移并接管 {len(set(entries))} 条黑名单")
+        except Exception as e:
+            logger.warning(f"[Mon3trBot补丁][主动回复] 黑名单迁移失败：{e}")
+    return list(dict.fromkeys(entries))
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -118,171 +188,104 @@ def _patch_kb_wording_mgr():
 
 
 def _patch_kb_wording_agent():
-    """astr_main_agent 非 agentic 路径的注入头。
-
-    上游在这条路径上调用 kb_mgr.format_context 或手拼文本。查看当前
-    版本实际调用方式：如果它复用 format_context，则补丁 2 已覆盖，
-    这里只做探测，不重复替换。
-    """
+    """Replace the non-agentic knowledge-base injection prefix at runtime."""
     from astrbot.core import astr_main_agent as mod
 
-    src = inspect.getsource(mod)
-    if "你手头可查的知识库资料" in src or "【知识库】" in src:
-        # 源码层已是新措辞（可能是历史补丁残留），无需 monkey-patch
-        return None
-    if "format_context" in src:
-        # 复用 format_context → 补丁 2 已覆盖此路径
-        return None
-    # 独立拼接路径：替换其硬编码注入头
-    # （v4.28.0 原文 "（你想起来的相关记忆，仅供你自己参考）：\n{kb_result}"）
-    replaced = []
-    for name, member in vars(mod).items():
-        if callable(member) and hasattr(member, "__code__"):
-            try:
-                code_src = inspect.getsource(member)
-            except (OSError, TypeError):
-                continue
-            if "你想起来的相关记忆" in code_src:
-                # 直接改不了闭包内嵌文本——采用替换模块常量/文本拼接点的
-                # 通用策略：打标记提醒 + 由 format_context 全局新措辞兜底
-                replaced.append(name)
-    if replaced:
-        logger.warning(
-            f"[Akasha补丁] astr_main_agent 中仍存在旧记忆措辞的函数 "
-            f"{replaced}；其知识库注入将走 format_context 新措辞兜底。")
-    return ("astrbot.core.astr_main_agent", "KB 注入头", "探测完成（format_context 兜底）")
-
-
-def _patch_kb_wording_tools():
-    from astrbot.core.tools import knowledge_base_tools as mod
-
-    changed = []
-    # 1) 工具 description
-    for name, member in vars(mod).items():
-        if inspect.isclass(member) and hasattr(member, "model_fields"):
-            desc_field = member.model_fields.get("description")
-            if desc_field is not None:
-                new_desc = ("Look up your knowledge base for reference material "
-                            "relevant to the user's question (set/lore facts, "
-                            "character details, community memes, notes, etc.). "
-                            "Treat the results as OBJECTIVE REFERENCE MATERIAL - "
-                            "NOT as your own personal memories, past experiences, "
-                            "or things you did together with someone. In normal "
-                            "replies never mention the knowledge base, this "
-                            "lookup, or where the content came from; only explain "
-                            "the source if the user explicitly asks about it. "
-                            "Only send short keywords or a concise question as "
-                            "the query.")
-                if "Recall your own" in str(desc_field.default or ""):
-                    member.model_fields["description"].default = new_desc
-                    changed.append(f"{name}.description")
-    # 2) 空结果文案：替换模块级函数里的字符串
-    src = inspect.getsource(mod)
-    if "你想了想，没有想起相关的内容" in src:
-        # 逐个函数替换字符串常量（运行时无法改 code 常量——改为包装）
-        for name, member in vars(mod).items():
-            if callable(member) and hasattr(member, "__code__"):
-                try:
-                    fn_src = inspect.getsource(member)
-                except (OSError, TypeError):
-                    continue
-                if "你想了想，没有想起相关的内容" in fn_src:
-                    # monkey-wrap: 拦截返回值替换文案
-                    orig_fn = member
-
-                    def make_wrapper(orig):
-                        async def wrapper(*args, **kwargs):
-                            res = await orig(*args, **kwargs)
-                            if isinstance(res, str) and "你想了想" in res:
-                                res = ("（知识库里没有检索到相关内容。"
-                                       "不要编造，按常识回答或直接说不知道。）")
-                            return res
-                        wrapper.__name__ = getattr(orig, "__name__", "wrapped")
-                        return wrapper
-
-                    try:
-                        setattr(mod, name, make_wrapper(orig_fn))
-                        changed.append(f"{name}:空结果文案")
-                    except Exception:
-                        pass
-    if changed:
-        return ("astrbot.core.tools.knowledge_base_tools",
-                ", ".join(changed[:2]), "工具描述+空结果文案")
-    return None
-
-
-def _run_patch_script(script_name: str, keywords_ok: tuple,
-                      script_args: tuple = ()) -> str | None:
-    """以 importlib 执行仓库 scripts/ 下的补丁脚本 main()（同进程、无子进程）。
-
-    这些脚本只做文件读写，无副作用依赖；import 方式比 subprocess 可靠
-    （运行实例的 sys.executable 是 vendor python，子进程读输出会挂）。
-    返回结果描述；脚本自己的打印会被重定向捕获。
-    """
-    import contextlib
-
-    repo_root = os.path.abspath(os.path.join(PLUGIN_DIR, "..", "..", "..", "..", ".."))
-    script = os.path.join(repo_root, "scripts", script_name)
-    if not os.path.exists(script):
-        logger.warning(f"[Akasha补丁] 找不到 {script}，跳过")
+    original = mod._apply_kb
+    if getattr(original, "_akasha_kb_wording_agent_patched", False):
         return None
 
-    spec = importlib.util.spec_from_file_location(
-        f"_akasha_patch_{script_name[:-3]}", script)
-    mod = importlib.util.module_from_spec(spec)
-    buf = io.StringIO()
-    old_argv = sys.argv
-    # 部分脚本会重定向 sys.stdout.buffer（TextIOWrapper）——StringIO 没有该
-    # 属性，给它补一个假 buffer 避免脚本头部崩溃。
-    class _Buf(io.StringIO):
-        buffer = None
-    buf2 = _Buf()
-    buf2.buffer = io.BytesIO()
-    try:
-        sys.argv = [script_name, *script_args]
-        with contextlib.redirect_stdout(buf2):
-            spec.loader.exec_module(mod)   # 会执行到 main()（__main__ 保护在 exec_module 下不触发）
-            rc = mod.main()
-        out = buf2.getvalue()
-    except SystemExit as e:
-        out = buf2.getvalue()
-        rc = e.code
-    except Exception as e:
-        logger.error(f"[Akasha补丁] {script_name} 执行异常: {e}")
-        return None
-    finally:
-        sys.argv = old_argv
+    async def _apply_kb_patched(event, req, plugin_context, config):
+        await original(event, req, plugin_context, config)
+        for part in getattr(req, "extra_user_content_parts", []):
+            text = getattr(part, "text", "")
+            if text.startswith("[Related Knowledge Base Results]:"):
+                body = text.split(":", 1)[1].lstrip("\n")
+                part.text = (
+                    "（以下是你手头可查的知识库资料，作为回答的事实依据；"
+                    "当客观资料使用，不要说成自己的经历或回忆；"
+                    "回复里不要提“知识库/资料”这类字样，"
+                    "用户直接问起来源时才如实说明。）\n" + body
+                )
 
-    if any(k in out for k in keywords_ok):
-        return out.strip().splitlines()[-1][:60] if out.strip() else "done"
-    logger.warning(f"[Akasha补丁] {script_name} 输出未识别: {out[:150]} (rc={rc})")
-    return None
+    _apply_kb_patched._akasha_kb_wording_agent_patched = True
+    mod._apply_kb = _apply_kb_patched
+    return ("astrbot.core.astr_main_agent", "_apply_kb",
+            "非 agentic KB 注入措辞运行时接管")
+
+
 
 
 def _patch_aiocqhttp_primary():
-    """主动发送路由兜底（源码文件补丁，import 执行仓库脚本）。"""
-    out = _run_patch_script(
-        "patch_aiocqhttp_primary_client.py",
-        ("已打", "已注入", "已是新版", "跳过"))
-    if out:
-        return ("packages/aiocqhttp/api_impl.py", "主动发送路由", out)
-    return None
+    """Runtime fallback for proactive sends without event context.
+
+    This mirrors the old source patch, but lives in memory so an AstrBot
+    upgrade can never leave site-packages modified or half-patched.
+    """
+    from aiocqhttp import api_impl
+
+    original = api_impl.WebSocketReverseApi.call_action
+    if getattr(original, "_akasha_aiocqhttp_primary_patched", False):
+        return None
+
+    async def call_action(self, action, **params):
+        api_ws = None
+        if params.get("self_id"):
+            api_ws = self._api_clients.get(str(params["self_id"]))
+        elif api_impl.event_ws and api_impl.event_ws in self._event_clients:
+            api_ws = self._api_clients.get(api_impl.event_ws.headers["X-Self-ID"])
+        elif len(self._api_clients) == 1:
+            api_ws = tuple(self._api_clients.values())[0]
+
+        if not api_ws:
+            excluded = {
+                x for x in os.environ.get(
+                    "AKASHA_OB_EXCLUDE_SELF_IDS", "99009900"
+                ).replace(" ", "").split(",") if x
+            }
+            candidates = [
+                ws for sid, ws in self._api_clients.items() if sid not in excluded
+            ]
+            if len(candidates) == 1:
+                api_ws = candidates[0]
+
+        if not api_ws:
+            raise api_impl.ApiNotAvailable
+
+        seq = api_impl._SequenceGenerator.next()
+        await api_ws.send(json.dumps({
+            "action": action,
+            "params": params,
+            "echo": {"seq": seq},
+        }))
+        return api_impl._handle_api_result(
+            await api_impl.ResultStore.fetch(seq, self._timeout_sec)
+        )
+
+    call_action._akasha_aiocqhttp_primary_patched = True
+    api_impl.WebSocketReverseApi.call_action = call_action
+    return ("aiocqhttp.api_impl", "WebSocketReverseApi.call_action",
+            "主动发送路由运行时兜底")
 
 
 def _patch_kb_scope():
-    """知识库 API key 的 kb scope 放开（源码文件补丁，import 执行仓库脚本）。
+    """Expose the kb scope to API keys without editing AstrBot files."""
+    from astrbot.dashboard.services import auth_service as auth_mod
+    from astrbot.dashboard.services import api_key_service as key_mod
+    from astrbot.dashboard.api import auth as auth_api
 
-    为什么必要：AstrBot 上游 ALL_OPEN_API_SCOPES 不含 "kb"，API key 调
-    知识库接口一律 403，知识库导入管道（import_generic_kb.py）整个瘫痪。
-    pip 升级即失效——由本插件每次启动自动重新放开。
-    """
-    out = _run_patch_script(
-        "kb_scope.py",
-        ("已放开", "无需操作", "已经是放开状态"),
-        script_args=("on",))
-    if out:
-        return ("dashboard/auth_service.py", "kb scope 白名单", out)
-    return None
+    if "kb" in auth_mod.ALL_OPEN_API_SCOPES:
+        return None
+    scopes = tuple(auth_mod.DEFAULT_OPEN_API_SCOPES) + (
+        auth_mod.CHAT_ADMIN_SCOPE,
+        auth_mod.CONFIG_EDIT_ADMIN_SCOPE,
+        "kb",
+    )
+    auth_mod.ALL_OPEN_API_SCOPES = scopes
+    key_mod.ALL_OPEN_API_SCOPES = scopes
+    auth_api.ALL_OPEN_API_SCOPES = scopes
+    return ("dashboard.auth_service + auth + api_key_service",
+            "ALL_OPEN_API_SCOPES", "kb scope 运行时放开")
 
 
 def _patch_openai_read_timeout():
@@ -330,43 +333,117 @@ def _patch_openai_read_timeout():
             "httpx read timeout", "read=180s（防流式响应挂起）")
 
 
-def _patch_i18n_blacklist():
-    """面板 i18n 黑名单文案（源码文件补丁，import 执行仓库脚本）。"""
-    out = _run_patch_script(
-        "patch_astrbot_i18n_blacklist.py",
-        ("已打", "已注入", "已是新版", "跳过"))
-    if out:
-        return ("dashboard i18n", "黑名单文案×4", out)
-    return None
-
-
 def _patch_cron_sender_name():
-    """Cron 合成事件默认发送者名 Scheduler→系统日程（源码文件补丁）。
+    """Keep scheduler events from leaking a callable-looking sender name."""
+    from astrbot.core.cron import events as mod
 
-    为什么必要：CronMessageEvent 默认 sender_name="Scheduler"，主动/定时
-    消息在模型上下文里都顶着这个假名（group_chat_context 拼成
-    [Scheduler/HH:MM:SS]: 前缀），模型模仿称呼 → 泄漏「Scheduler博士」
-    （2026-09-30 首现，2026-10-03 复发）。pip 升级即失效——由本插件
-    每次启动自动重打。
+    original = mod.CronMessageEvent.__init__
+    if getattr(original, "_akasha_cron_sender_patched", False):
+        return None
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("sender_name") == "Scheduler":
+            kwargs["sender_name"] = "系统日程"
+        return original(self, *args, **kwargs)
+
+    __init__._akasha_cron_sender_patched = True
+    mod.CronMessageEvent.__init__ = __init__
+    return ("astrbot.core.cron.events", "CronMessageEvent.__init__",
+            "默认发送者名中性化（系统日程）")
+
+
+def _patch_active_reply_blacklist():
+    """把 AstrBot 4.29 删除的主动回复黑名单恢复为运行时行为。
+
+    名单放在插件自己的配置文件里，AstrBot 升级/配置迁移不会丢失。
     """
-    out = _run_patch_script(
-        "patch_cron_sender_name.py",
-        ("已打", "已换", "已是新版", "无需操作"))
-    if out:
-        return ("core/cron/events.py", "默认 sender_name 中性化", out)
-    return None
+    from astrbot.builtin_stars.astrbot import group_chat_context as mod
+
+    mine = _runtime_blacklist()
+    original = mod.GroupChatContext.need_active_reply
+    if getattr(original, "_akasha_ar_blacklist_patched", False):
+        return None
+
+    async def need_active_reply(self, event):
+        # 先走 AstrBot 4.29 原逻辑（含白名单、唤醒、概率）。
+        allowed = await original(self, event)
+        if not allowed:
+            return False
+        # 4.29 删除了黑名单；黑名单优先级高于白名单，命中即拒绝。
+        bl = _runtime_blacklist()
+        if not bl:
+            return True
+        gid = event.get_group_id()
+        return not (event.unified_msg_origin in bl or (gid and gid in bl))
+
+    need_active_reply._akasha_ar_blacklist_patched = True
+    mod.GroupChatContext.need_active_reply = need_active_reply
+    return ("astrbot.builtin_stars.astrbot.group_chat_context",
+            "need_active_reply", f"黑名单运行时接管（{len(mine)} 条）")
+
+
+def _patch_group_alias_note():
+    """Move bridge-provided <alias> hints into the group context header.
+
+    The bridge already emits nickname=remark aliases on group messages. This
+    wrapper keeps the same behavior without touching AstrBot's source file.
+    """
+    from astrbot.builtin_stars.astrbot import group_chat_context as mod
+
+    original = mod._format_group_history_block
+    if getattr(original, "_mon3tr_alias_note_patched", False):
+        return None
+    try:
+        if "同人别名补丁" in inspect.getsource(original):
+            return None
+    except (OSError, TypeError):
+        pass
+
+    def _format_group_history_block(records: list[str]) -> str:
+        import re
+        pattern = re.compile(r"<alias>([^<]*)</alias>")
+        found = {}
+        cleaned = []
+        for record in records:
+            marks = pattern.findall(record or "")
+            if marks:
+                record = pattern.sub("", record).rstrip()
+                for mark in marks:
+                    for pair in mark.split(";"):
+                        if "=" not in pair:
+                            continue
+                        alias, primary = (x.strip() for x in pair.split("=", 1))
+                        if alias and primary and alias != primary:
+                            found.setdefault(primary, set()).add(alias)
+            if record:
+                cleaned.append(record)
+        note = ""
+        if found:
+            lines = [
+                f"[同名说明] {'、'.join(sorted(aliases))} = {primary}"
+                f"（同一个人；{primary} 是备注名）"
+                for primary, aliases in found.items()
+            ]
+            note = "\n".join(lines) + "\n"
+        return (mod.GROUP_HISTORY_HEADER + note
+                + "\n".join(cleaned) + mod.GROUP_HISTORY_FOOTER)
+
+    _format_group_history_block._mon3tr_alias_note_patched = True
+    mod._format_group_history_block = _format_group_history_block
+    return ("astrbot.builtin_stars.astrbot.group_chat_context",
+            "_format_group_history_block", "同名说明运行时接管")
 
 
 PATCHES = [
-    ("provider_getkeys",  "provider get_keys 归一化（修复 All chat models failed）", _patch_provider_getkeys),
-    ("openai_read_timeout", "OpenAI 通道 read timeout（防流式响应挂起）",           _patch_openai_read_timeout),
-    ("kb_wording_mgr",    "kb_mgr.format_context 知识库措辞",                        _patch_kb_wording_mgr),
-    ("kb_wording_tools",  "knowledge_base_tools 描述+空结果文案",                    _patch_kb_wording_tools),
-    ("kb_wording_agent",  "astr_main_agent 注入头探测/兜底",                          _patch_kb_wording_agent),
-    ("kb_scope",          "kb scope 白名单（API key 调知识库接口）",                  _patch_kb_scope),
-    ("aiocqhttp_primary", "aiocqhttp 主动发送路由兜底",                              _patch_aiocqhttp_primary),
-    ("cron_sender_name",  "Cron 合成发送者名中性化（防 Scheduler博士泄漏）",           _patch_cron_sender_name),
-    ("i18n_blacklist",    "面板 i18n 黑名单文案",                                    _patch_i18n_blacklist),
+    ("active_reply_blacklist", "主动回复黑名单运行时接管（4.29 回归修复）", _patch_active_reply_blacklist),
+    ("provider_getkeys", "provider get_keys 归一化（修复 All chat models failed）", _patch_provider_getkeys),
+    ("openai_read_timeout", "OpenAI 通道 read timeout（防流式响应挂起）", _patch_openai_read_timeout),
+    ("kb_wording_mgr", "kb_mgr.format_context 知识库措辞", _patch_kb_wording_mgr),
+    ("kb_wording_agent", "astr_main_agent 注入头运行时接管", _patch_kb_wording_agent),
+    ("kb_scope", "kb scope 白名单（API key 调知识库接口）", _patch_kb_scope),
+    ("aiocqhttp_primary", "aiocqhttp 主动发送路由运行时兜底", _patch_aiocqhttp_primary),
+    ("cron_sender_name", "Cron 合成发送者名中性化（防 Scheduler博士泄漏）", _patch_cron_sender_name),
+    ("group_alias_note", "群聊同名说明（昵称=备注）", _patch_group_alias_note),
 ]
 
 
@@ -382,7 +459,7 @@ class AkashaPatchesPlugin(Star):
 
     async def initialize(self):
         logger.info("=" * 56)
-        logger.info("[Akasha补丁] 开始应用核心补丁集 v1.0.0")
+        logger.info("[Mon3trBot补丁] 开始应用核心补丁集 v1.1.0")
         logger.info("=" * 56)
         for key, desc, fn in PATCHES:
             try:
@@ -394,13 +471,13 @@ class AkashaPatchesPlugin(Star):
                     logger.info(f"  ⏭️ {desc} → 已生效/无需重复")
             except Exception as e:
                 logger.error(f"  ❌ {desc} → {type(e).__name__}: {e}")
-        logger.info(f"[Akasha补丁] 完成：{len(self.applied)}/{len(PATCHES)} 项生效")
+        logger.info(f"[Mon3trBot补丁] 完成：{len(self.applied)}/{len(PATCHES)} 项生效")
         logger.info("=" * 56)
 
     @event_filter.command("akasha_patches")
     async def status_cmd(self, event: AstrMessageEvent):
         """/akasha_patches 查看补丁状态"""
-        lines = ["Akasha RC 核心补丁集状态："]
+        lines = ["Mon3trBot_Remake 核心补丁集状态："]
         for key, desc, _ in PATCHES:
             mark = "✅" if key in self.applied else "⏭️"
             lines.append(f"{mark} {desc}")
@@ -410,4 +487,4 @@ class AkashaPatchesPlugin(Star):
 
     async def terminate(self):
         # monkey-patch 进程内生效，进程退出即消失，无需还原
-        logger.info("[Akasha补丁] 插件卸载（内存补丁随之消失）")
+        logger.info("[Mon3trBot补丁] 插件卸载（内存补丁随之消失）")

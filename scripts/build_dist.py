@@ -7,9 +7,9 @@
 
 发行版结构
 ----------
-    Akasha_RulerCordelius-Wechatbot-vX.Y.Z/
-    ├── 启动 Akasha.bat          一键启动（% ~dp0 相对定位，解压到哪都能跑）
-    ├── 停止 Akasha.bat
+    Mon3trBot_Remake-vX.Y.Z/
+    ├── 启动 Mon3trBot.bat      一键启动（% ~dp0 相对定位，解压到哪都能跑）
+    ├── 停止 Mon3trBot.bat
     ├── 使用说明.md
     ├── akasha/                  ★ 桥接【完整可运行副本】（含 .venv）
     ├── astrbot/                 ★ AstrBot【完整副本】（含 .venv / 三人格 / 普通知识库）
@@ -72,8 +72,8 @@ VENDOR = os.path.join(ROOT, "vendor")
 RELEASE_DIST = os.path.join(ROOT, "release", "dist")
 DEFAULT_STAGE = r"C:\_akasha_dist"
 
-# 项目代号（2026-09-18 起固定）—— 发行版 zip 与包内目录名都用它
-PROJECT_CODE = "Akasha_RulerCordelius-Wechatbot"
+# 项目名称（2026-10-19 起）—— 发行版 zip 与包内目录名都用它
+PROJECT_CODE = "Mon3trBot_Remake"
 
 ROBOCOPY = shutil.which("robocopy") or r"C:\Windows\System32\robocopy.exe"
 
@@ -115,7 +115,7 @@ ASTRBOT_FILES = ["run_astrbot.py"]
 # 兜底：这些串**绝对不允许**出现在发行版里（除了被白名单放行的占位符）
 # 前三条是本机绝对路径与 Windows 真实姓名 —— 最要命的一类泄漏。
 # ⚠️ RulerCordelius 曾在此名单，2026-09-18 起它是项目代号
-# （Akasha_RulerCordelius-Wechatbot）的一部分、用户公开 ID，**放行**。
+# 只对通用路径占位符做替换，真实账号标识仍会被审计拦截。
 # 真实姓名 Junqin Zhao 仍是隐私，继续拦截。
 HARD_LITERALS = [
     "Junqin Zhao",
@@ -582,10 +582,10 @@ LAUNCHER = r"""@echo off
 chcp 65001 >nul
 setlocal
 cd /d "%~dp0"
-title Akasha 启动器
+title Mon3trBot 启动器
 
 echo ============================================================
-echo   Akasha 正在启动
+echo   Mon3trBot 正在启动
 echo ============================================================
 echo.
 
@@ -672,7 +672,7 @@ rem ---- 4) 启动桥接 ----
 :start_bridge
 echo [4/5] 启动桥接...
 if exist "%~dp0akasha\bridge.pid" del /q "%~dp0akasha\bridge.pid"
-start "Akasha 桥接" /d "%~dp0akasha" "%~dp0python\python.exe" main.py
+start "Mon3trBot 桥接" /d "%~dp0akasha" "%~dp0python\python.exe" main.py
 
 timeout /t 10 /nobreak >nul
 echo.
@@ -685,7 +685,7 @@ echo   已启动完成。
 echo     桥接面板   http://127.0.0.1:8766
 echo     AstrBot    http://127.0.0.1:6185
 echo   两个服务各占一个窗口，关掉窗口即停止。
-echo   也可以双击「停止 Akasha.bat」一次全停。
+echo   也可以双击「停止 Mon3trBot.bat」一次全停。
 echo ============================================================
 echo.
 pause
@@ -693,8 +693,8 @@ pause
 
 STOPPER = r"""@echo off
 chcp 65001 >nul
-title 停止 Akasha
-echo 正在停止 Akasha...
+title 停止 Mon3trBot
+echo 正在停止 Mon3trBot...
 
 for %%P in (8766 6185 11229) do (
     for /f "tokens=5" %%A in ('netstat -ano ^| findstr LISTENING ^| findstr ":%%P"') do (
@@ -751,8 +751,8 @@ pause
 def write_launchers(stage, astrbot_dir):
     # bat 用 GBK 写，cmd 下中文才不乱码
     for name, content, where in (
-            ("启动 Akasha.bat", LAUNCHER, stage),
-            ("停止 Akasha.bat", STOPPER, stage),
+            ("启动 Mon3trBot.bat", LAUNCHER, stage),
+            ("停止 Mon3trBot.bat", STOPPER, stage),
             ("启动 AstrBot.bat", ASTRBOT_LAUNCHER, astrbot_dir)):
         p = os.path.join(where, name)
         io.open(p, "w", encoding="gbk", errors="replace",
@@ -760,7 +760,7 @@ def write_launchers(stage, astrbot_dir):
         log(f"  ✔ {os.path.relpath(p, stage)}")
 
 
-README_TXT = """# Akasha 微信机器人 · 正式发行版
+README_TXT = """# Mon3trBot_Remake · 正式发行版
 
 解压即用。**不需要安装 Python、不需要安装 AstrBot、不需要 pip 装依赖** ——
 运行环境都在包里了。
@@ -794,11 +794,11 @@ README_TXT = """# Akasha 微信机器人 · 正式发行版
    - **桥接**：`akasha\\config.json`（照 `akasha\\config.example.json` 填，
      关键是 WeFlow 的 Access Token）
    - **模型**：打开 AstrBot 面板后在里面配，或改 `astrbot\\data\\cmd_config.json`
-2. 双击 **`启动 Akasha.bat`**
+2. 双击 **`启动 Mon3trBot.bat`**
    - 自动校正运行环境路径 → 拉起 WeFlow → AstrBot → 桥接
    - 最后自动打开控制面板 <http://127.0.0.1:8766>
 
-停止：双击 **`停止 Akasha.bat`**。
+停止：双击 **`停止 Mon3trBot.bat`**。
 
 ---
 
@@ -857,7 +857,7 @@ AstrBot 只在**启动时**读一次配置。改完必须重启——面板上�
 （约 40~90 秒），不用关控制台窗口。
 
 **Q：换台电脑怎么办？**
-整个文件夹拷过去，双击 `启动 Akasha.bat` —— 启动脚本会自动把环境路径
+整个文件夹拷过去，双击 `启动 Mon3trBot.bat` —— 启动脚本会自动把环境路径
 改成新位置。但微信和 WeFlow 要在新电脑上重新安装与登录。
 
 ---
@@ -957,7 +957,7 @@ def main():
     log(f"  用时 {time.time()-t0:.0f}s")
 
     # ---------- 3. 桥接（完整） ----------
-    hr("3/7 复制 Akasha 桥接（完整运行副本）")
+    hr("3/7 复制 Mon3trBot 桥接（完整运行副本）")
     t0 = time.time()
     dst_br = os.path.join(stage, "akasha")
     os.makedirs(dst_br, exist_ok=True)

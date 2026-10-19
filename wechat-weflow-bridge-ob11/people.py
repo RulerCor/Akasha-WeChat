@@ -70,6 +70,44 @@ def _write_astrbot_cfg(cfg, bom: bool) -> None:
         f.write(data)
 
 
+def _plugin_blacklist_path() -> str:
+    """插件自有的主动回复黑名单文件，不随 AstrBot 配置迁移丢失。"""
+    cfg = _astrbot_cfg_path()
+    if not cfg:
+        return ""
+    return os.path.join(os.path.dirname(cfg), "plugin_data",
+                        "akasha_rc_patches", "active_reply_blacklist.json")
+
+
+def _read_plugin_blacklist() -> list:
+    path = _plugin_blacklist_path()
+    if not path or not os.path.isfile(path):
+        return []
+    try:
+        with open(path, encoding="utf-8-sig") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            data = data.get("entries") or []
+        return [str(x).strip() for x in (data or []) if str(x).strip()]
+    except Exception as e:
+        log.warning(f"读取主动回复黑名单失败：{e}")
+        return []
+
+
+def _write_plugin_blacklist(entries) -> None:
+    path = _plugin_blacklist_path()
+    if not path:
+        raise FileNotFoundError("AstrBot 配置路径不可用")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    data = {"entries": list(dict.fromkeys(
+        str(x).strip() for x in (entries or []) if str(x).strip()))}
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    os.replace(tmp, path)
+
+
 def _platform_id(cfg: dict) -> str:
     """从 AstrBot 配置里找 aiocqhttp 平台的平台 ID（拼 UMO 用）。"""
     platforms = cfg.get("platform") or []
@@ -365,8 +403,7 @@ def read_overview() -> dict:
         "id_whitelist": ps.get("id_whitelist") or [],
         "ar_enable": bool(ltm.get("enable", False)),
         "ar_possibility": ltm.get("possibility_reply", 0.1),
-        "ar_whitelist": ltm.get("whitelist") or [],
-        "ar_blacklist": ltm.get("blacklist") or [],
+        "ar_blacklist": _read_plugin_blacklist() or (ltm.get("blacklist") or []),
     }
 
 
@@ -469,14 +506,21 @@ def update_astrbot_settings(payload: dict):
             ar["possibility_reply"] = max(0.0, min(1.0, float(payload["ar_possibility"])))
         except (TypeError, ValueError):
             pass
-    if "ar_whitelist" in payload:
-        ar["whitelist"] = [str(x).strip() for x in payload["ar_whitelist"] if str(x).strip()]
     if "ar_blacklist" in payload:
-        ar["blacklist"] = [str(x).strip() for x in payload["ar_blacklist"] if str(x).strip()]
+        entries = [str(x).strip() for x in payload["ar_blacklist"] if str(x).strip()]
+        try:
+            _write_plugin_blacklist(entries)
+        except Exception as e:
+            return False, f"写入主动回复黑名单失败: {e}"
+        # 4.29 已删除该键；清掉旧副本，避免以后误以为它仍是权威来源。
+        ar.pop("blacklist", None)
+    # 白名单已被群表取代；保留空值只为兼容旧版读取。
+    if "ar_whitelist" in payload or "ar_blacklist" in payload:
+        ar["whitelist"] = []
 
     try:
         _write_astrbot_cfg(cfg, bom)
     except Exception as e:
         return False, str(e)
     log.info("⚙️ AstrBot 白名单/主动回复设置已由面板更新（重启 AstrBot 后生效）")
-    return True, "已写入 AstrBot 配置"
+    return True, "已写入 AstrBot 配置与插件黑名单"

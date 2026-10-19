@@ -1,216 +1,157 @@
-# Akasha_RulerCordelius-Wechatbot
+# Mon3trBot_Remake
 
-微信个人号 ↔ AstrBot 的桥接器（WeFlow + OneBot v11 / 反向 WebSocket）。
-本仓库是 **[alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 的 RC（Release Candidate）分支**，在同一套架构上做稳定性与可维护性改进，目录结构沿用上游，方便对照 diff 与合并上游更新。
+**English** | [中文](#中文)
 
-- **上游**：<https://github.com/alingalingling/Akasha-WeChat>
-- **项目代号**（2026-09-18 起固定）：`Akasha_RulerCordelius-Wechatbot`
-- **项目标识**：`PROJECT_NAME = "Akasha_RulerCordelius-Wechatbot"`，版本号见 `wechat-weflow-bridge-ob11/VERSION`
-- **许可证**：MIT（沿用上游，见 `wechat-weflow-bridge-ob11/LICENSE`）
+Mon3trBot_Remake connects a personal WeChat account to AstrBot through a Windows bridge. WeFlow or Alpha supplies incoming messages, the bridge translates them to OneBot v11, and AstrBot handles models, personas, knowledge, tools, and scheduled tasks. Outgoing messages are sent through WeChat's desktop UI.
 
-> 代号中的 `RulerCordelius` 是作者公开 ID、属代号的一部分（不是隐私）；改名目录或 fork 都不会影响它——日志首行会打印 `Akasha_RulerCordelius-Wechatbot v<版本号>`，便于任何时候分辨运行的是哪一支。
+This project is a maintained fork of [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat). The bridge directory keeps the upstream name so changes remain easy to compare and merge.
+
+## Features
+
+- Stable OneBot v11 sessions across bridge restarts
+- WeFlow and Alpha message sources
+- Windows UIA sending with an optional Alpha API sender
+- Web control panel for startup, configuration, logs, members, permissions, and AstrBot restarts
+- Group reply and proactive-chat controls, plus a private-chat allowlist
+- AstrBot runtime patches packaged as a plugin, so framework upgrades do not require source edits
+- Character personas and ordinary knowledge-base documents included in release builds
+
+## Requirements
+
+- Windows 10/11
+- WeChat desktop and WeFlow (or a configured Alpha account)
+- Python 3.13 for development
+- AstrBot and a configured language-model provider
+
+The release ZIP is self-contained: Python, AstrBot, the bridge, and installers are included. Development users can run the local runtime instead.
+
+## Quick Start
+
+1. Extract the release ZIP to a short path.
+2. Double-click `启动 Mon3trBot.bat`.
+3. Open the bridge panel at <http://127.0.0.1:8766>.
+4. Configure the WeChat account, message source, and AstrBot connection.
+5. Open AstrBot's WebUI at <http://127.0.0.1:6185> and configure the model, personas, and knowledge base.
+6. Add friends or groups through **Members & Permissions**, save, and restart AstrBot when prompted.
+
+To stop all services, double-click `停止 Mon3trBot.bat`.
+
+## Architecture
+
+```text
+WeChat <-> WeFlow / Alpha --SSE--> bridge --WebSocket--> AstrBot
+                                      |
+                                      +--> Web panel :8766
+                                      +--> UIA sender / Alpha API
+```
+
+- `wechat-weflow-bridge-ob11/`: bridge source, protocol conversion, panel, and senders
+- `scripts/akasha_rc_patches_plugin/`: runtime patches owned by this project
+- `sim/`: offline conversation simulator
+- `docs/`: development, deployment, and troubleshooting notes
+- `runtime/`: local runtime data and virtual environments (not committed)
+- `release/`: build outputs and release history (not committed)
+
+## Development
+
+```powershell
+python scripts/check_patches.py
+python scripts/test_aiocqhttp_routing.py
+python scripts/test_alias_note.py
+python scripts/test_ob_segments.py
+```
+
+After changing a plugin, deploy it with:
+
+```powershell
+python scripts/deploy_plugin.py akasha_rc_patches
+```
+
+See [AGENT.md](AGENT.md) for maintenance rules and [CHANGELOG.md](CHANGELOG.md) for release history.
+
+## Privacy
+
+Never commit `config.json`, API keys, access tokens, chat history, contact lists, group names, or runtime databases. Release builds are sanitized and audited before packaging.
+
+## License and Credits
+
+MIT, following the upstream project. Built on [Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat), [AstrBot](https://github.com/AstrBotDevs/AstrBot), and [WeFlow](https://weflow.top).
 
 ---
 
-## 架构
+## 中文
 
-```
-微信 ←→ WeFlow(5031) ──SSE──→ bridge ──WebSocket 客户端──→ AstrBot(aiocqhttp 11229)
-                                  ↑                              │
-                            main.py 启动                          │ API 回调
-                            Web 面板 :8766  ←─────────────────────┘
-                                  │
-                        发送：UIA 操作微信窗口
-```
+Mon3trBot_Remake 是一个把微信个人号接入 AstrBot 的 Windows 桥接项目。WeFlow 或 Alpha 负责接收消息，桥接将其转换为 OneBot v11，AstrBot 负责模型、人格、知识库、工具和定时任务，最终由微信桌面端完成发送。
 
-- **读取**：WeFlow 解密本地消息库后 SSE 推送，不轮询、不依赖窗口渲染
-- **大脑**：AstrBot（模型、人格、知识库、工具全部由它负责）
-- **发送**：Windows UIA 自动化操作微信窗口（上游原方案）
-- **面板**：内置 Web 控制面板，可在线改配置、启停、看日志
+本项目是 [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 的持续维护分支。桥接目录沿用上游名称，便于对照和合并更新。
 
-## 相对上游的改动
+## 功能
 
-改动集中在"**能不能长期稳定跑**"，没有替换架构。完整开发日志见 [`CHANGELOG.md`](CHANGELOG.md)，给后续维护者/AI 的注意事项见 [`AGENT.md`](AGENT.md)。
+- 桥接重启后会话 ID 保持稳定
+- 支持 WeFlow 与 Alpha 两种消息源
+- 默认使用 Windows UIA 发送，也可配置 Alpha API 发送
+- Web 面板可启动服务、修改配置、查看日志、管理成员权限并重启 AstrBot
+- 群聊回复与主动插话开关，私聊白名单独立管理
+- AstrBot 修复以插件形式在运行时加载，升级框架无需改源码
+- 发行版包含角色人格与普通知识库文档
 
-**发送链路（UIA）**
-- 控件遍历深度 14 → 26，并优先按类名 `ChatInputField` 精确定位聊天输入框（上游只找到搜索框，导致消息被写进搜索框）
-- 显式排除搜索框；定位不到合适输入框时**直接中止**，不再退化为用搜索框
-- 修复 `uiautomation 2.x` 移除的 API（`IsValuePatternAvailable` / `Control.SetValue`），改用 `GetPropertyValue` + `GetValuePattern()`
-- 发送按钮定位修正：原先匹配到左侧栏无名图标，现按类名 `XOutlineButton` + 名称「发送」定位
-- 发送结果以「输入框是否清空」为判据，依次尝试 发送按钮 → Enter → Ctrl+Enter，失败会在日志中明确报出
-- 窗口句柄获取适配微信 4.x（`mmui::MainWindow`）与标题 `Weixin`
-- 切联系人：先在左侧会话列表按名字点击（精确 > 前缀 > 包含），失败再退回 Ctrl+F 搜索；用标题栏校验是否真的切过去了，`switch_method` 可选 `auto`/`list`/`search`
+## 环境要求
 
-**会话与身份**
-- 会话 ID 从 `hash(wxid)` 改为 MD5：**上游的 hash 每个进程都会变**，桥接一重启同一联系人就变成新会话（面板里表现为"每个聊天出现两遍"），现已跨重启稳定
-- 群 ID 用 `xxx@chatroom` 而不是群名，群改名不再产生新会话
-- 持久化「微信 ID → 显示名」缓存（启动时从 WeFlow 全量预取 + 消息流增量回写），群名缺失时不再把 `xxx@chatroom` 当群名送出去
+- Windows 10/11
+- 微信桌面端，以及 WeFlow（或已配置的 Alpha 账号）
+- 开发环境使用 Python 3.13
+- AstrBot，以及已配置的大模型服务
 
-**消息与图片**
-- 群图片门槛：只有与**同一个人的 @ 属于同一次请求**才读取（@ 前发的先暂存等 @，@ 后紧跟的直接读），避免群里任何人发图都触发
-- 图片理解两条路：`image_caption_model` **留空** → 图片原样以 `base64://` 段交给 AstrBot（由它用主模型直看或走转述模型）；**填了** → 走上游的桥接侧描述（取图落盘 → 描述模型 → 发文字）
-- 补全只读 OneBot 接口：`get_login_info` / `get_group_info` / `get_group_member_info` / `get_group_member_list` / `get_group_list` / `get_friend_list` / `get_stranger_info` / `get_msg`，AstrBot 现在能拿到真实群名与成员昵称
-- 消息缓冲修复：推送期间到达的新消息会重新排期（上游会一直压在缓冲里）；自回复去重真正生效（上游只判断从不记录）
-
-**可维护性**
-- 本地请求（WeFlow / AstrBot / Ollama）在代码层面绕过系统代理，不依赖启动脚本设 `NO_PROXY`
-- 被策略丢弃的消息会打日志（`⏭️ 跳过 …`，可按"会话+成员+原因"节流），不再静默消失
-- 未使用导入/字段等**保持上游原样**，不做"顺手清理"
-- `processed_ids` 加 FIFO 上限，避免长时间运行内存增长
-
-## 前置条件
-
-| 依赖 | 说明 |
-|---|---|
-| Windows | 需要桌面微信（发送靠 UIA，微信需可自动化） |
-| Python 3.10+ | 运行桥接 |
-| [WeFlow](https://weflow.top) | 已登录并开启 API 服务（默认 5031） |
-| [AstrBot](https://github.com/AstrBotDevs/AstrBot) | 已部署，启用 **aiocqhttp** 适配器（反向 WS，端口如 11229） |
-
-> WeFlow 只负责**读取**（它没有发送接口）。发送走 UIA，所以微信窗口需要能被自动化访问。
+发行版压缩包已包含 Python、AstrBot、桥接和安装包，解压即可使用。
 
 ## 快速开始
 
-```bash
-cd wechat-weflow-bridge-ob11
-pip install -r requirements.txt
+1. 将发行版解压到较短路径。
+2. 双击 `启动 Mon3trBot.bat`。
+3. 打开桥接面板 <http://127.0.0.1:8766>。
+4. 配置微信账号、消息源和 AstrBot 连接。
+5. 打开 AstrBot WebUI <http://127.0.0.1:6185>，配置模型、人格和知识库。
+6. 在「成员与权限」中勾选好友或群，保存后按提示重启 AstrBot。
+
+停止全部服务：双击 `停止 Mon3trBot.bat`。
+
+## 架构
+
+```text
+微信 <-> WeFlow / Alpha --SSE--> 桥接 --WebSocket--> AstrBot
+                                      |
+                                      +--> Web 面板 :8766
+                                      +--> UIA 发送 / Alpha API
 ```
 
-首次运行会自动从 `config.example.json` 生成 `config.json`，然后填配置（也可以直接在 Web 面板改）：
+- `wechat-weflow-bridge-ob11/`：桥接源码、协议转换、面板与发送器
+- `scripts/akasha_rc_patches_plugin/`：本项目维护的 AstrBot 运行时补丁
+- `sim/`：离线对话模拟器
+- `docs/`：开发、部署与排障文档
+- `runtime/`：本地运行数据与虚拟环境（不入库）
+- `release/`：构建产物与历史版本（不入库）
 
-| 关键项 | 说明 |
-|---|---|
-| `weflow_base_url` | WeFlow 地址，如 `http://127.0.0.1:5031` |
-| `access_token` | WeFlow 的 Access Token |
-| `astrbot_ob_url` | AstrBot 的 aiocqhttp 反向 WS 地址，如 `ws://127.0.0.1:11229/ws` |
-| `bot_nicknames` | 机器人昵称（判定 @ 用） |
-| `send_method` | 固定 `uia` |
-| `group_reply_mode` | `mention`（仅 @ 回复，默认）/ `all` / `batch` |
+## 开发
 
-启动：
-
-```bash
-python main.py          # 或双击 start.bat（会开一个可见的控制台窗口）
+```powershell
+python scripts/check_patches.py
+python scripts/test_aiocqhttp_routing.py
+python scripts/test_alias_note.py
+python scripts/test_ob_segments.py
 ```
 
-打开面板 <http://127.0.0.1:8766> 看运行状态与实时日志（`web_host` 默认 `0.0.0.0`，局域网可访问；只想要本机就改成 `127.0.0.1`）。
+修改插件后部署：
 
-## 文档导航
-
-| 文档 | 看什么 |
-|---|---|
-| **[`docs/开发文档.md`](docs/开发文档.md)** | **开发前读这份**：架构、核心机制、配置参考、AstrBot 补丁清单、排障 |
-| **[`docs/依赖与目录说明.md`](docs/依赖与目录说明.md)** | **搬家/换电脑前读这份**：每个目录是什么、哪些依赖在文件夹内、哪些在外部、开发环境与正式发行版的区别 |
-| **[`docs/人设卡制作规范.md`](docs/人设卡制作规范.md)** | **加/改角色人设前读这份**：三段结构、说话方式怎么写、台词来源分级、六步流程与验收 |
-| **[docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)** | **发版前读这份**：版号、CHANGELOG、tag、发行包、补丁快照、证据归档七步 |
-| `AGENT.md` | 红线与已知坑（改代码前的必读警告） |
-| `CHANGELOG.md` | 每个版本改了什么、为什么 |
-| `docs/architecture.html` | 可交互架构图（浏览器打开） |
-| `sim/README.md` | 微信对话模拟器（离线测说话效果） |
-
-## 目录结构
-
-```
-Akasha-WeChat_RC/
-├── README.md                 本文件（fork 说明）
-├── AGENT.md                  给后续开发者 / AI 的约定与踩坑清单
-├── CHANGELOG.md              开发日志（相对上游的改动史）
-├── .gitignore
-├── docs/
-│   ├── 开发文档.md           ★ 开发、配置、排障主文档
-│   ├── 依赖与目录说明.md      ★ 每个目录/依赖在哪、换电脑怎么办
-│   ├── upstream/             上游原样文档（SETUP / CLAUDE 速查）
-├── vendor/                   随项目走的第三方依赖（不入库，约 750MB）
-│   ├── python/               免安装 Python 基座（两个 venv 都指向它）
-│   └── weflow/               WeFlow 程序本体
-├── runtime/                  本地运行环境（不入库）
-│   ├── bridge/               桥接运行副本 + venv + 配置 + 数据
-│   └── astrbot/              AstrBot 运行副本 + venv（框架代码在其 site-packages 内）
-├── release/                  发布产物（不入库）
-│   ├── versions/vX.Y.Z/      各版本**源码**快照（除源码外只放安装包）
-│   └── dist/*.zip            ★ 正式发行版（给别人用的解压即用包）
-├── installers_src/           放安装包的地方（WeFlow / 微信，构建时自动收录）
-├── scripts/                  工具脚本（打包/补丁/脱敏/诊断/自检）
-└── wechat-weflow-bridge-ob11/    ← 代码目录（沿用上游路径）
-    ├── main.py bridge_core.py ob_protocol.py ob_client.py
-    ├── senders.py uia_sender.py web_panel.py state.py config.py
-    ├── config.example.json requirements.txt start.bat LICENSE
-    ├── VERSION                版本号（长期标识的一部分）
-    └── README.md              上游原始说明（保留未改）
-
-sim/                        附属工具：微信对话模拟器（见 sim/README.md）
-├── sim_wechat.py           独立 OneBot 客户端直连 AstrBot，网页聊天界面 + autotest
-├── start_sim.bat           Windows 一键启动
-└── README.md               用途、依赖与注意事项
+```powershell
+python scripts/deploy_plugin.py akasha_rc_patches
 ```
 
-## 版本与出包（版号制）
+维护约定见 [AGENT.md](AGENT.md)，版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
-从 **v1.0.0** 起，本项目按 `vX.Y.Z` 走版号（此前 `1.0.1-rc.1~rc.7` 为预发布，已归档在 `CHANGELOG.md`）。
-版本号始终写在 `wechat-weflow-bridge-ob11/VERSION` 单行文件里，改版本只改这一个文件。
+## 隐私
 
-**两套产物，用途不同：**
+不要提交 `config.json`、API Key、访问令牌、聊天记录、联系人名单、群名或运行数据库。发行版会在打包前完成脱敏与审计。
 
-```bat
-python scripts/build_release.py   :: ① 源码归档（自己用）：versions/vX.Y.Z + newestbuild
-python scripts/build_dist.py      :: ② 正式发行版（给别人用）：release/dist/*.zip
-```
+## 许可证与致谢
 
-产物结构（`release/` 不入库）：
-
-```
-release/
-├── versions/vX.Y.Z/      该版本源码快照（归档，不再改动；除源码外只放安装包）
-├── newestbuild/          始终是最新的源码归档
-├── backups/pre-vX.Y.Z-*  构建前的上一次 newestbuild（回滚用）
-└── dist/
-    └── Akasha-WeChat-vX.Y.Z.zip    ★ 正式发行版（解压即用，可外发）
-```
-
-**正式发行版里放什么**（收件人解压即用，免装 Python / AstrBot）：
-
-```
-Akasha-WeChat-vX.Y.Z/
-├── 启动 Akasha.bat      %~dp0 相对定位，解压到哪都能跑
-├── 停止 Akasha.bat
-├── 使用说明.md
-├── akasha/             桥接完整运行副本（含 .venv）
-├── astrbot/            AstrBot 完整副本（含 .venv / 三个人格 / 普通知识库文档）
-│   └── 启动 AstrBot.bat 目录内相对路径启动脚本
-├── python/             免安装 Python 基座
-└── installers/         WeFlow / 微信 的**安装包**
-```
-
-**隐私边界**（出包前跑脱敏审计 + 本机标识硬检查，零残留才出包）：
-
-| 保留 ✅ | 删除 ❌ |
-|---|---|
-| 全部角色人格（软件资产，可开源） | 全部 API Key / 面板口令 / jwt_secret |
-| 普通知识库文档（`kb_docs/*.md`） | 向量知识库（`doc.db` / `index.faiss`） |
-| AstrBot 框架与依赖 | 聊天历史 / 会话映射 / 定时任务 / 好友群名单 |
-
-> ⚠️ **便携版体系已废弃**（2026-09）：`build_portable.py`、`release/portable/`
-> 均已移除。以后只做正式发行版。
-
-其余维护约定：
-
-- 每次改动都要在 `CHANGELOG.md` 留一条；改动涉及"约定/坑"时同步 `AGENT.md`
-- **不删上游既有代码**（含未使用的导入、重复实现、看着像死代码的部分）——修 bug 可以，顺手清理不行，避免与上游合并时冲突
-
-## 目录与路径约定
-
-- 本地运行环境在 `runtime/`（`bridge/` 桥接、`astrbot/` AstrBot，含 venv 与业务数据），**不入库**
-- 代码中不写死绝对路径：`config.json` 里的 `astrbot_config_file`、`astrbot_attachments`
-  都是相对路径，以「项目根（桥接目录的上一级）」为基准；留空时会自动按
-  `runtime/astrbot`、`../AstrBot` 等常见布局搜索——所以整个目录拷到别的电脑也能直接跑
-
-## 隐私提醒
-
-- `config.json` 含 WeFlow Access Token，**已被 .gitignore 排除，切勿提交**
-- 运行期 `data/chat_names.json` 会缓存真实会话名与 wxid，同样不入库
-- 提 issue 或贴日志前，请先删掉 token、wxid、群名、内网 IP 与本机路径
-
-## 致谢
-
-上游 [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 以及 [AstrBot](https://github.com/AstrBotDevs/AstrBot)、[WeFlow](https://weflow.top)。
-
+MIT，沿用上游项目。感谢 [Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat)、[AstrBot](https://github.com/AstrBotDevs/AstrBot) 与 [WeFlow](https://weflow.top)。

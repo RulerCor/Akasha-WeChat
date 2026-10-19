@@ -327,7 +327,7 @@ if __name__ == "__main__":
 
     try:
         log.info("=" * 50)
-        log.info(f" {getattr(config, 'PROJECT_NAME', 'Akasha_RulerCordelius-Wechatbot')} (OneBot v11)")
+        log.info(f" {getattr(config, 'PROJECT_NAME', 'Mon3trBot_Remake')} (OneBot v11)")
         log.info("=" * 50)
         log.info(f"Bridge 版本: {getattr(config, 'PROJECT_VERSION', '?')}（核心: 2026-06-03 OB11）")
         exit_reason.set_phase("启动桥接")

@@ -4,19 +4,17 @@
 
 ## 0. 这是什么
 
-- 项目代号（2026-09-18 起固定）：**`Akasha_RulerCordelius-Wechatbot`**，上游 [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 的 RC 分支
+- 项目名称（2026-10-19 起）：**`Mon3trBot_Remake`**，上游 [alingalingling/Akasha-WeChat](https://github.com/alingalingling/Akasha-WeChat) 的维护分支
 - 作用：把微信个人号接进 AstrBot。WeFlow 负责读消息（SSE），本桥接负责协议转换，AstrBot 负责 AI，发送靠 Windows UIA 操作微信窗口
 - 代码目录：`wechat-weflow-bridge-ob11/`（**沿用上游路径，不要挪动**，否则与上游的 diff 会变成"全量移动"）
 - 身份常量：`config.PROJECT_NAME` / `config.PROJECT_VERSION`（读同目录 `VERSION` 文件）；面板标题、启动 banner、发行版 zip 名全部由它们派生
-- ⚠️ **`RulerCordelius` 是代号的一部分（作者公开 ID），不是隐私** —— 已从
-  `sanitize_privacy.py` 与 `build_dist.HARD_LITERALS` 放行；真实姓名
-  `Junqin Zhao` 与本机路径仍是隐私，继续拦截。别再把代号加回脱敏名单。
+- 真实姓名、账号标识与本机路径由 `sanitize_privacy.py` 和发行版审计拦截。
 - ⚠️ **平时开发只改源码，不要随手重建发行版**（用户约定，2026-09-18）：
   `scripts/build_dist.py` 只在用户明确要求出包时跑（约 7 分钟大 IO）。
   日常改动：改 `runtime/bridge/` → `sync_to_rc.py` → 重启桥接即可。
 - ⚠️ **发行版历史版本绝不删除**（用户约定，2026-09-18）：
   `release/dist/*.zip` 只增不删 —— 出新版**不要**清掉旧版 zip，哪怕同盘同目录。
-  历史纯净版 zip（`release/Akasha_RulerCordelius-Wechatbot_纯净版-*.zip`）同理。
+  历史纯净版 zip 同理。
   空间不够就问用户，别自作主张。
 - ⚠️ **新加好友/新会话机器人不理**，九成是 AstrBot 的 **平台 ID 白名单**
   （`platform_settings.id_whitelist`）没包含对方：AstrBot 的
@@ -133,7 +131,7 @@
   主动发送（定时任务 / `send_message_to_user` 跨会话发送）没有事件上下文，
   aiocqhttp 只能靠 `len(_api_clients)==1` 选路由。**模拟器一开着，所有定时任务必然
   100% 失败**，而且失败是静默的（空异常 `ApiNotAvailable` → DB 里仍写 completed）。
-  已打补丁 `scripts/patch_aiocqhttp_primary_client.py`；自检用
+  已由 `scripts/akasha_rc_patches_plugin/` 在运行时接管；自检用
   `scripts/cron_test_push.py`。详见 `docs/开发文档.md` §4.9。
 - 本机请求（WeFlow / AstrBot / Ollama）必须在代码层面绕过系统代理；`config.py` 里已有 `NO_PROXY` 兜底，不要改成依赖启动脚本
 - 非正常退出会残留 `bridge.pid`，下次启动会直接拒绝启动并打 `⚠️ bridge.pid 已存在`——清理它再启
@@ -202,7 +200,7 @@
   正确做法是**如实标注为【知识库】资料**，并明确三条：
   ① 当客观资料用、不许说成自己的经历/回忆；② 正常回复里不出现"知识库/资料库/检索/文档"字样；
   ③ 用户**直接问起**来源时如实说明，不要硬躲。
-  补丁：`scripts/patch_kb_wording.py`（三处 AstrBot 文件）+ `scripts/patch_persona_kb_framing.py`（人设三条规则）。
+  补丁：`scripts/akasha_rc_patches_plugin/`（运行时接管注入措辞）+ `scripts/patch_persona_kb_framing.py`（人设规则）。
 
 - **KB 导入必须逐篇串行 + 完成后对账**：AstrBot 的上传是后台任务，每个任务各自
   「读 index.faiss → 加向量 → 写回」，**并发时后者整体覆盖前者**——persona3 曾因此丢
@@ -243,7 +241,7 @@
 | 产物 | 命令 | 给谁 | 内容 |
 |---|---|---|---|
 | **源码归档** | `python scripts/build_release.py` | 自己 / 版本管理 | 只有源码 + 安装包 |
-| **正式发行版** | `python scripts/build_dist.py` | **收件人**（可外发） | astrbot 完整目录 + akasha 完整目录 + 安装包 + 免安装 Python |
+| **正式发行版** | `python scripts/build_dist.py` | **收件人**（可外发） | AstrBot 完整目录 + Mon3trBot 桥接目录 + 安装包 + 免安装 Python |
 
 1. 改代码 → 本地验证
 2. `CHANGELOG.md` 追加一条（说明改了什么、为什么）
@@ -257,7 +255,7 @@ AstrBot 相关配置留空时会自动按常见布局搜索。
 
 ## 6. 正式发行版（`build_dist.py`）
 
-`python scripts/build_dist.py` → `release/dist/Akasha-WeChat-vX.Y.Z.zip`。
+`python scripts/build_dist.py` → `release/dist/Mon3trBot_Remake-vX.Y.Z.zip`。
 目标：收件人**解压即用**，免装 Python / AstrBot / 任何 pip 依赖。
 
 > ⚠️ **不要再用 `build_portable.py`** —— 便携版体系已废弃（2026-09 移除）。
@@ -267,11 +265,11 @@ AstrBot 相关配置留空时会自动按常见布局搜索。
 **包内结构**
 
 ```
-Akasha-WeChat-vX.Y.Z/
-├── 启动 Akasha.bat      %~dp0 相对定位，解压到哪都能跑
-├── 停止 Akasha.bat
+Mon3trBot_Remake-vX.Y.Z/
+├── 启动 Mon3trBot.bat      %~dp0 相对定位，解压到哪都能跑
+├── 停止 Mon3trBot.bat
 ├── 使用说明.md
-├── akasha/             桥接完整运行副本（含 .venv）
+├── akasha/             Mon3trBot 桥接完整运行副本（含 .venv）
 ├── astrbot/            AstrBot 完整副本（含 .venv / 三个人格 / 普通知识库文档）
 │   └── 启动 AstrBot.bat 目录内相对路径启动脚本（单独调试用）
 ├── python/             免安装 Python 基座
@@ -307,7 +305,7 @@ Akasha-WeChat-vX.Y.Z/
 并同步收录进 `build_release.py` 的源码归档。
 **找不到只告警、不中止**——微信旧版安装包腾讯已下架，收件人可能得自行安装。
 
-**构建目录必须用短路径**（默认 `C:\_akasha_dist`）：venv 近 5 万个小文件，
+**构建目录必须用短路径**（默认 `C:\_mon3trbot_dist`）：venv 近 5 万个小文件，
 放在深目录会撞 Windows 的 260 字符路径上限。
 
 **版本号约定**：发行版不单独编号，直接用它所打包的代码版本

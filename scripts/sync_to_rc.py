@@ -41,12 +41,11 @@ PROJECT_BLOCK_ANCHORS = [
 
 PROJECT_BLOCK = '''
 # ============ 项目标识（长期可识别） ============
-# 项目代号（2026-09-18 起固定）：Akasha_RulerCordelius-Wechatbot
+# 项目名称（2026-10-19 起）：Mon3trBot_Remake
 # 名字与版本号固定写在这里 + 同目录 VERSION 文件，方便日志/面板/issue
 # 一眼分辨版本，不依赖目录名。面板标题（浏览器 tab + 页面抬头）也读这里。
-# 说明：RulerCordelius 是用户公开 ID、属项目代号的一部分，**不是隐私**；
-# 真实姓名等仍在 sanitize_privacy.py 的脱敏名单里。
-PROJECT_NAME = "Akasha_RulerCordelius-Wechatbot"
+# 真实姓名、账号标识和本机路径仍由 sanitize_privacy.py 脱敏。
+PROJECT_NAME = "Mon3trBot_Remake"
 _VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
 try:
     with open(_VERSION_FILE, encoding="utf-8") as _f:
