@@ -15,12 +15,15 @@ Runtime patches:
   7. cron_sender_name       use a neutral sender name for scheduler events
   8. group_alias_note       explain nickname/remark aliases in group context
   9. active_reply_blacklist keep the 4.29-removed group blacklist behavior
+ 10. humanizer_session_style apply per-session humanizer style overrides
 
-The active-reply blacklist is stored under AstrBot's plugin_data directory.
+The active-reply blacklist and humanizer style overrides are stored under
+AstrBot's plugin_data directory.
 Persona rules live in data_v4.db and are checked separately by
 scripts/check_patches.py; they are not modified by this plugin.
 """
 
+from contextvars import ContextVar
 import hashlib
 import inspect
 import io
@@ -37,6 +40,13 @@ ACTIVE_REPLY_BLACKLIST_PATH = os.path.normpath(os.path.join(
     PLUGIN_DIR, "..", "..", "plugin_data", "akasha_rc_patches",
     "active_reply_blacklist.json",
 ))
+HUMANIZER_STYLE_OVERRIDES_PATH = os.path.normpath(os.path.join(
+    PLUGIN_DIR, "..", "..", "plugin_data", "akasha_rc_patches",
+    "humanizer_style_overrides.json",
+))
+HUMANIZER_PLUGIN_NAME = "astrbot_plugin_wanna_be_human"
+HUMANIZER_PATCH_KEY = "humanizer_session_style"
+_HUMANIZER_ACTIVE_STYLE = ContextVar("mon3tr_humanizer_active_style", default="")
 
 
 def _read_json(path, default=None):
@@ -117,6 +127,143 @@ def _runtime_blacklist():
 # ══════════════════════════════════════════════════════════════════
 # 补丁实现（每个函数返回 (模块名, 属性名, 新值, 描述)；失败抛异常）
 # ══════════════════════════════════════════════════════════════════
+
+def _humanizer_style_overrides():
+    """Read session-specific humanizer styles without caching.
+
+    The bridge panel writes this file atomically. Reading it on every request
+    avoids an AstrBot restart after a style change and keeps fallback logic
+    authoritative for sessions not listed here.
+    """
+    data = _read_json(HUMANIZER_STYLE_OVERRIDES_PATH, {}) or {}
+    sessions = data.get("sessions") if isinstance(data, dict) else None
+    if not isinstance(sessions, dict):
+        return {}
+    out = {}
+    for umo, style in sessions.items():
+        umo = str(umo).strip()
+        style = str(style or "").strip()
+        if umo and style and style != "__global__":
+            out[umo] = style
+    return out
+
+
+def _patch_humanizer_session_style():
+    """Apply per-session style overrides around the humanizer's own hook.
+
+    The humanizer supports one global ``active_style``.  This patch does not
+    copy that plugin's injection logic: it wraps the original request hook and
+    exposes a request-scoped override through ``_effective_active_style``.
+    As a result, any future fixes in the humanizer's own hook keep working,
+    while its style profile and style-bound retrieval KB follow the selected
+    session style.  Invalid or missing profiles fall back to the global style.
+    """
+    try:
+        from astrbot.core.star.star import star_map
+        from astrbot.core.star.star_handler import star_handlers_registry
+    except Exception:
+        return None
+
+    plugin = None
+    for metadata in star_map.values():
+        if getattr(metadata, "name", "") == HUMANIZER_PLUGIN_NAME:
+            candidate = getattr(metadata, "star_cls", None)
+            if candidate is not None:
+                plugin = candidate
+                break
+    if plugin is None:
+        return None
+
+    required = ("_effective_active_style", "_find_profile_cached", "on_llm_request")
+    if not all(callable(getattr(plugin, name, None)) for name in required):
+        logger.warning("[Mon3trBot补丁][会话风格] 人类风格插件接口不完整，暂不接管")
+        return None
+
+    def _is_humanizer_handler(handler):
+        if getattr(handler, "handler_name", "") != "on_llm_request":
+            return False
+        target = getattr(handler, "handler", None)
+        owner = getattr(target, "__self__", None)
+        if owner is not None:
+            return owner is plugin
+        # AstrBot binds plugin methods as functools.partial(raw, instance).
+        # Never use the module path when a concrete owner exists: after a hot
+        # reload that path still identifies the old instance.
+        if hasattr(target, "args"):
+            return bool(target.args) and target.args[0] is plugin
+        module_path = getattr(handler, "handler_module_path", "")
+        return module_path.endswith(f"{HUMANIZER_PLUGIN_NAME}.main")
+
+    def _patched_handler_count():
+        return sum(1 for handler in star_handlers_registry
+                   if _is_humanizer_handler(handler))
+
+    original_effective = plugin._effective_active_style
+    original_hook = plugin.on_llm_request
+    if (getattr(original_effective, "_mon3tr_session_style", False)
+            or getattr(original_hook, "_mon3tr_session_style", False)):
+        patched = _patched_handler_count()
+        if patched:
+            count = len(_humanizer_style_overrides())
+            return (HUMANIZER_PLUGIN_NAME, "on_llm_request",
+                    f"会话风格运行时接管（已生效，{patched} 个入口，{count} 个自定义会话）")
+        return None
+
+    def _effective_active_style(self=None):
+        target = getattr(original_effective, "__self__", None) or self
+        if target is None:
+            return ""
+        override = _HUMANIZER_ACTIVE_STYLE.get()
+        if override:
+            try:
+                profile = target._find_profile_cached(override)
+            except Exception:
+                profile = None
+            if profile is not None:
+                return profile["name"]
+        if getattr(original_effective, "__self__", None) is not None:
+            return original_effective()
+        return original_effective(target)
+
+    _effective_active_style._mon3tr_session_style = True
+    plugin._effective_active_style = _effective_active_style
+
+    async def on_llm_request(self, event, req):
+        umo = str(getattr(event, "unified_msg_origin", "") or "").strip()
+        override = _humanizer_style_overrides().get(umo, "")
+        token = _HUMANIZER_ACTIVE_STYLE.set(override)
+        try:
+            if getattr(original_hook, "__self__", None) is not None:
+                await original_hook(event, req)
+            else:
+                await original_hook(self, event, req)
+        finally:
+            _HUMANIZER_ACTIVE_STYLE.reset(token)
+
+    on_llm_request._mon3tr_session_style = True
+    plugin.on_llm_request = on_llm_request
+
+    # AstrBot invokes registry hooks as ``handler(event, ...)``.  A bound
+    # method already supplies the instance, so use that shape directly.
+    patched = 0
+    for handler in star_handlers_registry:
+        if not _is_humanizer_handler(handler):
+            continue
+        handler.handler = on_llm_request.__get__(plugin, type(plugin))
+        patched += 1
+
+    if not patched:
+        # Do not leave a half-installed patch if this AstrBot version stores
+        # handlers differently than expected.  The global humanizer remains
+        # fully usable.
+        plugin._effective_active_style = original_effective
+        plugin.on_llm_request = original_hook
+        return None
+
+    count = len(_humanizer_style_overrides())
+    return (HUMANIZER_PLUGIN_NAME, "on_llm_request",
+            f"会话风格运行时接管（{patched} 个入口，{count} 个自定义会话）")
+
 
 def _patch_provider_getkeys():
     """get_keys(): str key → [str]。修复 str.copy() 崩溃。"""
@@ -444,6 +591,7 @@ PATCHES = [
     ("aiocqhttp_primary", "aiocqhttp 主动发送路由运行时兜底", _patch_aiocqhttp_primary),
     ("cron_sender_name", "Cron 合成发送者名中性化（防 Scheduler博士泄漏）", _patch_cron_sender_name),
     ("group_alias_note", "群聊同名说明（昵称=备注）", _patch_group_alias_note),
+    ("humanizer_session_style", "人类风格注入按会话选择检索风格", _patch_humanizer_session_style),
 ]
 
 
@@ -459,9 +607,20 @@ class AkashaPatchesPlugin(Star):
 
     async def initialize(self):
         logger.info("=" * 56)
-        logger.info("[Mon3trBot补丁] 开始应用核心补丁集 v1.1.0")
+        logger.info("[Mon3trBot补丁] 开始应用核心补丁集 v1.2.0")
         logger.info("=" * 56)
         for key, desc, fn in PATCHES:
+            if key == HUMANIZER_PATCH_KEY:
+                try:
+                    result = fn()
+                    if result:
+                        self.applied[key] = result
+                        logger.info(f"  ✅ {desc} → {result[2]}")
+                    else:
+                        logger.info(f"  ⏳ {desc} → 等待人类风格插件加载")
+                except Exception as e:
+                    logger.error(f"  ❌ {desc} → {type(e).__name__}: {e}")
+                continue
             try:
                 result = fn()
                 if result:
@@ -474,12 +633,28 @@ class AkashaPatchesPlugin(Star):
         logger.info(f"[Mon3trBot补丁] 完成：{len(self.applied)}/{len(PATCHES)} 项生效")
         logger.info("=" * 56)
 
+    @event_filter.on_plugin_loaded()
+    async def _on_plugin_loaded(self, metadata):
+        """Apply the humanizer patch after its plugin has been fully loaded."""
+        if getattr(metadata, "name", "") != HUMANIZER_PLUGIN_NAME:
+            return
+        try:
+            result = _patch_humanizer_session_style()
+        except Exception as e:
+            logger.error(f"[Mon3trBot补丁][会话风格] 延迟接管失败：{type(e).__name__}: {e}")
+            return
+        if result:
+            self.applied[HUMANIZER_PATCH_KEY] = result
+            logger.info(f"  ✅ 人类风格注入按会话选择检索风格 → {result[2]}")
+
     @event_filter.command("akasha_patches")
     async def status_cmd(self, event: AstrMessageEvent):
         """/akasha_patches 查看补丁状态"""
         lines = ["Mon3trBot_Remake 核心补丁集状态："]
         for key, desc, _ in PATCHES:
-            mark = "✅" if key in self.applied else "⏭️"
+            mark = "✅" if key in self.applied else (
+                "⏳" if key == HUMANIZER_PATCH_KEY else "⏭️"
+            )
             lines.append(f"{mark} {desc}")
         lines.append(f"共 {len(self.applied)}/{len(PATCHES)} 项由本插件接管；"
                      "人设层 5 段补丁在 personas 表中（不受升级影响）。")

@@ -79,6 +79,107 @@ def _plugin_blacklist_path() -> str:
                         "akasha_rc_patches", "active_reply_blacklist.json")
 
 
+def _plugin_data_path(filename: str) -> str:
+    """Locate a file owned by akasha_rc_patches under AstrBot plugin data."""
+    cfg = _astrbot_cfg_path()
+    if not cfg:
+        return ""
+    return os.path.join(os.path.dirname(cfg), "plugin_data",
+                        "akasha_rc_patches", filename)
+
+
+def _humanizer_style_override_path() -> str:
+    return _plugin_data_path("humanizer_style_overrides.json")
+
+
+def _read_json_file(path: str, default):
+    if not path or not os.path.isfile(path):
+        return default
+    try:
+        with open(path, encoding="utf-8-sig") as f:
+            return json.load(f)
+    except Exception as e:
+        log.warning(f"读取 JSON 失败（{path}）: {e}")
+        return default
+
+
+def _write_json_atomic(path: str, data: dict) -> None:
+    if not path:
+        raise FileNotFoundError("AstrBot 配置路径不可用")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = f"{path}.tmp{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
+def _humanizer_config_path() -> str:
+    cfg = _astrbot_cfg_path()
+    if not cfg:
+        return ""
+    return os.path.join(os.path.dirname(cfg), "config",
+                        "astrbot_plugin_wanna_be_human_config.json")
+
+
+def _humanizer_styles_dir() -> str:
+    cfg = _astrbot_cfg_path()
+    if not cfg:
+        return ""
+    return os.path.join(os.path.dirname(cfg), "plugin_data",
+                        "astrbot_plugin_wanna_be_human", "styles")
+
+
+def _read_humanizer_styles() -> list:
+    path = _humanizer_styles_dir()
+    if not path or not os.path.isdir(path):
+        return []
+    names = []
+    try:
+        for fn in sorted(os.listdir(path)):
+            if not fn.endswith(".json"):
+                continue
+            data = _read_json_file(os.path.join(path, fn), {}) or {}
+            name = str(data.get("name") or "").strip()
+            if name:
+                names.append(name)
+    except Exception as e:
+        log.warning(f"读取人类风格档案失败：{e}")
+    return list(dict.fromkeys(names))
+
+
+def _read_humanizer_style_overrides() -> dict:
+    data = _read_json_file(_humanizer_style_override_path(), {}) or {}
+    sessions = data.get("sessions") if isinstance(data, dict) else None
+    if not isinstance(sessions, dict):
+        return {}
+    return {str(k).strip(): str(v or "").strip()
+            for k, v in sessions.items() if str(k).strip() and str(v or "").strip()}
+
+
+def _write_humanizer_style_overrides(sessions: dict) -> None:
+    """Validate and atomically save per-session style choices.
+
+    Clearing an empty override file remains possible while the humanizer is
+    temporarily unavailable.  Selecting a real style still requires the style
+    directory so a stale or misspelled profile cannot be persisted.
+    """
+    styles = set(_read_humanizer_styles())
+    clean = {}
+    for umo, style in (sessions or {}).items():
+        umo, style = str(umo).strip(), str(style or "").strip()
+        if not umo or not style or style == "__global__":
+            continue
+        if not styles:
+            raise RuntimeError("未找到人类风格档案（AstrBot 或风格插件未就绪）")
+        if style not in styles:
+            raise ValueError(f"风格 {style} 不存在")
+        clean[umo] = style
+    _write_json_atomic(_humanizer_style_override_path(), {"sessions": clean})
+
+
 def _read_plugin_blacklist() -> list:
     path = _plugin_blacklist_path()
     if not path or not os.path.isfile(path):
@@ -390,6 +491,29 @@ def read_overview() -> dict:
             "muted": state.is_session_muted(session),
         })
 
+    humanizer_cfg = _read_json_file(_humanizer_config_path(), {}) if astrbot_ok else {}
+    humanizer = ((humanizer_cfg or {}).get("style") or {}) if isinstance(humanizer_cfg, dict) else {}
+    style_overrides = _read_humanizer_style_overrides()
+    humanizer_sessions = []
+    if astrbot_ok:
+        for g in groups:
+            humanizer_sessions.append({
+                "umo": g["umo"], "name": g["name"], "kind": "group",
+            })
+        for p in persons:
+            if p.get("uid") is None:
+                continue
+            humanizer_sessions.append({
+                "umo": f"{pid}:FriendMessage:{p['uid']}",
+                "name": p["name"], "kind": "private",
+            })
+
+    humanizer_styles = _read_humanizer_styles()
+    global_style = str(humanizer.get("active_style") or "").strip()
+    if not global_style and humanizer_styles:
+        # The humanizer itself falls back to its first available profile when
+        # active_style is empty, so the panel must show the same effective value.
+        global_style = humanizer_styles[0]
     return {
         "ok": True,
         "astrbot_available": astrbot_ok,
@@ -397,6 +521,13 @@ def read_overview() -> dict:
         "astrbot_error": "" if astrbot_ok else cfg_err,
         "persons": persons,
         "groups": groups,
+        "humanizer": {
+            "available": astrbot_ok and bool(humanizer_styles),
+            "global_style": global_style,
+            "styles": humanizer_styles,
+            "sessions": humanizer_sessions,
+            "overrides": style_overrides,
+        },
         "muted_sessions": state.muted_session_list(),
         "admins": sorted(admins),
         "id_whitelist_enable": bool(ps.get("enable_id_white_list", False)),
@@ -518,9 +649,18 @@ def update_astrbot_settings(payload: dict):
     if "ar_whitelist" in payload or "ar_blacklist" in payload:
         ar["whitelist"] = []
 
+    if "humanizer_style_overrides" in payload:
+        raw_overrides = payload.get("humanizer_style_overrides") or {}
+        if not isinstance(raw_overrides, dict):
+            return False, "会话风格数据必须是对象"
+        try:
+            _write_humanizer_style_overrides(raw_overrides)
+        except Exception as e:
+            return False, f"写入会话风格失败: {e}"
+
     try:
         _write_astrbot_cfg(cfg, bom)
     except Exception as e:
         return False, str(e)
-    log.info("⚙️ AstrBot 白名单/主动回复设置已由面板更新（重启 AstrBot 后生效）")
-    return True, "已写入 AstrBot 配置与插件黑名单"
+    log.info("⚙️ AstrBot 白名单/主动回复/会话风格设置已由面板更新")
+    return True, "已写入 AstrBot 配置、插件黑名单与会话风格"

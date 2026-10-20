@@ -1089,6 +1089,7 @@ details.tier.warn > .tier-body { background: linear-gradient(180deg, rgba(251,24
     <div class="seg-bar">
       <button class="seg active" data-sub="groups" onclick="switchMembersTab('groups')">💬 群聊</button>
       <button class="seg" data-sub="friends" onclick="switchMembersTab('friends')">🧑‍🤝‍🧑 私聊</button>
+      <button class="seg" data-sub="styles" onclick="switchMembersTab('styles')">🎭 风格</button>
       <button class="seg" data-sub="admins" onclick="switchMembersTab('admins')">👑 管理员</button>
       <div class="spacer"></div>
       <button class="btn btn-outline btn-sm" id="btnRefreshPeople" onclick="refreshPeople()" title="从 WeFlow 重新拉一遍联系人 / 群列表；bot 被拉进新群后点它立即收录">🔄 刷新名单</button>
@@ -1167,6 +1168,42 @@ details.tier.warn > .tier-body { background: linear-gradient(180deg, rgba(251,24
           </div>
           <div class="chip-wrap" id="fw_friends" style="max-height:420px;overflow:auto;border:1px solid #dedbd1;border-radius:10px;padding:8px"></div>
           <div class="field-hint" style="margin-top:6px"><span id="fwCount">-</span>　（搜索只筛选显示，不影响已勾选项）</div>
+        </div>
+      </div>
+
+      <!-- ── 子页：会话风格 ── -->
+      <div class="members-sub" id="sub-styles">
+        <div class="card">
+          <h3><span class="ic">🎭</span>会话检索风格</h3>
+          <div class="card-sub">
+            这里管理「好想成为人类啊」的风格注入：每个会话可选一个专属风格档案。
+            没有特殊设置的会话继续使用全局风格；保存后无需重启 AstrBot。
+          </div>
+          <div class="settings-row" style="margin-bottom:8px">
+            <div class="settings-field" style="min-width:220px;max-width:280px">
+              <label>全局风格（AstrBot 插件里设置）</label>
+              <input id="hsGlobalStyle" disabled placeholder="-">
+            </div>
+            <div class="settings-field" style="flex:1;min-width:200px">
+              <label>搜索会话</label>
+              <input class="search-input" id="hsSearch" style="width:100%" placeholder="🔍 群名 / 好友名 / UMO" oninput="renderHumanizerStyles()">
+            </div>
+            <div class="settings-field" style="max-width:130px;align-self:end">
+              <label style="visibility:hidden">.</label>
+              <label class="chip" style="width:100%;justify-content:center"><input type="checkbox" id="hsOnlyCustom" onchange="renderHumanizerStyles()"><span class="dot"></span>只看自定义</label>
+            </div>
+          </div>
+          <div class="tbl-scroll">
+            <table class="member-table">
+              <thead><tr>
+                <th>会话</th>
+                <th style="width:210px">使用风格</th>
+                <th style="width:250px">UMO（点击复制）</th>
+              </tr></thead>
+              <tbody id="hsBody"><tr><td colspan="3" style="color:#7d838c">加载中...</td></tr></tbody>
+            </table>
+          </div>
+          <div class="field-hint" style="margin-top:6px"><span id="hsCount">-</span>　（「跟随全局」不写入配置；风格档案仍需在人类风格插件中创建）</div>
         </div>
       </div>
 
@@ -1548,6 +1585,8 @@ var arOverrides = {};             // gid → 「插嘴」勾选（仅记录用�
 // 当前私聊白名单（uid / UMO 混合）缓存：搜索、「只看已勾」触发局部重渲染
 // 时用它，避免把「面板拉到的旧值」当成「用户正在编辑的新值」丢掉勾选。
 var currentWhitelist = [];
+var humanizerStyleOverrides = {};   // umo → style（当前服务端值）
+var humanizerStyleDirty = false;    // 用户是否改过会话风格
 
 // ---- 子页签 ----
 function switchMembersTab(name) {
@@ -1591,6 +1630,15 @@ function loadPeopleData(d) {
     ? (d.persons.length + ' 人 · ' + d.groups.length + ' 群 · AstrBot 已连接')
     : '⚠️ 未找到 AstrBot 配置: ' + (d.astrbot_error || d.astrbot_path);
   currentArBlacklist = (d.ar_blacklist || []).map(function(x){return String(x).trim()});
+  var h = d.humanizer || {};
+  humanizerStyleOverrides = {};
+  humanizerStyleDirty = false;
+  Object.keys(h.overrides || {}).forEach(function(k){
+    humanizerStyleOverrides[String(k)] = String(h.overrides[k]);
+  });
+  var gs = document.getElementById('hsGlobalStyle');
+  if (gs) gs.value = h.global_style || '-';
+  renderHumanizerStyles();
   renderPeople();
   renderGroups(true);
   fillAstrbotForm(d);
@@ -1874,6 +1922,51 @@ function syncWlEnable(el) {
   markDirty();
 }
 
+// ---- 会话检索风格 ----
+function styleOptionHtml(style, current) {
+  var selected = style === current ? ' selected' : '';
+  return '<option value="' + esc(style) + '"' + selected + '>' + esc(style) + '</option>';
+}
+
+function renderHumanizerStyles() {
+  if (!peopleData) return;
+  var h = peopleData.humanizer || {};
+  var styles = h.styles || [];
+  var kw = ((document.getElementById('hsSearch') || {}).value || '').toLowerCase().trim();
+  var onlyCustom = document.getElementById('hsOnlyCustom') && document.getElementById('hsOnlyCustom').checked;
+  var rows = '', custom = 0;
+  (h.sessions || []).forEach(function(item){
+    var cur = humanizerStyleOverrides.hasOwnProperty(item.umo)
+      ? humanizerStyleOverrides[item.umo] : '__global__';
+    if (cur !== '__global__') custom++;
+    if (onlyCustom && cur === '__global__') return;
+    if (kw && item.name.toLowerCase().indexOf(kw) < 0
+        && item.umo.toLowerCase().indexOf(kw) < 0) return;
+    var opts = '<option value="__global__"' + (cur === '__global__' ? ' selected' : '') + '>跟随全局（' + esc(h.global_style || '-') + '）</option>';
+    styles.forEach(function(style){ opts += styleOptionHtml(style, cur); });
+    rows += '<tr>'
+      + '<td><span class="set-note">' + (item.kind === 'group' ? '群' : '私聊') + '</span> ' + esc(item.name) + '</td>'
+      + '<td><select data-umo="' + esc(item.umo) + '" onchange="onHumanizerStyleChange(this)" style="width:100%">' + opts + '</select></td>'
+      + '<td><span class="copy-chip" data-v="' + esc(item.umo) + '" onclick="copyText(this.dataset.v)" title="点击复制完整 UMO">' + esc(item.umo) + ' 📋</span></td>'
+      + '</tr>';
+  });
+  document.getElementById('hsBody').innerHTML = rows
+    || '<tr><td colspan="3" style="color:#7d838c">' + (kw ? '没有匹配的会话' : '暂无可用风格或会话') + '</td></tr>';
+  var cnt = document.getElementById('hsCount');
+  if (cnt) cnt.textContent = (h.available ? (custom + ' 个自定义 / ' + (h.sessions || []).length + ' 个会话') : '未找到人类风格插件配置');
+}
+
+function onHumanizerStyleChange(sel) {
+  var umo = sel.getAttribute('data-umo');
+  var val = sel.value;
+  if (val === '__global__') delete humanizerStyleOverrides[umo];
+  else humanizerStyleOverrides[umo] = val;
+  humanizerStyleDirty = true;
+  markDirty();
+  var cnt = document.getElementById('hsCount');
+  if (cnt) cnt.textContent = Object.keys(humanizerStyleOverrides).length + ' 个自定义 / ' + ((peopleData.humanizer || {}).sessions || []).length + ' 个会话';
+}
+
 // ---- 统一保存 ----
 // 一次写入：管理员（/api/admins）+ 私聊/群白名单 + 随机插话（/api/astrbot）。
 // 「插嘴」列取 arOverrides（用户改过的行）∪ 服务端黑名单（没改过的行），
@@ -1896,6 +1989,13 @@ function saveAll() {
     ar_possibility: parseFloat(document.getElementById('ab_ar_poss').value),
     ar_blacklist: bl,
   };
+  // Do not let an unavailable/misconfigured humanizer block unrelated saves.
+  // Only submit this field when the user changed it. Unchanged stale data must
+  // not block unrelated settings when a style profile was deleted externally.
+  var savedHumanizerStyles = humanizerStyleDirty;
+  if (savedHumanizerStyles) {
+    body.humanizer_style_overrides = humanizerStyleOverrides;
+  }
   var btn = document.getElementById('abSaveBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ 保存中…'; }
   Promise.all([
@@ -1912,9 +2012,16 @@ function saveAll() {
       currentArBlacklist = bl.slice();
       updateDirtyHint();
       if (a.admins) { peopleData.admins = a.admins; renderPeople(); }
+      humanizerStyleDirty = false;
+      if (savedHumanizerStyles && peopleData.humanizer) {
+        peopleData.humanizer.overrides = JSON.parse(JSON.stringify(humanizerStyleOverrides));
+        renderHumanizerStyles();
+      }
       showMsg('abMsg', '✅ 已保存');
       if (a.synced === false) {
         toast('⚠️ 已保存，但管理员写入 AstrBot 失败：' + (a.message || '?'), 'error');
+      } else if (savedHumanizerStyles) {
+        toast('✅ 已保存 —— 会话风格立即生效，其余项重启 AstrBot 后生效', 'success');
       } else {
         toast('✅ 已保存 —— 重启 AstrBot 后生效', 'success');
       }

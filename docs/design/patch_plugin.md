@@ -17,6 +17,7 @@ AstrBot 升级会覆盖安装目录里的源码。`akasha_rc_patches` 插件把�
 | aiocqhttp_primary | 主动发送无事件上下文时的路由兜底 |
 | cron_sender_name | 定时任务合成发送者名中性化 |
 | group_alias_note | 群聊上下文中合并昵称/备注同名说明 |
+| humanizer_session_style | 「好想成为人类啊」按会话覆盖风格注入与对应检索库 |
 
 人设规则保存在 `data_v4.db`，不属于本插件；`scripts/check_patches.py` 单独检查这些持久化规则。
 
@@ -37,6 +38,24 @@ runtime/astrbot/data/plugin_data/akasha_rc_patches/active_reply_blacklist.json
 ```
 
 桥接面板保存“插嘴”开关时写入这份文件；AstrBot 配置中的旧 `active_reply.blacklist` 已不再是权威来源。
+
+会话风格覆盖保存在：
+
+```text
+runtime/astrbot/data/plugin_data/akasha_rc_patches/humanizer_style_overrides.json
+```
+
+结构为：
+
+```json
+{
+  "sessions": {
+    "wechat_bridge:GroupMessage:123456": "本人风格"
+  }
+}
+```
+
+桥接面板「成员与权限 → 风格」负责可视化编辑；补丁插件每次 LLM 请求都重新读取该文件，因此保存后无需重启 AstrBot。未列出的会话继续使用人类风格插件的全局 `active_style`。
 
 ## 部署与验证
 
